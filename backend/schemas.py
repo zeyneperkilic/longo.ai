@@ -14,7 +14,7 @@ class QuizRequest(BaseModel):
     
     # Extra fields için esnek yapı
     class Config:
-        extra = "allow"  # Bilinmeyen field'ları da kabul et
+        extra = "allow"
 
 class SupplementRecommendation(BaseModel):
     name: str = Field(description="Supplement adı")
@@ -96,6 +96,12 @@ class MultipleLabRequest(BaseModel):
         extra = "allow"
 
 # Chat Schemas - ESNEK YAPI
+class ChatStartResponse(BaseModel):
+    conversation_id: int = Field(description="Konuşma ID'si")
+    
+    class Config:
+        extra = "allow"
+
 class ChatMessageRequest(BaseModel):
     text: str = Field(description="Kullanıcı mesajı")
     conversation_id: int = Field(description="Konuşma ID'si")
