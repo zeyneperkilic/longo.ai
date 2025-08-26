@@ -23,18 +23,30 @@ class SupplementRecommendation(BaseModel):
     benefits: List[str] = Field(description="Faydaları")
     warnings: List[str] = Field(description="Uyarılar")
     priority: Literal["high", "medium", "low"] = Field(default="medium")
+    
+    class Config:
+        extra = "allow"
 
 class NutritionAdvice(BaseModel):
     title: str = "Beslenme Önerileri"
     recommendations: List[str]
+    
+    class Config:
+        extra = "allow"
 
 class LifestyleAdvice(BaseModel):
     title: str = "Yaşam Tarzı Önerileri" 
     recommendations: List[str]
+    
+    class Config:
+        extra = "allow"
 
 class GeneralWarnings(BaseModel):
     title: str = "Genel Uyarılar"
     warnings: List[str]
+    
+    class Config:
+        extra = "allow"
 
 # Lab Analysis Schemas - ESNEK YAPI
 class LabTestResult(BaseModel):
@@ -167,18 +179,30 @@ class GeneralLabSummaryResponse(BaseModel):
 # Legacy schemas for compatibility
 class AnalyzePayload(BaseModel):
     payload: Dict[str, Any]
+    
+    class Config:
+        extra = "allow"
 
 class LabBatchPayload(BaseModel):
     results: List[Dict[str, Any]]
+    
+    class Config:
+        extra = "allow"
 
 class RecommendationItem(BaseModel):
     id: Optional[str] = None
     name: str
     reason: str
     source: Literal["consensus", "assistant"] = "consensus"
+    
+    class Config:
+        extra = "allow"
 
 class AnalyzeResponse(BaseModel):
     recommendations: List[RecommendationItem] = Field(default_factory=list)
     analysis: Dict[str, Any] = Field(default_factory=dict)
     disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
+    
+    class Config:
+        extra = "allow"
 

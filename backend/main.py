@@ -398,8 +398,8 @@ async def analyze_quiz(body: QuizRequest,
     
     user = get_or_create_user(db, x_user_id, x_user_plan)
     
-    # Quiz data'yı dict'e çevir ve validate et
-    quiz_dict = validate_input_data(body.quiz_answers or {}, ["age", "gender"])
+    # Quiz data'yı dict'e çevir ve validate et - TAMAMEN ESNEK
+    quiz_dict = validate_input_data(body.quiz_answers or {}, [])  # Required fields yok, her şeyi kabul et
     
     # XML'den supplement listesini al (eğer body'de yoksa)
     from backend.config import SUPPLEMENTS_LIST
