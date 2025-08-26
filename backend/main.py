@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import json, time
 import os
@@ -428,7 +429,7 @@ def count_user_analyses(db: Session, user_id: int) -> int:
 
 @app.post("/ai/quiz", response_model=QuizResponse)
 @cache_model_response(ttl_seconds=1800)  # 30 dakika cache - benzer quiz'ler için
-def analyze_quiz(body: QuizRequest,
+async def analyze_quiz(body: QuizRequest,
                  current_user: str = Depends(get_current_user),
                  x_user_id: str | None = Header(default=None),
                  x_user_plan: str | None = Header(default=None)):
@@ -439,12 +440,12 @@ def analyze_quiz(body: QuizRequest,
     try:
         user = get_or_create_user(db, x_user_id, x_user_plan)
         
-        # Quiz data'yı dict'e çevir
-        quiz_dict = body.quiz_answers
+        # Quiz data'yı dict'e çevir ve validate et
+        quiz_dict = validate_input_data(body.quiz_answers or {}, ["age", "gender"])
         
         # XML'den supplement listesini al (eğer body'de yoksa)
         from backend.config import SUPPLEMENTS_LIST
-        supplements_dict = SUPPLEMENTS_LIST
+        supplements_dict = body.available_supplements or SUPPLEMENTS_LIST
         
         # Use parallel quiz analysis with supplements
         res = parallel_quiz_analyze(quiz_dict, supplements_dict)
@@ -758,3 +759,29 @@ def cleanup_expired_cache():
     from backend.cache_utils import cleanup_cache
     removed_count = cleanup_cache()
     return {"message": f"{removed_count} expired item temizlendi", "status": "success"}
+
+# Global error handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global error handler for production"""
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "message": "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+            "type": str(type(exc).__name__)
+        }
+    )
+
+# Input validation helper
+def validate_input_data(data: dict, required_fields: list = None) -> dict:
+    """Input data validation for production"""
+    if not data:
+        data = {}
+    
+    if required_fields:
+        for field in required_fields:
+            if field not in data:
+                data[field] = None
+    
+    return data
