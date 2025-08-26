@@ -443,7 +443,7 @@ def analyze_quiz(body: QuizRequest,
         quiz_dict = body.quiz_answers
         
         # XML'den supplement listesini al (eğer body'de yoksa)
-        from config import SUPPLEMENTS_LIST
+        from backend.config import SUPPLEMENTS_LIST
         supplements_dict = SUPPLEMENTS_LIST
         
         # Use parallel quiz analysis with supplements
@@ -609,7 +609,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     supplements_dict = body.available_supplements
     if not supplements_dict:
         # XML'den supplement listesini çek (gerçek veriler)
-        from config import SUPPLEMENTS_LIST
+        from backend.config import SUPPLEMENTS_LIST
         supplements_dict = SUPPLEMENTS_LIST
     
     # Use parallel multiple lab analysis with supplements
