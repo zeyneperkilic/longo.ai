@@ -428,7 +428,6 @@ def count_user_analyses(db: Session, user_id: int) -> int:
     return db.query(Message).filter(Message.user_id==user_id, Message.role=="assistant", Message.model_name=="analyze").count()
 
 @app.post("/ai/quiz", response_model=QuizResponse)
-@cache_model_response(ttl_seconds=1800)  # 30 dakika cache - benzer quiz'ler için
 async def analyze_quiz(body: QuizRequest,
                  current_user: str = Depends(get_current_user),
                  x_user_id: str | None = Header(default=None),
