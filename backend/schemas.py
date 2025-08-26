@@ -39,7 +39,7 @@ class GeneralWarnings(BaseModel):
 # Lab Analysis Schemas - ESNEK YAPI
 class LabTestResult(BaseModel):
     name: str = Field(description="Test adı")
-    value: str = Field(description="Test sonucu değeri")
+    value: Any = Field(description="Test sonucu değeri - herhangi bir tip (string, int, float)")
     unit: Optional[str] = Field(default=None, description="Birim")
     reference_range: Optional[str] = Field(default=None, description="Referans aralığı")
     status: Optional[str] = Field(default=None, description="Test durumu")
@@ -53,10 +53,13 @@ class LabTestResult(BaseModel):
 
 class HistoricalLabResult(BaseModel):
     date: str = Field(description="Test tarihi (YYYY-MM-DD)")
-    value: str = Field(description="Test sonucu değeri")
+    value: Any = Field(description="Test sonucu değeri - herhangi bir tip (string, int, float)")
     status: Optional[str] = Field(default=None, description="Test durumu (normal, yüksek, düşük, kritik)")
     lab: Optional[str] = Field(default=None, description="Laboratuvar adı")
     notes: Optional[str] = Field(default=None, description="Ek notlar")
+    
+    class Config:
+        extra = "allow"
 
 class SingleLabRequest(BaseModel):
     test: LabTestResult

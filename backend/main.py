@@ -750,13 +750,16 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Input validation helper
 def validate_input_data(data: dict, required_fields: list = None) -> dict:
-    """Input data validation for production"""
+    """Input data validation for production - TAMAMEN ESNEK"""
     if not data:
         data = {}
     
+    # Required fields için default değer ata (ama strict validation yapma)
     if required_fields:
         for field in required_fields:
             if field not in data:
                 data[field] = None
     
+    # Her türlü input'u kabul et (string, int, float, dict, list)
+    # Pydantic schema'lar zaten extra = "allow" ile esnek
     return data
