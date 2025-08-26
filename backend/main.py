@@ -9,14 +9,14 @@ from functools import wraps
 from collections import defaultdict
 import time
 
-from config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
-from db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context
-from auth import get_db, get_or_create_user
-from schemas import ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
-from health_guard import guard_or_message
-from orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
-from utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
-from cache_utils import cache_supplements, cache_user_context, cache_model_response, get_cache_stats
+from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
+from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context
+from backend.auth import get_db, get_or_create_user
+from backend.schemas import ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
+from backend.health_guard import guard_or_message
+from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
+from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
+from backend.cache_utils import cache_supplements, cache_user_context, cache_model_response, get_cache_stats
 
 # Simple rate limiting
 request_counts = defaultdict(list)
@@ -200,7 +200,7 @@ async def chat_message(req: ChatMessageRequest,
         rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
         
         # Get user's previous analyses for context (CACHE THIS!)
-        from db import get_user_ai_interactions
+        from backend.db import get_user_ai_interactions
         user_analyses = get_user_ai_interactions(db, user.id, limit=5)
         
         # Build enhanced system prompt with user context
@@ -306,7 +306,7 @@ async def chat_message(req: ChatMessageRequest,
             system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
         
         # XML'den supplement listesini ekle - AI'ya ürün önerileri için
-        from config import SUPPLEMENTS_LIST
+        from backend.config import SUPPLEMENTS_LIST
         supplements_list = SUPPLEMENTS_LIST
         
         # Supplement listesi kuralları (quiz'deki gibi)
@@ -502,7 +502,7 @@ def analyze_quiz(body: QuizRequest,
         
         # Quiz sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
         if data and "supplement_recommendations" in data:
-            from db import get_user_global_context, update_user_global_context
+            from backend.db import get_user_global_context, update_user_global_context
             
             # Mevcut global context'i al
             current_context = get_user_global_context(db, user.id) or {}
@@ -624,9 +624,9 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     if "overall_status" not in data:
         data["overall_status"] = "analiz_tamamlandı"
     
-    # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
+                # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
     if data and "test_details" in data:
-        from db import get_user_global_context, update_user_global_context
+        from backend.db import get_user_global_context, update_user_global_context
         
         # Mevcut global context'i al
         current_context = get_user_global_context(db, user.id) or {}
@@ -652,7 +652,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             updated_context = {**current_context, **lab_context}
             update_user_global_context(db, user.id, updated_context)
             print(f"DEBUG: Lab context updated (ÖZET): {lab_context}")
-    
+
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece AI yanıtını döndür
     
@@ -665,7 +665,7 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
     """Get user's lab test progress and trends"""
     
     # Get lab test history
-    from db import get_lab_test_history
+    from backend.db import get_lab_test_history
     
     # user_id'yi integer'a çevirmeye çalış, başarısız olursa string olarak kullan
     try:
@@ -710,7 +710,7 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
 def get_supplements_xml():
     """XML feed endpoint - Ana site için supplement listesi"""
     from fastapi.responses import Response
-    from config import SUPPLEMENTS_LIST
+    from backend.config import SUPPLEMENTS_LIST
     
     # Gerçek supplement verileri (config'den)
     supplements = SUPPLEMENTS_LIST
@@ -746,7 +746,7 @@ def get_cache_statistics():
 @app.get("/cache/clear")
 def clear_all_cache():
     """Tüm cache'i temizle"""
-    from cache_utils import cache
+    from backend.cache_utils import cache
     cache.clear()
     return {"message": "Cache temizlendi", "status": "success"}
 
@@ -754,6 +754,6 @@ def clear_all_cache():
 @app.get("/cache/cleanup")
 def cleanup_expired_cache():
     """Expired cache item'ları temizle"""
-    from cache_utils import cleanup_cache
+    from backend.cache_utils import cleanup_cache
     removed_count = cleanup_cache()
     return {"message": f"{removed_count} expired item temizlendi", "status": "success"}
