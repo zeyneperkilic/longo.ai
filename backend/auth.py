@@ -1,6 +1,6 @@
 from fastapi import Header, HTTPException
 from sqlalchemy.orm import Session
-from db import SessionLocal, User
+from backend.db import SessionLocal, User
 
 def get_db():
     db = SessionLocal()

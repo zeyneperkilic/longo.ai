@@ -46,7 +46,7 @@ def rate_limit(func):
 # Basic Authentication
 def check_basic_auth(username: str, password: str):
     """Basit authentication kontrolü"""
-    from config import AUTH_USERNAME, AUTH_PASSWORD
+    from backend.config import AUTH_USERNAME, AUTH_PASSWORD
     if username == AUTH_USERNAME and password == AUTH_PASSWORD:
         return True
     return False
@@ -378,7 +378,7 @@ async def chat_message(req: ChatMessageRequest,
             used_model = res.get("model_used","unknown")
         except Exception as e:
             print(f"Chat failed: {e}, using fallback")
-            from orchestrator import chat_fallback
+            from backend.orchestrator import chat_fallback
             fallback_res = chat_fallback(history)
             final = fallback_res["content"]
             used_model = fallback_res["model_used"]

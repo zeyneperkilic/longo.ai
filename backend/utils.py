@@ -459,7 +459,7 @@ def extract_user_context_ai(message_content: str, user_id: str = None) -> dict:
     """AI model ile akıllı context çıkar"""
     
     try:
-        from openrouter_client import call_chat_model
+        from backend.openrouter_client import call_chat_model
         
         prompt = f"""
         DİKKAT: Bu kullanıcı mesajından SADECE kullanıcının kendisi hakkında AÇIKÇA söylediği bilgileri çıkar:

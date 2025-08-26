@@ -1,6 +1,6 @@
 from typing import Tuple
-from config import HEALTH_MODE, MODERATION_MODEL
-from openrouter_client import call_chat_model
+from backend.config import HEALTH_MODE, MODERATION_MODEL
+from backend.openrouter_client import call_chat_model
 import time
 
 

@@ -1,7 +1,7 @@
 import time
 import httpx
 from typing import List, Dict, Any, Optional
-from config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, PARALLEL_TIMEOUT_MS
+from backend.config import OPENROUTER_API_KEY, OPENROUTER_BASE_URL, PARALLEL_TIMEOUT_MS
 
 def _get_headers():
     if not OPENROUTER_API_KEY:

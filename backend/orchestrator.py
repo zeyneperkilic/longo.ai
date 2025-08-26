@@ -1,8 +1,8 @@
 from typing import List, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from config import PARALLEL_MODELS
-from openrouter_client import call_chat_model
-from utils import is_valid_chat, parse_json_safe
+from backend.config import PARALLEL_MODELS
+from backend.openrouter_client import call_chat_model
+from backend.utils import is_valid_chat, parse_json_safe
 import time
 import json
 import re

@@ -8,7 +8,7 @@ import os
 import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from db import Base, SessionLocal, User, Conversation, Message, LabTestHistory, AIInteraction
+from backend.db import Base, SessionLocal, User, Conversation, Message, LabTestHistory, AIInteraction
 
 def migrate_to_postgresql():
     """SQLite'dan PostgreSQL'e veri taşıma"""
@@ -150,7 +150,7 @@ def switch_to_postgresql():
     os.environ["DB_TYPE"] = "postgresql"
     
     # Database'i yeniden başlat
-    from db import engine, SessionLocal
+    from backend.db import engine, SessionLocal
     print("✅ Database PostgreSQL'e geçti!")
     
     return True
