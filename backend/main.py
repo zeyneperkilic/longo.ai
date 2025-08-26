@@ -358,14 +358,22 @@ async def chat_message(req: ChatMessageRequest,
         start = time.time()
         try:
             res = parallel_chat(history)
-            final = res["content"]
+            final = res.get("content", "")
             used_model = res.get("model_used","unknown")
+            
+            # None kontrolü - AI'dan boş yanıt gelirse fallback kullan
+            if not final or final is None:
+                from backend.orchestrator import chat_fallback
+                fallback_res = chat_fallback(history)
+                final = fallback_res.get("content", "Üzgünüm, şu anda yanıt veremiyorum. Lütfen tekrar deneyin.")
+                used_model = fallback_res.get("model_used", "fallback")
+                
         except Exception as e:
             # Production'da log yerine fallback kullan
             from backend.orchestrator import chat_fallback
             fallback_res = chat_fallback(history)
-            final = fallback_res["content"]
-            used_model = fallback_res["model_used"]
+            final = fallback_res.get("content", "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.")
+            used_model = fallback_res.get("model_used", "fallback")
         
         latency_ms = int((time.time()-start)*1000)
 
