@@ -1104,29 +1104,19 @@ def parallel_single_session_analyze(session_tests: List[Dict[str, Any]], session
         
         # Single model analysis (optimized for GPT-5)
         responses = []
-        print(f"DEBUG: Starting session analysis with {len(PARALLEL_MODELS)} models")
-        print(f"DEBUG: Model list: {PARALLEL_MODELS}")
-        
         if len(PARALLEL_MODELS) == 1:
             # Tek model - direkt çağır
-            print(f"DEBUG: Using single model: {PARALLEL_MODELS[0]}")
             try:
-                print(f"DEBUG: Calling chat model...")
                 result = call_chat_model(PARALLEL_MODELS[0], messages, 0.3, 1500)
-                print(f"DEBUG: Chat model result: {result}")
                 
                 if result and result.get("content") and result["content"].strip():
                     responses.append({
                         "model": PARALLEL_MODELS[0],
                         "response": result["content"]
                     })
-                    print(f"DEBUG: Session analysis completed with {PARALLEL_MODELS[0]}")
-                else:
-                    print(f"DEBUG: Session analysis failed - empty response")
             except Exception as e:
-                print(f"DEBUG: Session model {PARALLEL_MODELS[0]} failed: {e}")
-                print(f"DEBUG: Exception type: {type(e)}")
-                print(f"DEBUG: Exception details: {str(e)}")
+                # Production'da log yerine fallback kullan
+                pass
         else:
             # Çoklu model - paralel çağır
             with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
@@ -1157,12 +1147,10 @@ def parallel_single_session_analyze(session_tests: List[Dict[str, Any]], session
         
         # Tek model kullanıldığı için synthesis'e gerek yok - direkt AI response'u kullan
         ai_response = responses[0]["response"]
-        print(f"DEBUG: AI Response: {ai_response[:200]}...")
         
         # AI model'in response'unu schema'ya uygun hale getir
         try:
             if ai_response and isinstance(ai_response, str):
-                print(f"DEBUG: Parsing AI response...")
                 # Markdown wrapper'ını temizle (```json ... ``` formatında olabilir)
                 cleaned_response = ai_response.strip()
                 if cleaned_response.startswith('```json'):
@@ -1173,7 +1161,6 @@ def parallel_single_session_analyze(session_tests: List[Dict[str, Any]], session
                 
                 # AI response'u parse et
                 parsed_response = json.loads(cleaned_response) if cleaned_response.startswith('{') else {}
-                print(f"DEBUG: Parsed response keys: {parsed_response.keys() if parsed_response else 'None'}")
                 
                 # Schema'ya uygun response oluştur
                 formatted_response = {

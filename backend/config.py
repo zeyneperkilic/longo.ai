@@ -41,6 +41,11 @@ RETENTION_DAYS = 365
 PRESCRIPTION_BLOCK = True
 # DAILY_CHAT_LIMIT = 100  # KALDIRILDI - Gereksiz
 
+# Context limits for production
+MAX_SUPPLEMENTS_IN_CONTEXT = 7  # Maximum supplements to store in context
+MAX_PRIORITY_SUPPLEMENTS = 5    # Maximum priority supplements to store
+MAX_LAB_TESTS_IN_CONTEXT = 5   # Maximum lab tests to store in context
+
 
 
 MODERATION_MODEL = "google/gemini-2.5-flash"

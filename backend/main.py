@@ -19,33 +19,13 @@ from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
 from backend.cache_utils import cache_supplements, cache_user_context, cache_model_response, get_cache_stats
 
-# Simple rate limiting
-request_counts = defaultdict(list)
-RATE_LIMIT_WINDOW = 60  # 1 minute
-RATE_LIMIT_MAX_REQUESTS = 100  # Max requests per minute per IP
+# Rate limiting removed for production - will be implemented properly later
+# request_counts = defaultdict(list)  # Removed to prevent memory leak
+# RATE_LIMIT_WINDOW = 60
+# RATE_LIMIT_MAX_REQUESTS = 100
 
-def rate_limit(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        # Get request from FastAPI context
-        from fastapi import Request
-        request = Request(kwargs.get('request'))
-        client_ip = request.client.host if request.client else "unknown"
-        
-        # Clean old requests
-        current_time = time.time()
-        request_counts[client_ip] = [req_time for req_time in request_counts[client_ip] 
-                                   if current_time - req_time < RATE_LIMIT_WINDOW]
-        
-        # Check rate limit
-        if len(request_counts[client_ip]) >= RATE_LIMIT_MAX_REQUESTS:
-            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
-        
-        # Add current request
-        request_counts[client_ip].append(current_time)
-        
-        return await func(*args, **kwargs)
-    return wrapper
+# def rate_limit(func):  # Removed to prevent memory leak
+#     ... removed ...
 
 # Basic Authentication
 def check_basic_auth(username: str, password: str):
@@ -85,6 +65,11 @@ if os.getenv("ENVIRONMENT") == "production":
         TrustedHostMiddleware, 
         allowed_hosts=["*"]  # Configure specific hosts in production
     )
+    
+    # Production'da CORS'u kısıtla
+    if ALLOWED_ORIGINS == ["*"]:
+        print("⚠️  WARNING: CORS is open to all origins in production!")
+        print("   Set ALLOWED_ORIGINS environment variable for security")
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -149,140 +134,123 @@ def chat_history(conversation_id: int,
 @app.post("/ai/chat", response_model=ChatResponse)
 async def chat_message(req: ChatMessageRequest,
                   current_user: str = Depends(get_current_user),
+                  db: Session = Depends(get_db),
                   x_user_id: str | None = Header(default=None),
                   x_user_plan: str | None = Header(default=None)):
-    # Database session'ı manuel yönet
-    db = SessionLocal()
-    try:
-        user = get_or_create_user(db, x_user_id, x_user_plan)  # Asıl site zaten kontrol ediyor
+    user = get_or_create_user(db, x_user_id, x_user_plan)  # Asıl site zaten kontrol ediyor
 
-        conv = get_conversation_by_user_based_id(db, user.id, req.conversation_id)
-        if not conv:
-            raise HTTPException(404, "Konuşma bulunamadı")
+    conv = get_conversation_by_user_based_id(db, user.id, req.conversation_id)
+    if not conv:
+        raise HTTPException(404, "Konuşma bulunamadı")
 
-        # Günlük chat limiti kaldırıldı - Gereksiz
+    # Günlük chat limiti kaldırıldı - Gereksiz
 
-        # Global context'i önce al (hafıza sorusu için gerekli)
-        global_context = get_user_global_context(db, user.id)
-        
-        # Health Guard ile kategori kontrolü
-        ok, msg = guard_or_message(req.text)
-        
-        # Hafıza soruları artık HEALTH kategorisinde, özel işlem yok
-        memory_bypass = False
-        if not ok:
-            # store user message
-            db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=req.text)); db.commit()
-            # reply fixed message
-            reply = msg
-            m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
-            db.add(m); db.commit()
-            return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
-        
-        # Hafıza soruları artık normal AI model ile yanıtlanıyor
-        
-        # Selamlama sonrası özel yanıt kontrolü
-        txt = req.text.lower().strip()
-        pure_greeting_keywords = [
-            "selam", "naber", "günaydın", "gunaydin",
-            "iyi akşamlar", "iyi aksamlar", "iyi geceler", "iyi günler", "iyi gunler"
-        ]
-        
-        # Eğer saf selamlama ise özel yanıt ver
-        if any(kw == txt for kw in pure_greeting_keywords):
-            reply = "Merhaba! Ben Longo AI. Sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
-            m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
-            db.add(m); db.commit()
-            return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
-
-        # store user message FIRST
+    # Global context'i önce al (hafıza sorusu için gerekli)
+    global_context = get_user_global_context(db, user.id)
+    
+    # Health Guard ile kategori kontrolü
+    ok, msg = guard_or_message(req.text)
+    
+    # Hafıza soruları artık HEALTH kategorisinde, özel işlem yok
+    memory_bypass = False
+    if not ok:
+        # store user message
         db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=req.text)); db.commit()
+        # reply fixed message
+        reply = msg
+        m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
+        db.add(m); db.commit()
+        return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
+    
+    # Hafıza soruları artık normal AI model ile yanıtlanıyor
+    
+    # Selamlama sonrası özel yanıt kontrolü
+    txt = req.text.lower().strip()
+    pure_greeting_keywords = [
+        "selam", "naber", "günaydın", "gunaydin",
+        "iyi akşamlar", "iyi aksamlar", "iyi geceler", "iyi günler", "iyi gunler"
+    ]
+    
+    # Eğer saf selamlama ise özel yanıt ver
+    if any(kw == txt for kw in pure_greeting_keywords):
+        reply = "Merhaba! Ben Longo AI. Sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
+        m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
+        db.add(m); db.commit()
+        return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
 
-        # build history (including the new user message)
-        rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
-        
-        # Get user's previous analyses for context (CACHE THIS!)
-        from backend.db import get_user_ai_interactions
-        user_analyses = get_user_ai_interactions(db, user.id, limit=5)
-        
-        # Build enhanced system prompt with user context
-        system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! İsim anlamı, kültür, tarih, spor gibi konularda bilgi verme! Sadece sağlık konusuna odaklan!"
-        
-        # Global + Local Context Sistemi - OPTIMIZED
-        user_context = {}
-        
-        # 1. Global context'i getir (zaten yukarıda alındı)
-        if global_context:
-            # Key'leri normalize et (büyük harf -> küçük harf + encoding temizle)
-            normalized_global = {}
-            for key, value in global_context.items():
-                if key and value:  # None/boş değerleri atla
-                    # Encoding sorunlarını çöz: 'i̇si̇m' -> 'isim'
-                    normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
-                    if normalized_key and normalized_key not in normalized_global:
-                        normalized_global[normalized_key] = value
-            user_context.update(normalized_global)
-        
-        # 2. Son mesajlardan yeni context bilgilerini çıkar (ONLY IF NEEDED)
-        # ÖNEMLİ: Global context user bazında olmalı, conversation bazında değil!
-        # Bu yüzden sadece yeni mesajdan context çıkar, eski mesajlardan değil
-        # recent_messages = rows[-(CHAT_HISTORY_MAX-1):] if len(rows) > 0 else []
-        new_context = {}
-        
-        # 2. YENİ MESAJDAN CONTEXT ÇIKAR (her mesajda!)
-        current_message_context = extract_user_context_hybrid(req.text, user.email)
-        for key, value in current_message_context.items():
-            # Key'i normalize et (encoding sorunlarını çöz)
-            normalized_key = key.strip().lower()
-            if normalized_key and value:  # Boş değerleri atla
-                if normalized_key not in new_context:
-                    new_context[normalized_key] = value
-                elif isinstance(value, list) and isinstance(new_context[normalized_key], list):
-                    # Listeleri birleştir (duplicate'ları kaldır)
-                    new_context[normalized_key] = list(set(new_context[normalized_key] + value))
-                else:
-                    # String değerleri güncelle
-                    new_context[normalized_key] = value
+    # store user message FIRST
+    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=req.text)); db.commit()
+
+    # build history (including the new user message)
+    rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
+    
+    # Get user's previous analyses for context (CACHE THIS!)
+    from backend.db import get_user_ai_interactions
+    user_analyses = get_user_ai_interactions(db, user.id, limit=5)
+    
+    # Build enhanced system prompt with user context
+    system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! İsim anlamı, kültür, tarih, spor gibi konularda bilgi verme! Sadece sağlık konusuna odaklan!"
+    
+    # Global + Local Context Sistemi - OPTIMIZED
+    user_context = {}
+    
+    # 1. Global context'i getir (zaten yukarıda alındı)
+    if global_context:
+        # Key'leri normalize et (büyük harf -> küçük harf + encoding temizle)
+        normalized_global = {}
+        for key, value in global_context.items():
+            if key and value:  # None/boş değerleri atla
+                # Encoding sorunlarını çöz: 'i̇si̇m' -> 'isim'
+                normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
+                if normalized_key and normalized_key not in normalized_global:
+                    normalized_global[normalized_key] = value
+        user_context.update(normalized_global)
+    
+    # 2. Son mesajlardan yeni context bilgilerini çıkar (ONLY IF NEEDED)
+    # ÖNEMLİ: Global context user bazında olmalı, conversation bazında değil!
+    # Bu yüzden sadece yeni mesajdan context çıkar, eski mesajlardan değil
+    # recent_messages = rows[-(CHAT_HISTORY_MAX-1):] if len(rows) > 0 else []
+    new_context = {}
+    
+    # 2. YENİ MESAJDAN CONTEXT ÇIKAR (her mesajda!)
+    current_message_context = extract_user_context_hybrid(req.text, user.email)
+    for key, value in current_message_context.items():
+        # Key'i normalize et (encoding sorunlarını çöz)
+        normalized_key = key.strip().lower()
+        if normalized_key and value:  # Boş değerleri atla
+            if normalized_key not in new_context:
+                new_context[normalized_key] = value
+            elif isinstance(value, list) and isinstance(new_context[normalized_key], list):
+                # Listeleri birleştir (duplicate'ları kaldır)
+                new_context[normalized_key] = list(set(new_context[normalized_key] + value))
+            else:
+                # String değerleri güncelle
+                new_context[normalized_key] = value
         
         # 3. Yeni context'i global context'e ekle (ONLY IF CHANGED)
         context_changed = False
         if new_context and any(new_context.values()):
-            print(f"DEBUG: new_context: {new_context}")
-            print(f"DEBUG: user_context: {user_context}")
-            
             # Check if context actually changed
             for key, value in new_context.items():
                 if key not in user_context or user_context[key] != value:
                     context_changed = True
-                    print(f"DEBUG: Context changed for key '{key}': old='{user_context.get(key)}' new='{value}'")
                     break
             
-            print(f"DEBUG: Context changed: {context_changed}")
-            
             if context_changed:
-                print(f"DEBUG: Updating global context with: {new_context}")
                 update_user_global_context(db, user.id, new_context)
                 # Local context'i de güncelle
                 user_context.update(new_context)
-                print(f"DEBUG: Updated local context: {user_context}")
-            else:
-                print("DEBUG: No context changes detected")
-        else:
-            print(f"DEBUG: new_context is empty or invalid: {new_context}")
         
         # Kullanıcı bilgilerini AI'ya hatırlat 
         if user_context and any(user_context.values()):
-            print(f"DEBUG: user_context available: {user_context}")
             system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
             
             # String ve integer değerler için özel format
             if "isim" in user_context and user_context["isim"]:
                 system_prompt += f"KULLANICI ADI: {user_context['isim']}\n"
-                print(f"DEBUG: Added name: {user_context['isim']}")
                 
             if "yas" in user_context and user_context["yas"]:
                 system_prompt += f"KULLANICI YAŞI: {user_context['yas']} yaşında\n"
-                print(f"DEBUG: Added age: {user_context['yas']}")
                 
             if "tercihler" in user_context and user_context["tercihler"]:
                 tercihler_str = ', '.join(user_context['tercihler']) if isinstance(user_context['tercihler'], list) else str(user_context['tercihler'])
@@ -290,14 +258,12 @@ async def chat_message(req: ChatMessageRequest,
                 
             if "hastaliklar" in user_context and user_context["hastaliklar"]:
                 hastaliklar_str = ', '.join(user_context['hastaliklar']) if isinstance(user_context['hastaliklar'], list) else str(user_context['hastaliklar'])
-                system_prompt += f"KULLANICI HASTALIKLARI: {hastaliklar_str}\n"
-                print(f"DEBUG: Added diseases: {hastaliklar_str}")
+                system_prompt += f"DEBUG: Added diseases: {hastaliklar_str}\n"
                 
             if "cinsiyet" in user_context and user_context["cinsiyet"]:
                 system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
                 
             system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
-            print(f"DEBUG: System prompt length: {len(system_prompt)}")
         
         # User analyses context - OPTIMIZED (only add if exists)
         if user_analyses:
@@ -358,9 +324,6 @@ async def chat_message(req: ChatMessageRequest,
         supplements_info += "\n💡 AI: Tüm bu 128 ürün arasından en uygun olanları seç!"
         
         # Context'i ilk message'a ekle
-        print(f"DEBUG: System prompt length: {len(system_prompt)}")
-        print(f"DEBUG: System prompt (first 500 chars): {system_prompt[:500]}")
-        print(f"DEBUG: System prompt (last 500 chars): {system_prompt[-500:]}")
         
         # System message
         history = [{"role": "system", "content": system_prompt, "context_data": user_context}]
@@ -379,7 +342,7 @@ async def chat_message(req: ChatMessageRequest,
             final = res["content"]
             used_model = res.get("model_used","unknown")
         except Exception as e:
-            print(f"Chat failed: {e}, using fallback")
+            # Production'da log yerine fallback kullan
             from backend.orchestrator import chat_fallback
             fallback_res = chat_fallback(history)
             final = fallback_res["content"]
@@ -418,8 +381,6 @@ async def chat_message(req: ChatMessageRequest,
         # Sadece chat yanıtını döndür
         
         return ChatResponse(conversation_id=conv.id, reply=final, latency_ms=latency_ms)
-    finally:
-        db.close()
 
 # ---------- ANALYZE (FREE: one-time), LAB ----------
 
@@ -430,118 +391,115 @@ def count_user_analyses(db: Session, user_id: int) -> int:
 @app.post("/ai/quiz", response_model=QuizResponse)
 async def analyze_quiz(body: QuizRequest,
                  current_user: str = Depends(get_current_user),
+                 db: Session = Depends(get_db),
                  x_user_id: str | None = Header(default=None),
                  x_user_plan: str | None = Header(default=None)):
     """Quiz endpoint - Sadece AI model işlemi, asıl site entegrasyonu için optimize edildi"""
     
-    # Database session'ı manuel yönet
-    db = SessionLocal()
-    try:
-        user = get_or_create_user(db, x_user_id, x_user_plan)
-        
-        # Quiz data'yı dict'e çevir ve validate et
-        quiz_dict = validate_input_data(body.quiz_answers or {}, ["age", "gender"])
-        
-        # XML'den supplement listesini al (eğer body'de yoksa)
-        from backend.config import SUPPLEMENTS_LIST
-        supplements_dict = body.available_supplements or SUPPLEMENTS_LIST
-        
-        # Use parallel quiz analysis with supplements
-        res = parallel_quiz_analyze(quiz_dict, supplements_dict)
-        final_json = res["content"]
-        
-        data = parse_json_safe(final_json) or {}
+    user = get_or_create_user(db, x_user_id, x_user_plan)
     
-        if not data:
-            # Fallback: Default response döndür
-            data = {
-                "success": True,
-                "message": "Quiz analizi tamamlandı",
-                "nutrition_advice": {
-                    "title": "Beslenme Önerileri",
-                    "recommendations": [
-                        "Dengeli beslenme programı uygulayın",
-                        "Bol sebze ve meyve tüketin",
-                        "Yeterli protein alımına dikkat edin"
-                    ]
+    # Quiz data'yı dict'e çevir ve validate et
+    quiz_dict = validate_input_data(body.quiz_answers or {}, ["age", "gender"])
+    
+    # XML'den supplement listesini al (eğer body'de yoksa)
+    from backend.config import SUPPLEMENTS_LIST
+    supplements_dict = body.available_supplements or SUPPLEMENTS_LIST
+    
+    # Use parallel quiz analysis with supplements
+    res = parallel_quiz_analyze(quiz_dict, supplements_dict)
+    final_json = res["content"]
+    
+    data = parse_json_safe(final_json) or {}
+
+    if not data:
+        # Fallback: Default response döndür
+        data = {
+            "success": True,
+            "message": "Quiz analizi tamamlandı",
+            "nutrition_advice": {
+                "title": "Beslenme Önerileri",
+                "recommendations": [
+                    "Dengeli beslenme programı uygulayın",
+                    "Bol sebze ve meyve tüketin",
+                    "Yeterli protein alımına dikkat edin"
+                ]
+            },
+            "lifestyle_advice": {
+                "title": "Yaşam Tarzı Önerileri",
+                "recommendations": [
+                    "Düzenli egzersiz yapın",
+                    "Yeterli uyku alın",
+                    "Stres yönetimi teknikleri uygulayın"
+                ]
+            },
+            "general_warnings": {
+                "title": "Genel Uyarılar",
+                "warnings": [
+                    "Doktorunuza danışmadan supplement kullanmayın",
+                    "Alerjik reaksiyonlara dikkat edin"
+                ]
+            },
+            "supplement_recommendations": [
+                {
+                    "name": "D Vitamini",
+                    "description": "Kemik sağlığı ve bağışıklık için",
+                    "daily_dose": "600-800 IU (doktorunuza danışın)",
+                    "benefits": ["Kalsiyum emilimini artırır", "Bağışıklık güçlendirir"],
+                    "warnings": ["Yüksek dozlarda toksik olabilir"],
+                    "priority": "high"
                 },
-                "lifestyle_advice": {
-                    "title": "Yaşam Tarzı Önerileri",
-                    "recommendations": [
-                        "Düzenli egzersiz yapın",
-                        "Yeterli uyku alın",
-                        "Stres yönetimi teknikleri uygulayın"
-                    ]
-                },
-                "general_warnings": {
-                    "title": "Genel Uyarılar",
-                    "warnings": [
-                        "Doktorunuza danışmadan supplement kullanmayın",
-                        "Alerjik reaksiyonlara dikkat edin"
-                    ]
-                },
-                "supplement_recommendations": [
-                    {
-                        "name": "D Vitamini",
-                        "description": "Kemik sağlığı ve bağışıklık için",
-                        "daily_dose": "600-800 IU (doktorunuza danışın)",
-                        "benefits": ["Kalsiyum emilimini artırır", "Bağışıklık güçlendirir"],
-                        "warnings": ["Yüksek dozlarda toksik olabilir"],
-                        "priority": "high"
-                    },
-                    {
-                        "name": "Omega-3",
-                        "description": "Kalp ve beyin sağlığı için",
-                        "daily_dose": "1000-2000 mg (doktorunuza danışın)",
-                        "benefits": ["Kalp sağlığını destekler", "Beyin fonksiyonlarını artırır"],
-                        "warnings": ["Kan sulandırıcı ilaçlarla etkileşebilir"],
-                        "priority": "high"
-                    }
-                ],
-                "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
-            }
+                {
+                    "name": "Omega-3",
+                    "description": "Kalp ve beyin sağlığı için",
+                    "daily_dose": "1000-2000 mg (doktorunuza danışın)",
+                    "benefits": ["Kalp sağlığını destekler", "Beyin fonksiyonlarını artırır"],
+                    "warnings": ["Kan sulandırıcı ilaçlarla etkileşebilir"],
+                    "priority": "high"
+                }
+            ],
+            "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
+        }
+    
+    # Quiz sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
+    if data and "supplement_recommendations" in data:
+        from backend.db import get_user_global_context, update_user_global_context
         
-        # Quiz sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
-        if data and "supplement_recommendations" in data:
-            from backend.db import get_user_global_context, update_user_global_context
-            
-            # Mevcut global context'i al
-            current_context = get_user_global_context(db, user.id) or {}
-            
-            # Quiz sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
-            quiz_context = {}
-            
-            # Quiz cevaplarından temel bilgi çıkar
-            if "age" in quiz_dict:
-                quiz_context["yas"] = str(quiz_dict["age"])
-            if "gender" in quiz_dict:
-                quiz_context["cinsiyet"] = quiz_dict["gender"]
-            if "health_goals" in quiz_dict:
-                quiz_context["tercihler"] = quiz_dict["health_goals"]
-            
-            # Supplement önerilerinden SADECE İLK 5-7 TANESİNİ al
-            if "supplement_recommendations" in data:
-                all_supplements = [s["name"] for s in data["supplement_recommendations"]]
-                quiz_context["quiz_supplements"] = all_supplements[:7]  # Sadece ilk 7'si
-            
-            # Priority supplement'lerden SADECE İLK 3-5 TANESİNİ al
-            if "supplement_recommendations" in data:
-                priority_supplements = [s["name"] for s in data["supplement_recommendations"] if s.get("priority") == "high"]
-                quiz_context["quiz_priority"] = priority_supplements[:5]  # Sadece ilk 5'i
-            
-            # Quiz tarihini ekle
-            import time
-            quiz_context["quiz_tarih"] = time.strftime("%Y-%m-%d")
-            
-            # Global context'i güncelle
-            if quiz_context:
-                updated_context = {**current_context, **quiz_context}
-                update_user_global_context(db, user.id, updated_context)
-                print(f"DEBUG: Quiz context updated (ÖZET): {quiz_context}")
+        # Mevcut global context'i al
+        current_context = get_user_global_context(db, user.id) or {}
+        
+        # Quiz sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
+        quiz_context = {}
+        
+        # Quiz cevaplarından temel bilgi çıkar
+        if "age" in quiz_dict:
+            quiz_context["yas"] = str(quiz_dict["age"])
+        if "gender" in quiz_dict:
+            quiz_context["cinsiyet"] = quiz_dict["gender"]
+        if "health_goals" in quiz_dict:
+            quiz_context["tercihler"] = quiz_dict["health_goals"]
+        
+        # Supplement önerilerinden SADECE İLK N TANESİNİ al
+        if "supplement_recommendations" in data:
+            all_supplements = [s["name"] for s in data["supplement_recommendations"]]
+            from backend.config import MAX_SUPPLEMENTS_IN_CONTEXT
+            quiz_context["quiz_supplements"] = all_supplements[:MAX_SUPPLEMENTS_IN_CONTEXT]
+        
+        # Priority supplement'lerden SADECE İLK N TANESİNİ al
+        if "supplement_recommendations" in data:
+            priority_supplements = [s["name"] for s in data["supplement_recommendations"] if s.get("priority") == "high"]
+            from backend.config import MAX_PRIORITY_SUPPLEMENTS
+            quiz_context["quiz_priority"] = priority_supplements[:MAX_PRIORITY_SUPPLEMENTS]
+        
+        # Quiz tarihini ekle
+        import time
+        quiz_context["quiz_tarih"] = time.strftime("%Y-%m-%d")
+        
+        # Global context'i güncelle
+        if quiz_context:
+            updated_context = {**current_context, **quiz_context}
+            update_user_global_context(db, user.id, updated_context)
         
         return data
-    finally:
-        db.close()
 
 @app.post("/ai/lab/single", response_model=LabAnalysisResponse)
 def analyze_single_lab(body: SingleLabRequest,
@@ -625,34 +583,34 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     if "overall_status" not in data:
         data["overall_status"] = "analiz_tamamlandı"
     
-                # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
-    if data and "test_details" in data:
-        from backend.db import get_user_global_context, update_user_global_context
-        
-        # Mevcut global context'i al
-        current_context = get_user_global_context(db, user.id) or {}
-        
-        # Lab sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
-        lab_context = {}
-        
-        # Test adları - SADECE İLK 3-5 TANESİ
-        if "test_details" in data:
-            test_adlari = list(data["test_details"].keys())
-            lab_context["session_anormal_testler"] = test_adlari[:5]  # Sadece ilk 5'i
-        
-        # Genel lab durumu
-        if "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
-            lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
-        
-        # Lab tarihi
-        import time
-        lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
-        
-        # Global context'i güncelle
-        if lab_context:
-            updated_context = {**current_context, **lab_context}
-            update_user_global_context(db, user.id, updated_context)
-            print(f"DEBUG: Lab context updated (ÖZET): {lab_context}")
+                        # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
+        if data and "test_details" in data:
+            from backend.db import get_user_global_context, update_user_global_context
+            
+            # Mevcut global context'i al
+            current_context = get_user_global_context(db, user.id) or {}
+            
+            # Lab sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
+            lab_context = {}
+            
+            # Test adları - SADECE İLK N TANESİ
+            if "test_details" in data:
+                test_adlari = list(data["test_details"].keys())
+                from backend.config import MAX_LAB_TESTS_IN_CONTEXT
+                lab_context["session_anormal_testler"] = test_adlari[:MAX_LAB_TESTS_IN_CONTEXT]
+            
+            # Genel lab durumu
+            if "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
+                lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
+            
+            # Lab tarihi
+            import time
+            lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
+            
+            # Global context'i güncelle
+            if lab_context:
+                updated_context = {**current_context, **lab_context}
+                update_user_global_context(db, user.id, updated_context)
 
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece AI yanıtını döndür
@@ -758,6 +716,24 @@ def cleanup_expired_cache():
     from backend.cache_utils import cleanup_cache
     removed_count = cleanup_cache()
     return {"message": f"{removed_count} expired item temizlendi", "status": "success"}
+
+@app.get("/users/{external_user_id}/info")
+def get_user_info(external_user_id: str, db: Session = Depends(get_db)):
+    """Kullanıcı bilgilerini getir (production için test)"""
+    from backend.db import get_user_by_external_id
+    
+    user = get_user_by_external_id(db, external_user_id)
+    if not user:
+        raise HTTPException(404, "Kullanıcı bulunamadı")
+    
+    return {
+        "user_id": user.id,
+        "external_user_id": user.external_user_id,
+        "plan": user.plan,
+        "conversation_count": len(user.conversations),
+        "created_at": user.created_at.isoformat(),
+        "global_context_keys": list(user.global_context.keys()) if user.global_context else []
+    }
 
 # Global error handler
 @app.exception_handler(Exception)

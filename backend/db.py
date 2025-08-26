@@ -40,6 +40,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
+    external_user_id = Column(String, unique=True, index=True, nullable=True)  # Asıl site'den gelen unique ID
     email = Column(String, unique=True, index=True, nullable=True)
     plan = Column(String, default="free")  # 'free' or 'premium'
     global_context = Column(JSON, nullable=True)  # Global user context (name, preferences, diseases)
@@ -139,6 +140,34 @@ def get_user_ai_interactions(db: Session, user_id: int, limit: int = 10):
     ).order_by(
         AIInteraction.created_at.desc()
     ).limit(limit).all()
+
+def get_or_create_user_by_external_id(db: Session, external_user_id: str, plan: str = "free") -> User:
+    """External user ID ile kullanıcıyı bul veya oluştur"""
+    if not external_user_id:
+        raise ValueError("External user ID gerekli")
+    
+    # Önce external_user_id ile ara
+    user = db.query(User).filter(User.external_user_id == external_user_id).first()
+    
+    if not user:
+        # Yeni kullanıcı oluştur
+        user = User(
+            external_user_id=external_user_id,
+            plan=plan,
+            global_context={}
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    return user
+
+def get_user_by_external_id(db: Session, external_user_id: str) -> User:
+    """External user ID ile kullanıcıyı bul"""
+    if not external_user_id:
+        return None
+    
+    return db.query(User).filter(User.external_user_id == external_user_id).first()
 
 def get_user_global_context(db: Session, user_id: int) -> dict:
     """Kullanıcının global context bilgilerini getir"""

@@ -66,8 +66,12 @@ def migrate_to_postgresql():
         
         # Users
         for user in users:
+            # External user ID oluştur (email'den)
+            external_user_id = user.email if user.email and user.email != "guest@example.com" else f"user_{user.id}"
+            
             pg_user = User(
                 id=user.id,
+                external_user_id=external_user_id,
                 email=user.email,
                 plan=user.plan,
                 global_context=user.global_context,
