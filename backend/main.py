@@ -262,27 +262,8 @@ async def chat_message(req: ChatMessageRequest,
                 
             if "cinsiyet" in user_context and user_context["cinsiyet"]:
                 system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
-            
-            # Lab test bilgileri
-            if "son_lab_test" in user_context and user_context["son_lab_test"]:
-                system_prompt += f"SON LAB TEST: {user_context['son_lab_test']}\n"
-            
-            if "lab_anormal" in user_context and user_context["lab_anormal"]:
-                system_prompt += f"LAB ANORMAL: {user_context['lab_anormal']}\n"
-            
-            if "lab_tarih" in user_context and user_context["lab_tarih"]:
-                system_prompt += f"LAB TARİHİ: {user_context['lab_tarih']}\n"
-            
-            if "session_test_sayisi" in user_context and user_context["session_test_sayisi"]:
-                system_prompt += f"SESSION TEST SAYISI: {user_context['session_test_sayisi']}\n"
-            
-            if "son_laboratuvar" in user_context and user_context["son_laboratuvar"]:
-                system_prompt += f"SON LABORATUVAR: {user_context['son_laboratuvar']}\n"
-            
-            if "session_anormal_sayisi" in user_context and user_context["session_anormal_sayisi"]:
-                system_prompt += f"SESSION ANORMAL SAYISI: {user_context['session_anormal_sayisi']}\n"
                 
-            system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını, hastalığını veya lab sonuçlarını sorduğunda yukarıdaki bilgilerle cevap ver!"
+            system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
         
         # User analyses context - OPTIMIZED (only add if exists)
         if user_analyses:
@@ -358,22 +339,14 @@ async def chat_message(req: ChatMessageRequest,
         start = time.time()
         try:
             res = parallel_chat(history)
-            final = res.get("content", "")
+            final = res["content"]
             used_model = res.get("model_used","unknown")
-            
-            # None kontrolü - AI'dan boş yanıt gelirse fallback kullan
-            if not final or final is None:
-                from backend.orchestrator import chat_fallback
-                fallback_res = chat_fallback(history)
-                final = fallback_res.get("content", "Üzgünüm, şu anda yanıt veremiyorum. Lütfen tekrar deneyin.")
-                used_model = fallback_res.get("model_used", "fallback")
-                
         except Exception as e:
             # Production'da log yerine fallback kullan
             from backend.orchestrator import chat_fallback
             fallback_res = chat_fallback(history)
-            final = fallback_res.get("content", "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.")
-            used_model = fallback_res.get("model_used", "fallback")
+            final = fallback_res["content"]
+            used_model = fallback_res["model_used"]
         
         latency_ms = int((time.time()-start)*1000)
 
@@ -610,33 +583,34 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     if "overall_status" not in data:
         data["overall_status"] = "analiz_tamamlandı"
     
-    # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
-    if data and "test_details" in data:
-        from backend.db import get_user_global_context, update_user_global_context
-        
-        # Mevcut global context'i al
-        current_context = get_user_global_context(db, user.id) or {}
-        
-        # Lab sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
-        lab_context = {}
-        
-        # Test adları - SADECE İLK N TANESİ
-        if "test_details" in data:
-            test_adlari = list(data["test_details"].keys())
-            from backend.config import MAX_LAB_TESTS_IN_CONTEXT
-            lab_context["session_anormal_testler"] = test_adlari[:MAX_LAB_TESTS_IN_CONTEXT]
-        
-        # Genel lab durumu
-        if "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
-            lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
-        
-        # Lab tarihi
-        lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
-        
-        # Global context'i güncelle
-        if lab_context:
-            updated_context = {**current_context, **lab_context}
-            update_user_global_context(db, user.id, updated_context)
+                        # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
+        if data and "test_details" in data:
+            from backend.db import get_user_global_context, update_user_global_context
+            
+            # Mevcut global context'i al
+            current_context = get_user_global_context(db, user.id) or {}
+            
+            # Lab sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
+            lab_context = {}
+            
+            # Test adları - SADECE İLK N TANESİ
+            if "test_details" in data:
+                test_adlari = list(data["test_details"].keys())
+                from backend.config import MAX_LAB_TESTS_IN_CONTEXT
+                lab_context["session_anormal_testler"] = test_adlari[:MAX_LAB_TESTS_IN_CONTEXT]
+            
+            # Genel lab durumu
+            if "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
+                lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
+            
+            # Lab tarihi
+            import time
+            lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
+            
+            # Global context'i güncelle
+            if lab_context:
+                updated_context = {**current_context, **lab_context}
+                update_user_global_context(db, user.id, updated_context)
 
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece AI yanıtını döndür
