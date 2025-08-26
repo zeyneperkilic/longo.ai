@@ -25,8 +25,11 @@ RATE_LIMIT_MAX_REQUESTS = 100  # Max requests per minute per IP
 
 def rate_limit(func):
     @wraps(func)
-    async def wrapper(*args, request: Request, **kwargs):
-        client_ip = request.client.host
+    async def wrapper(*args, **kwargs):
+        # Get request from FastAPI context
+        from fastapi import Request
+        request = Request(kwargs.get('request'))
+        client_ip = request.client.host if request.client else "unknown"
         
         # Clean old requests
         current_time = time.time()
@@ -40,7 +43,7 @@ def rate_limit(func):
         # Add current request
         request_counts[client_ip].append(current_time)
         
-        return await func(*args, request=request, **kwargs)
+        return await func(*args, **kwargs)
     return wrapper
 
 # Basic Authentication
@@ -143,12 +146,10 @@ def chat_history(conversation_id: int,
     return [{"role": m.role, "content": m.content, "ts": m.created_at.isoformat()} for m in msgs][-CHAT_HISTORY_MAX:]
 
 @app.post("/ai/chat", response_model=ChatResponse)
-@rate_limit
 async def chat_message(req: ChatMessageRequest,
-                 current_user: str = Depends(get_current_user),
-                 x_user_id: str | None = Header(default=None),
-                 x_user_plan: str | None = Header(default=None),
-                 request: Request = Depends()):
+                  current_user: str = Depends(get_current_user),
+                  x_user_id: str | None = Header(default=None),
+                  x_user_plan: str | None = Header(default=None)):
     # Database session'ı manuel yönet
     db = SessionLocal()
     try:
