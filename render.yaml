@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: longopass-ai
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ENVIRONMENT
+        value: production
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: AUTH_USERNAME
+        value: longopass
+      - key: AUTH_PASSWORD
+        sync: false
+      - key: DB_TYPE
+        value: sqlite
+      - key: DB_PATH
+        value: /opt/render/project/src/app.db
+      - key: ALLOWED_ORIGINS
+        value: "https://yoursite.com,https://www.yoursite.com"
+      - key: HEALTH_MODE
+        value: topic
+      - key: PRESCRIPTION_BLOCK
+        value: "true"
+      - key: CHAT_HISTORY_MAX
+        value: "20"
+      - key: FREE_ANALYZE_LIMIT
+        value: "1"
+    # Database bilgileri olmadığında SQLite kullan
+    # PostgreSQL bilgileri geldiğinde şu satırları ekle:
+    # - key: DB_TYPE
+    #   value: postgresql
+    # - key: DB_HOST
+    #   fromDatabase:
+    #     name: longopass-db
+    #     property: host
+    # - key: DB_PORT
+    #   fromDatabase:
+    #     name: longopass-db
+    #     property: port
+    # - key: DB_NAME
+    #   fromDatabase:
+    #     name: longopass-db
+    #     property: database
+    # - key: DB_USER
+    #   fromDatabase:
+    #     name: longopass-db
+    #     property: user
+    # - key: DB_PASSWORD
+    #   fromDatabase:
+    #     name: longopass-db
+    #     property: password
+
+# Database bilgileri geldiğinde bu kısmı aktif et:
+# databases:
+#   - name: longopass-db
+#     databaseName: longopass
+#     user: longopass_user

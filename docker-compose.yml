@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  longopass-ai:
+    build: .
+    container_name: longopass-ai
+    ports:
+      - "8000:8000"
+    environment:
+      # API Configuration
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      
+      # Authentication (CHANGE THESE IN PRODUCTION!)
+      - AUTH_USERNAME=${AUTH_USERNAME:-longopass}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-change_this_password}
+      
+      # Database Configuration (SQLite by default)
+      - DB_TYPE=${DB_TYPE:-sqlite}
+      - DB_PATH=/app/app.db
+      
+      # PostgreSQL bilgileri geldiğinde bu satırları aktif et:
+      # - DB_HOST=${DB_HOST}
+      # - DB_PORT=${DB_PORT:-5432}
+      # - DB_NAME=${DB_NAME}
+      # - DB_USER=${DB_USER}
+      # - DB_PASSWORD=${DB_PASSWORD}
+      
+      # Security and CORS
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - HEALTH_MODE=${HEALTH_MODE:-topic}
+      - PRESCRIPTION_BLOCK=${PRESCRIPTION_BLOCK:-true}
+      
+      # Model Configuration
+      - CASCADE_MODELS=${CASCADE_MODELS:-google/gemini-2.5-pro,x-ai/grok-2,deepseek/deepseek-r1,meta-llama/llama-3.1-8b-instruct}
+      - FINALIZER_MODEL=${FINALIZER_MODEL:-openai/gpt-5}
+      - MODERATION_MODEL=${MODERATION_MODEL:-meta-llama/llama-3.1-8b-instruct}
+      - CASCADE_TIMEOUT_MS=${CASCADE_TIMEOUT_MS:-8000}
+      - CHAT_HISTORY_MAX=${CHAT_HISTORY_MAX:-20}
+      - FREE_ANALYZE_LIMIT=${FREE_ANALYZE_LIMIT:-1}
+      
+    volumes:
+      - ./data:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
