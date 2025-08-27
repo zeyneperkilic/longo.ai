@@ -87,9 +87,13 @@ class SingleLabRequest(BaseModel):
         extra = "allow"
 
 class SingleSessionRequest(BaseModel):
-    session_tests: List[LabTestResult]
-    session_date: str = Field(description="Test seansı tarihi")
-    laboratory: str = Field(description="Laboratuvar adı")
+    # TÜM FIELD'LAR OPSİYONEL - Asıl site'dan herhangi bir format gelebilir
+    session_tests: Optional[List[LabTestResult]] = Field(default_factory=list, description="Test seansı sonuçları")
+    tests: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Test sonuçları (alternatif)")
+    session_date: Optional[str] = Field(default=None, description="Test seansı tarihi")
+    date: Optional[str] = Field(default=None, description="Test tarihi (alternatif)")
+    laboratory: Optional[str] = Field(default=None, description="Laboratuvar adı")
+    lab: Optional[str] = Field(default=None, description="Laboratuvar adı (alternatif)")
     session_summary: Optional[Dict[str, Any]] = Field(
         default=None, 
         description="Seans özeti - herhangi bir format"

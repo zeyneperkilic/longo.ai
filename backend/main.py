@@ -537,13 +537,37 @@ def analyze_single_session(body: SingleSessionRequest,
     """Analyze single lab session with multiple tests"""
     user = get_or_create_user(db, x_user_id, "premium")  # Asıl site zaten kontrol ediyor
     
-    # Convert session tests to dict for processing
-    tests_dict = [test.model_dump() for test in body.session_tests]
+    # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
+    tests_dict = []
+    
+    # 1. Önce body.session_tests'i dene
+    if body.session_tests:
+        tests_dict = [test.model_dump() for test in body.session_tests]
+    # 2. Yoksa body.tests'i dene
+    elif body.tests:
+        tests_dict = body.tests
+    # 3. Hiçbiri yoksa boş liste
+    else:
+        tests_dict = []
+    
+    # 4. Eğer tests_dict boşsa, default test oluştur
+    if not tests_dict:
+        tests_dict = [
+            {
+                "name": "Test Sonucu",
+                "value": "Veri bulunamadı",
+                "unit": "N/A",
+                "reference_range": "N/A"
+            }
+        ]
     
     # Health Guard kaldırıldı - Lab analizi zaten kontrollü içerik üretiyor
     
-    # Use parallel single session analysis
-    res = parallel_single_session_analyze(tests_dict, body.session_date, body.laboratory)
+    # Use parallel single session analysis with flexible input
+    session_date = body.session_date or body.date or "2024-01-15"  # Default date
+    laboratory = body.laboratory or body.lab or "Laboratuvar"  # Default lab name
+    
+    res = parallel_single_session_analyze(tests_dict, session_date, laboratory)
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
     
