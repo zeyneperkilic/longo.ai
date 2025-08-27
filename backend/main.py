@@ -13,7 +13,7 @@ import time
 from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
 from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context
 from backend.auth import get_db, get_or_create_user
-from backend.schemas import ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
+from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
@@ -104,7 +104,8 @@ def test_page():
 # ---------- CHAT (PREMIUM) ----------
 
 @app.post("/ai/chat/start", response_model=ChatStartResponse)
-def chat_start(db: Session = Depends(get_db),
+def chat_start(body: ChatStartRequest = None,
+               db: Session = Depends(get_db),
                x_user_id: str | None = Header(default=None),
                x_user_plan: str | None = Header(default=None)):
     user = get_or_create_user(db, x_user_id, x_user_plan)
@@ -139,7 +140,12 @@ async def chat_message(req: ChatMessageRequest,
                   x_user_plan: str | None = Header(default=None)):
     user = get_or_create_user(db, x_user_id, x_user_plan)  # Asıl site zaten kontrol ediyor
 
-    conv = get_conversation_by_user_based_id(db, user.id, req.conversation_id)
+    # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
+    conversation_id = req.conversation_id or req.conv_id
+    if not conversation_id:
+        raise HTTPException(400, "Conversation ID gerekli")
+    
+    conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
     if not conv:
         raise HTTPException(404, "Konuşma bulunamadı")
 
@@ -148,14 +154,19 @@ async def chat_message(req: ChatMessageRequest,
     # Global context'i önce al (hafıza sorusu için gerekli)
     global_context = get_user_global_context(db, user.id)
     
+    # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
+    message_text = req.text or req.message
+    if not message_text:
+        raise HTTPException(400, "Mesaj metni gerekli")
+    
     # Health Guard ile kategori kontrolü
-    ok, msg = guard_or_message(req.text)
+    ok, msg = guard_or_message(message_text)
     
     # Hafıza soruları artık HEALTH kategorisinde, özel işlem yok
     memory_bypass = False
     if not ok:
         # store user message
-        db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=req.text)); db.commit()
+        db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=message_text)); db.commit()
         # reply fixed message
         reply = msg
         m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
@@ -165,7 +176,7 @@ async def chat_message(req: ChatMessageRequest,
     # Hafıza soruları artık normal AI model ile yanıtlanıyor
     
     # Selamlama sonrası özel yanıt kontrolü
-    txt = req.text.lower().strip()
+    txt = message_text.lower().strip()
     pure_greeting_keywords = [
         "selam", "naber", "günaydın", "gunaydin",
         "iyi akşamlar", "iyi aksamlar", "iyi geceler", "iyi günler", "iyi gunler"
@@ -179,7 +190,7 @@ async def chat_message(req: ChatMessageRequest,
         return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
 
     # store user message FIRST
-    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=req.text)); db.commit()
+    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=message_text)); db.commit()
 
     # build history (including the new user message)
     rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
@@ -213,7 +224,7 @@ async def chat_message(req: ChatMessageRequest,
     new_context = {}
     
     # 2. YENİ MESAJDAN CONTEXT ÇIKAR (her mesajda!)
-    current_message_context = extract_user_context_hybrid(req.text, user.email)
+    current_message_context = extract_user_context_hybrid(message_text, user.email)
     for key, value in current_message_context.items():
         # Key'i normalize et (encoding sorunlarını çöz)
         normalized_key = key.strip().lower()

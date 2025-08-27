@@ -120,6 +120,12 @@ class MultipleLabRequest(BaseModel):
         extra = "allow"
 
 # Chat Schemas - ESNEK YAPI
+class ChatStartRequest(BaseModel):
+    # TÜM FIELD'LAR OPSİYONEL - Asıl site'dan herhangi bir format gelebilir
+    # Boş body kabul et, herhangi bir field eklenebilir
+    class Config:
+        extra = "allow"
+
 class ChatStartResponse(BaseModel):
     conversation_id: int = Field(description="Konuşma ID'si")
     
@@ -127,8 +133,11 @@ class ChatStartResponse(BaseModel):
         extra = "allow"
 
 class ChatMessageRequest(BaseModel):
-    text: str = Field(description="Kullanıcı mesajı")
-    conversation_id: int = Field(description="Konuşma ID'si")
+    # TÜM FIELD'LAR OPSİYONEL - Asıl site'dan herhangi bir format gelebilir
+    text: Optional[str] = Field(default=None, description="Kullanıcı mesajı")
+    message: Optional[str] = Field(default=None, description="Kullanıcı mesajı (alternatif)")
+    conversation_id: Optional[int] = Field(default=None, description="Konuşma ID'si")
+    conv_id: Optional[int] = Field(default=None, description="Konuşma ID'si (alternatif)")
     
     # Extra fields için esnek yapı
     class Config:
