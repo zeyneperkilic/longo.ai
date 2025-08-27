@@ -50,12 +50,15 @@ class GeneralWarnings(BaseModel):
 
 # Lab Analysis Schemas - ESNEK YAPI
 class LabTestResult(BaseModel):
-    name: str = Field(description="Test adı")
-    value: Any = Field(description="Test sonucu değeri - herhangi bir tip (string, int, float)")
+    # TÜM FIELD'LAR OPSİYONEL - Asıl site'dan herhangi bir format gelebilir
+    name: Optional[str] = Field(default=None, description="Test adı")
+    test_name: Optional[str] = Field(default=None, description="Test adı (alternatif)")
+    value: Optional[Any] = Field(default=None, description="Test sonucu değeri - herhangi bir tip")
     unit: Optional[str] = Field(default=None, description="Birim")
     reference_range: Optional[str] = Field(default=None, description="Referans aralığı")
     status: Optional[str] = Field(default=None, description="Test durumu")
     test_date: Optional[str] = Field(default=None, description="Test tarihi")
+    date: Optional[str] = Field(default=None, description="Test tarihi (alternatif)")
     notes: Optional[str] = Field(default=None, description="Ek notlar")
     category: Optional[str] = Field(default=None, description="Test kategorisi")
     
@@ -96,8 +99,10 @@ class SingleSessionRequest(BaseModel):
         extra = "allow"
 
 class MultipleLabRequest(BaseModel):
-    tests: List[LabTestResult]
-    total_test_sessions: int = Field(description="Toplam test seansı sayısı")
+    # TÜM FIELD'LAR OPSİYONEL - Asıl site'dan herhangi bir format gelebilir
+    tests: Optional[List[LabTestResult]] = Field(default_factory=list, description="Test sonuçları")
+    lab_results: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Test sonuçları (alternatif)")
+    total_test_sessions: Optional[int] = Field(default=1, description="Toplam test seansı sayısı")
     available_supplements: Optional[List[Dict[str, Any]]] = Field(
         default=None, 
         description="Database'den gelen ürün kataloğu"

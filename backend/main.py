@@ -560,8 +560,29 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     """Generate general summary of multiple lab tests with supplement recommendations and progress tracking"""
     user = get_or_create_user(db, x_user_id, "premium")  # Asıl site zaten kontrol ediyor
     
-    # Convert tests to dict for processing
-    tests_dict = [test.model_dump() for test in body.tests]
+    # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
+    tests_dict = []
+    
+    # 1. Önce body.tests'i dene
+    if body.tests:
+        tests_dict = [test.model_dump() for test in body.tests]
+    # 2. Yoksa body.lab_results'i dene
+    elif body.lab_results:
+        tests_dict = body.lab_results
+    # 3. Hiçbiri yoksa boş liste
+    else:
+        tests_dict = []
+    
+    # 4. Eğer tests_dict boşsa, default test oluştur
+    if not tests_dict:
+        tests_dict = [
+            {
+                "name": "Test Sonucu",
+                "value": "Veri bulunamadı",
+                "unit": "N/A",
+                "reference_range": "N/A"
+            }
+        ]
     
     # XML'den supplement listesini al (eğer body'de yoksa)
     supplements_dict = body.available_supplements
@@ -571,7 +592,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
         supplements_dict = SUPPLEMENTS_LIST
     
     # Use parallel multiple lab analysis with supplements
-    res = parallel_multiple_lab_analyze(tests_dict, body.total_test_sessions, supplements_dict, body.user_profile)
+    total_sessions = body.total_test_sessions or 1  # Default 1
+    res = parallel_multiple_lab_analyze(tests_dict, total_sessions, supplements_dict, body.user_profile)
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
     
@@ -579,7 +601,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     
     # Add metadata for response formatting
     if "test_count" not in data:
-        data["test_count"] = body.total_test_sessions
+        data["test_count"] = total_sessions
     if "overall_status" not in data:
         data["overall_status"] = "analiz_tamamlandı"
     
