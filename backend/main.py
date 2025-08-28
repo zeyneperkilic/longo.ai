@@ -117,8 +117,8 @@ def chat_start(body: ChatStartRequest = None,
     conv = Conversation(user_id=user.id, status="active")
     db.add(conv); db.commit(); db.refresh(conv)
     
-    # Real DB conversation ID döndür (tutarlılık için)
-    return ChatStartResponse(conversation_id=conv.id)
+    # User-based conversation ID döndür (kullanıcı deneyimi için)
+    return ChatStartResponse(conversation_id=user_based_conv_id)
 
 @app.get("/ai/chat/{conversation_id}/history")
 def chat_history(conversation_id: int,
@@ -126,11 +126,18 @@ def chat_history(conversation_id: int,
                  x_user_id: str | None = Header(default=None),
                  x_user_plan: str | None = Header(default=None)):
     user = get_or_create_user(db, x_user_id, x_user_plan)
-    # Real DB conversation ID kullan (tutarlılık için)
-    conv = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == user.id).first()
+    
+    # User-based conversation ID'yi real DB ID'ye çevir
+    conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
     if not conv:
         raise HTTPException(404, "Konuşma bulunamadı")
-    msgs = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
+    
+    # Güvenlik için user ID kontrolü ekle
+    msgs = db.query(Message).filter(
+        Message.conversation_id == conv.id,
+        Message.user_id == user.id
+    ).order_by(Message.created_at.asc()).all()
+    
     return [{"role": m.role, "content": m.content, "ts": m.created_at.isoformat()} for m in msgs][-CHAT_HISTORY_MAX:]
 
 @app.post("/ai/chat", response_model=ChatResponse)
@@ -146,8 +153,8 @@ async def chat_message(req: ChatMessageRequest,
     if not conversation_id:
         raise HTTPException(400, "Conversation ID gerekli")
     
-    # Real DB conversation ID kullan (tutarlılık için)
-    conv = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == user.id).first()
+    # User-based conversation ID'yi real DB ID'ye çevir
+    conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
     if not conv:
         raise HTTPException(404, "Konuşma bulunamadı")
 
@@ -428,6 +435,27 @@ async def chat_message(req: ChatMessageRequest,
     )
     db.add(m); db.commit(); db.refresh(m)
     
+    # AI interaction kaydı ekle (progress tracking için)
+    try:
+        from backend.db import create_ai_interaction
+        create_ai_interaction(
+            db=db,
+            user_id=user.id,
+            interaction_type="chat",
+            user_input=message_text,
+            ai_response=final,
+            model_used=used_model,
+            interaction_metadata={
+                "conversation_id": conv.id,
+                "response_id": response_id,
+                "latency_ms": latency_ms,
+                "context_keys": list(user_context.keys()) if user_context else []
+            }
+        )
+    except Exception as e:
+        # Database yazma hatası olsa bile chat mesajı kaydedildi
+        print(f"Chat AI interaction kaydı hatası: {e}")
+    
     # Global context'i güncelle (yeni bilgiler varsa) - OPTIMIZED
     if new_context and context_changed:
         current_global = get_user_global_context(db, user.id)
@@ -526,7 +554,7 @@ async def analyze_quiz(body: QuizRequest,
     
     # Quiz sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
     if data and "supplement_recommendations" in data:
-        from backend.db import get_user_global_context, update_user_global_context
+        from backend.db import get_user_global_context, update_user_global_context, create_ai_interaction
         
         # Mevcut global context'i al
         current_context = get_user_global_context(db, user.id) or {}
@@ -562,6 +590,21 @@ async def analyze_quiz(body: QuizRequest,
         if quiz_context:
             updated_context = {**current_context, **quiz_context}
             update_user_global_context(db, user.id, updated_context)
+        
+        # AI interaction kaydı ekle (progress tracking için)
+        try:
+            create_ai_interaction(
+                db=db,
+                user_id=user.id,
+                interaction_type="quiz",
+                user_input=str(quiz_dict),
+                ai_response=str(data),
+                model_used="parallel_quiz_analyze",
+                interaction_metadata={"supplement_count": len(data.get("supplement_recommendations", []))}
+            )
+        except Exception as e:
+            # Database yazma hatası olsa bile global context güncellendi
+            print(f"Quiz database kaydı hatası: {e}")
     
     # Return quiz response
     return data
@@ -696,7 +739,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     
     # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
     if data and "test_details" in data:
-        from backend.db import get_user_global_context, update_user_global_context
+        from backend.db import get_user_global_context, update_user_global_context, create_lab_test_record, create_ai_interaction
         
         # Mevcut global context'i al
         current_context = get_user_global_context(db, user.id) or {}
@@ -722,9 +765,32 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
         if lab_context:
             updated_context = {**current_context, **lab_context}
             update_user_global_context(db, user.id, updated_context)
+        
+        # Database'e lab test kaydı yaz (read-through sistemi için)
+        try:
+            create_lab_test_record(
+                db=db,
+                user_id=user.id,
+                test_results=tests_dict,
+                analysis_result=data,
+                test_type="multiple"
+            )
+            
+            # AI interaction kaydı da ekle
+            create_ai_interaction(
+                db=db,
+                user_id=user.id,
+                interaction_type="lab_multiple",
+                user_input=str(tests_dict),
+                ai_response=str(data),
+                model_used="parallel_multiple_lab_analyze",
+                interaction_metadata={"test_count": total_sessions}
+            )
+        except Exception as e:
+            # Database yazma hatası olsa bile global context güncellendi
+            print(f"Lab test database kaydı hatası: {e}")
     
-    # Database kaydı kaldırıldı - Asıl site zaten yapacak
-    # Sadece AI yanıtını döndür
+    # Database kaydı tamamlandı - Artık read-through sistemi çalışacak
     
     return data
 
@@ -734,16 +800,15 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
 def get_user_progress(user_id: str, db: Session = Depends(get_db)):
     """Get user's lab test progress and trends"""
     
-    # Get lab test history
-    from backend.db import get_lab_test_history
+    # Get lab test history using external_user_id
+    from backend.db import get_lab_test_history, get_user_by_external_id
     
-    # user_id'yi integer'a çevirmeye çalış, başarısız olursa string olarak kullan
-    try:
-        user_id_int = int(user_id)
-    except ValueError:
-        user_id_int = 0  # String user_id için default değer
+    # external_user_id ile kullanıcıyı bul
+    user = get_user_by_external_id(db, user_id)
+    if not user:
+        raise HTTPException(404, "Kullanıcı bulunamadı")
     
-    lab_history = get_lab_test_history(db, user_id_int, limit=20)
+    lab_history = get_lab_test_history(db, user.id, limit=20)
     
     # Analyze trends
     if len(lab_history) < 2:
@@ -807,26 +872,25 @@ def get_supplements_xml():
     return Response(xml_content, media_type="application/xml")
 
 
-@app.get("/cache/stats")
-def get_cache_statistics():
-    """Cache istatistiklerini döndür"""
-    return get_cache_stats()
+# Production'da cache endpoint'leri güvenlik riski oluşturabilir - kaldırıldı
+# @app.get("/cache/stats")
+# def get_cache_statistics():
+#     """Cache istatistiklerini döndür"""
+#     return get_cache_stats()
 
+# @app.get("/cache/clear")
+# def clear_all_cache():
+#     """Tüm cache'i temizle"""
+#     from backend.cache_utils import cache
+#     cache.clear()
+#     return {"message": "Cache temizlendi", "status": "success"}
 
-@app.get("/cache/clear")
-def clear_all_cache():
-    """Tüm cache'i temizle"""
-    from backend.cache_utils import cache
-    cache.clear()
-    return {"message": "Cache temizlendi", "status": "success"}
-
-
-@app.get("/cache/cleanup")
-def cleanup_expired_cache():
-    """Expired cache item'ları temizle"""
-    from backend.cache_utils import cleanup_cache
-    removed_count = cleanup_cache()
-    return {"message": f"{removed_count} expired item temizlendi", "status": "success"}
+# @app.get("/cache/cleanup")
+# def cleanup_expired_cache():
+#     """Expired cache item'ları temizle"""
+#     from backend.cache_utils import cleanup_cache
+#     removed_count = cleanup_cache()
+#     return {"message": f"{removed_count} expired item temizlendi", "status": "success"}
 
 @app.get("/users/{external_user_id}/info")
 def get_user_info(external_user_id: str, db: Session = Depends(get_db)):
