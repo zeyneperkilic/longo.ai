@@ -332,10 +332,21 @@ async def chat_message(req: ChatMessageRequest,
     system_prompt += "\n- Değerler iyiyse Longevity, kötüyse problem çözücü öner!"
     
     # Supplement listesini user message olarak ekle (quiz'deki gibi)
-    supplements_info = f"\n\nTÜM KULLANILABİLİR ÜRÜNLER (Toplam: {len(supplements_list)}):\n"
-    for i, supplement in enumerate(supplements_list, 1):  # TÜM 128 ÜRÜNÜ GÖSTER
-        supplements_info += f"{i}. {supplement['name']} (ID: {supplement['id']}) - {supplement['category']}\n"
-    supplements_info += "\n💡 AI: Tüm bu 128 ürün arasından en uygun olanları seç!"
+    # Kategori bazlı gruplandırma - token tasarrufu için
+    categories = list(set([s['category'] for s in supplements_list]))
+    supplements_info = f"\n\nTOPLAM ÜRÜN: {len(supplements_list)} supplement\n"
+    supplements_info += f"KATEGORİLER: {', '.join(categories)}\n"
+    supplements_info += " AI: Aşağıdaki kategorilere göre gruplandırılmış ürünlerden en uygun olanları seç!\n\n"
+    
+    # Her kategori için ürünleri grupla
+    for category in categories:
+        category_products = [s for s in supplements_list if s['category'] == category]
+        supplements_info += f" {category.upper()} ({len(category_products)} ürün):\n"
+        for i, supplement in enumerate(category_products, 1):
+            supplements_info += f"  {i}. {supplement['name']} (ID: {supplement['id']})\n"
+        supplements_info += "\n"
+    
+    supplements_info += "💡 AI: Tüm bu 128 ürün arasından en uygun olanları seç!"
     
     # Context'i ilk message'a ekle
     
