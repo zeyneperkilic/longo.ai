@@ -275,6 +275,17 @@ async def chat_message(req: ChatMessageRequest,
             
         if "cinsiyet" in user_context and user_context["cinsiyet"]:
             system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
+        
+        # Lab verilerini de prompt'a ekle
+        if "session_anormal_testler" in user_context and user_context["session_anormal_testler"]:
+            test_str = ', '.join(user_context['session_anormal_testler']) if isinstance(user_context['session_anormal_testler'], list) else str(user_context['session_anormal_testler'])
+            system_prompt += f"ANORMAL LAB TESTLERİ: {test_str}\n"
+        
+        if "lab_genel_durum" in user_context and user_context["lab_genel_durum"]:
+            system_prompt += f"LAB GENEL DURUM: {user_context['lab_genel_durum']}\n"
+        
+        if "lab_tarih" in user_context and user_context["lab_tarih"]:
+            system_prompt += f"LAB TEST TARİHİ: {user_context['lab_tarih']}\n"
             
         system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
     else:
