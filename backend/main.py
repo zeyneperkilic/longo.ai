@@ -807,6 +807,26 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
 
 
 
+@app.get("/users/{user_id}/global-context")
+def get_user_global_context_endpoint(user_id: str, db: Session = Depends(get_db)):
+    """Get user's global context for debugging"""
+
+    from backend.db import get_user_by_external_id, get_user_global_context
+
+    # external_user_id ile kullanıcıyı bul
+    user = get_user_by_external_id(db, user_id)
+    if not user:
+        raise HTTPException(404, "Kullanıcı bulunamadı")
+
+    # Global context'i al
+    global_context = get_user_global_context(db, user.id) or {}
+
+    return {
+        "user_id": user_id,
+        "global_context": global_context,
+        "context_keys": list(global_context.keys()) if global_context else []
+    }
+
 @app.get("/ai/progress/{user_id}")
 def get_user_progress(user_id: str, db: Session = Depends(get_db)):
     """Get user's lab test progress and trends"""
