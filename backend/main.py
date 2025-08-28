@@ -209,15 +209,38 @@ async def chat_message(req: ChatMessageRequest,
     
     # 1. Global context'i getir (zaten yukarıda alındı)
     if global_context:
-        # Key'leri normalize et (büyük harf -> küçük harf + encoding temizle)
+        # Key'leri normalize et (büçük harf -> küçük harf + encoding temizle)
         normalized_global = {}
         for key, value in global_context.items():
             if key and value:  # None/boş değerleri atla
                 # Encoding sorunlarını çöz: 'i̇si̇m' -> 'isim'
                 normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
                 if normalized_key and normalized_key not in normalized_global:
-                    normalized_global[normalized_key] = value
+                    normalized_global[key] = value
         user_context.update(normalized_global)
+    
+    # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
+    if not any(key in user_context for key in ["session_anormal_testler", "lab_genel_durum", "lab_tarih"]):
+        from backend.db import get_lab_test_history
+        last_lab = get_lab_test_history(db, user.id, limit=1)
+        if last_lab:
+            # Son lab verisini global context'e merge et
+            lab_context = {}
+            if last_lab[0].test_results:
+                # Test adları
+                test_names = list(last_lab[0].test_results.keys())
+                lab_context["session_anormal_testler"] = test_names[:5]  # İlk 5 test
+            
+            # Lab tarihi
+            lab_context["lab_tarih"] = last_lab[0].test_date.strftime("%Y-%m-%d")
+            
+            # Global context'e merge et
+            if lab_context:
+                current_global = get_user_global_context(db, user.id) or {}
+                updated_context = {**current_global, **lab_context}
+                update_user_global_context(db, user.id, updated_context)
+                # Local context'i de güncelle
+                user_context.update(lab_context)
     
     # 2. Son mesajlardan yeni context bilgilerini çıkar (ONLY IF NEEDED)
     # ÖNEMLİ: Global context user bazında olmalı, conversation bazında değil!
