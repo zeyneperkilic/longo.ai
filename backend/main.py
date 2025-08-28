@@ -235,7 +235,12 @@ async def chat_message(req: ChatMessageRequest,
             lab_context = {}
             if last_lab[0].test_results:
                 # Test adları
-                test_names = list(last_lab[0].test_results.keys())
+                if isinstance(last_lab[0].test_results, list):
+                    # List of dict formatında
+                    test_names = [test.get('name', '') for test in last_lab[0].test_results if test.get('name')]
+                else:
+                    # Dict formatında (eski format)
+                    test_names = list(last_lab[0].test_results.keys())
                 lab_context["session_anormal_testler"] = test_names[:5]  # İlk 5 test
             
             # Lab tarihi
