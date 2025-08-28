@@ -286,115 +286,115 @@ async def chat_message(req: ChatMessageRequest,
             if analysis.interaction_type in ["quiz", "lab_single", "lab_multiple"]:
                 system_prompt += f"- {analysis.interaction_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
-        
-        # XML'den supplement listesini ekle - AI'ya ürün önerileri için
-        from backend.config import SUPPLEMENTS_LIST
-        supplements_list = SUPPLEMENTS_LIST
-        
-        # Supplement listesi kuralları (quiz'deki gibi)
-        system_prompt += "\n\n🚨 MUTLAK SUPPLEMENT KURALI:"
-        system_prompt += "\n- MUTLAKA sadece user message'da verilen supplement listesindeki ürünleri öner!"
-        system_prompt += "\n- CholestOff, Beta-Sitosterol, Nature Made, CholestePure gibi ürünler SİTEMİZDE YOK!"
-        system_prompt += "\n- Sadece: D Vitamini, Omega-3, Magnezyum, Koenzim Q10, Selenyum gibi ürünler!"
-        system_prompt += "\n- KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
-        system_prompt += "\n- DİL: SADECE TÜRKÇE YANIT VER!"
-        system_prompt += "\n\n🎯 SAĞLIK YÖNLENDİRME STRATEJİSİ:"
-        system_prompt += "\n- Off-topic konularda: 'Bu konu sağlıkla ilgili değil ama sana sağlık önerisi verebilirim'"
-        system_prompt += "\n- Her durumda: Supplement önerisi yap ve sağlık konusuna çek"
-        system_prompt += "\n- Örnek: 'Hava durumu yerine D vitamini eksikliği hakkında konuşalım'"
-        system_prompt += "\n\n🚫 KESİNLİKLE YASAK:"
-        system_prompt += "\n- İsim anlamı, köken, etimoloji bilgisi verme!"
-        system_prompt += "\n- Kültür, tarih, spor bilgisi verme!"
-        system_prompt += "\n- Off-topic konularda bilgi verme vedetaylar verme!"
-        system_prompt += "\n- Sadece sağlık konusuna odaklan!"
-        system_prompt += "\n\n⚠️ ÖNEMLİ: Kullanıcı adını hatırla ama isim hakkında bilgi verme!"
-        system_prompt += "\n- Sadece: 'Evet [isim], seni hatırlıyorum' de!"
-        system_prompt += "\n- Sonra hemen sağlık konusuna geç!"
-        system_prompt += "\n\n⏱️ ZAMAN KISITLAMASI:"
-        system_prompt += "\n- Sağlık dışı konularda konuşma!"
-        system_prompt += "\n- Hemen sağlık konusuna geç!"
-        system_prompt += "\n- Uzun açıklamalar yapma!"
-        system_prompt += "\n\n🔍 OTOMATİK VERİ ERİŞİMİ:"
-        system_prompt += "\n- Quiz sonucu istenirse: Kullanıcının quiz geçmişini otomatik incele!"
-        system_prompt += "\n- Lab test istenirse: Kullanıcının lab test geçmişini otomatik incele!"
-        system_prompt += "\n- Prompt'ta verilen verileri kullan, kullanıcıdan tekrar isteme!"
-        system_prompt += "\n- Mevcut verileri analiz et ve öneri yap!"
-        system_prompt += "\n\n🎯 AMBIGUOUS SORU YÖNLENDİRMESİ:"
-        system_prompt += "\n- 'Ne alayım?', 'Bana bir şey öner', 'Ne yapayım?' gibi belirsiz sorular → HEMEN SAĞLIK!"
-        system_prompt += "\n- 'Supplement öner', 'Hangi ürünleri alayım?' şeklinde yönlendir!"
-        system_prompt += "\n- Belirsiz sorularda genel sağlık paketi öner!"
-        system_prompt += "\n- Off-topic'e gitme, sadece sağlık!"
-        system_prompt += "\n\n💊 AKILLI SUPPLEMENT ÖNERİSİ:"
-        system_prompt += "\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
-        system_prompt += "\n- Kullanıcının problemlerine, test sonuçlarına, eksikliklerine göre öner!"
-        system_prompt += "\n- 'Herkes için aynı paket' yerine 'kişiye özel çözüm' sun!"
-        system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
-        system_prompt += "\n- Değerler iyiyse Longevity, kötüyse problem çözücü öner!"
-        
-        # Supplement listesini user message olarak ekle (quiz'deki gibi)
-        supplements_info = f"\n\nTÜM KULLANILABİLİR ÜRÜNLER (Toplam: {len(supplements_list)}):\n"
-        for i, supplement in enumerate(supplements_list, 1):  # TÜM 128 ÜRÜNÜ GÖSTER
-            supplements_info += f"{i}. {supplement['name']} (ID: {supplement['id']}) - {supplement['category']}\n"
-        supplements_info += "\n💡 AI: Tüm bu 128 ürün arasından en uygun olanları seç!"
-        
-        # Context'i ilk message'a ekle
-        
-        # System message
-        history = [{"role": "system", "content": system_prompt, "context_data": user_context}]
-        
-        # Supplement listesi user message olarak ekle (quiz'deki gibi)
-        history.append({"role": "user", "content": supplements_info})
-        
-        # Chat history
-        for r in rows[-(CHAT_HISTORY_MAX-1):]:
-            history.append({"role": r.role, "content": r.content})
 
-        # parallel chat with synthesis
-        start = time.time()
-        try:
-            res = parallel_chat(history)
-            final = res["content"]
-            used_model = res.get("model_used","unknown")
-        except Exception as e:
-            # Production'da log yerine fallback kullan
-            from backend.orchestrator import chat_fallback
-            fallback_res = chat_fallback(history)
-            final = fallback_res["content"]
-            used_model = fallback_res["model_used"]
-        
-        latency_ms = int((time.time()-start)*1000)
+    # XML'den supplement listesini ekle - AI'ya ürün önerileri için
+    from backend.config import SUPPLEMENTS_LIST
+    supplements_list = SUPPLEMENTS_LIST
+    
+    # Supplement listesi kuralları (quiz'deki gibi)
+    system_prompt += "\n\n🚨 MUTLAK SUPPLEMENT KURALI:"
+    system_prompt += "\n- MUTLAKA sadece user message'da verilen supplement listesindeki ürünleri öner!"
+    system_prompt += "\n- CholestOff, Beta-Sitosterol, Nature Made, CholestePure gibi ürünler SİTEMİZDE YOK!"
+    system_prompt += "\n- Sadece: D Vitamini, Omega-3, Magnezyum, Koenzim Q10, Selenyum gibi ürünler!"
+    system_prompt += "\n- KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
+    system_prompt += "\n- DİL: SADECE TÜRKÇE YANIT VER!"
+    system_prompt += "\n\n🎯 SAĞLIK YÖNLENDİRME STRATEJİSİ:"
+    system_prompt += "\n- Off-topic konularda: 'Bu konu sağlıkla ilgili değil ama sana sağlık önerisi verebilirim'"
+    system_prompt += "\n- Her durumda: Supplement önerisi yap ve sağlık konusuna çek"
+    system_prompt += "\n- Örnek: 'Hava durumu yerine D vitamini eksikliği hakkında konuşalım'"
+    system_prompt += "\n\n🚫 KESİNLİKLE YASAK:"
+    system_prompt += "\n- İsim anlamı, köken, etimoloji bilgisi verme!"
+    system_prompt += "\n- Kültür, tarih, spor bilgisi verme!"
+    system_prompt += "\n- Off-topic konularda bilgi verme vedetaylar verme!"
+    system_prompt += "\n- Sadece sağlık konusuna odaklan!"
+    system_prompt += "\n\n⚠️ ÖNEMLİ: Kullanıcı adını hatırla ama isim hakkında bilgi verme!"
+    system_prompt += "\n- Sadece: 'Evet [isim], seni hatırlıyorum' de!"
+    system_prompt += "\n- Sonra hemen sağlık konusuna geç!"
+    system_prompt += "\n\n⏱️ ZAMAN KISITLAMASI:"
+    system_prompt += "\n- Sağlık dışı konularda konuşma!"
+    system_prompt += "\n- Hemen sağlık konusuna geç!"
+    system_prompt += "\n- Uzun açıklamalar yapma!"
+    system_prompt += "\n\n🔍 OTOMATİK VERİ ERİŞİMİ:"
+    system_prompt += "\n- Quiz sonucu istenirse: Kullanıcının quiz geçmişini otomatik incele!"
+    system_prompt += "\n- Lab test istenirse: Kullanıcının lab test geçmişini otomatik incele!"
+    system_prompt += "\n- Prompt'ta verilen verileri kullan, kullanıcıdan tekrar isteme!"
+    system_prompt += "\n- Mevcut verileri analiz et ve öneri yap!"
+    system_prompt += "\n\n🎯 AMBIGUOUS SORU YÖNLENDİRMESİ:"
+    system_prompt += "\n- 'Ne alayım?', 'Bana bir şey öner', 'Ne yapayım?' gibi belirsiz sorular → HEMEN SAĞLIK!"
+    system_prompt += "\n- 'Supplement öner', 'Hangi ürünleri alayım?' şeklinde yönlendir!"
+    system_prompt += "\n- Belirsiz sorularda genel sağlık paketi öner!"
+    system_prompt += "\n- Off-topic'e gitme, sadece sağlık!"
+    system_prompt += "\n\n💊 AKILLI SUPPLEMENT ÖNERİSİ:"
+    system_prompt += "\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
+    system_prompt += "\n- Kullanıcının problemlerine, test sonuçlarına, eksikliklerine göre öner!"
+    system_prompt += "\n- 'Herkes için aynı paket' yerine 'kişiye özel çözüm' sun!"
+    system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
+    system_prompt += "\n- Değerler iyiyse Longevity, kötüyse problem çözücü öner!"
+    
+    # Supplement listesini user message olarak ekle (quiz'deki gibi)
+    supplements_info = f"\n\nTÜM KULLANILABİLİR ÜRÜNLER (Toplam: {len(supplements_list)}):\n"
+    for i, supplement in enumerate(supplements_list, 1):  # TÜM 128 ÜRÜNÜ GÖSTER
+        supplements_info += f"{i}. {supplement['name']} (ID: {supplement['id']}) - {supplement['category']}\n"
+    supplements_info += "\n💡 AI: Tüm bu 128 ürün arasından en uygun olanları seç!"
+    
+    # Context'i ilk message'a ekle
+    
+    # System message
+    history = [{"role": "system", "content": system_prompt, "context_data": user_context}]
+    
+    # Supplement listesi user message olarak ekle (quiz'deki gibi)
+    history.append({"role": "user", "content": supplements_info})
+    
+    # Chat history
+    for r in rows[-(CHAT_HISTORY_MAX-1):]:
+        history.append({"role": r.role, "content": r.content})
 
-        # Response ID oluştur ve context bilgilerini sakla
-        response_id = generate_response_id()
-        
-        # Assistant message'ı response ID ve context ile kaydet
-        m = Message(
-            conversation_id=conv.id, 
-            role="assistant", 
-            content=final, 
-            model_latency_ms=latency_ms,
-            response_id=response_id,
-            context_data=user_context
-        )
-        db.add(m); db.commit(); db.refresh(m)
-        
-        # Global context'i güncelle (yeni bilgiler varsa) - OPTIMIZED
-        if new_context and context_changed:
-            current_global = get_user_global_context(db, user.id)
-            if current_global:
-                # Mevcut context ile birleştir
-                updated_context = {**current_global, **new_context}
-                # None değerleri temizle
-                updated_context = {k: v for k, v in updated_context.items() if v is not None}
-                update_user_global_context(db, user.id, updated_context)
-            else:
-                # Yeni global context oluştur
-                update_user_global_context(db, user.id, new_context)
-        
-        # Database kaydı kaldırıldı - Asıl site zaten yapacak
-        # Sadece chat yanıtını döndür
-        
-        return ChatResponse(conversation_id=conv.id, reply=final, latency_ms=latency_ms)
+    # parallel chat with synthesis
+    start = time.time()
+    try:
+        res = parallel_chat(history)
+        final = res["content"]
+        used_model = res.get("model_used","unknown")
+    except Exception as e:
+        # Production'da log yerine fallback kullan
+        from backend.orchestrator import chat_fallback
+        fallback_res = chat_fallback(history)
+        final = fallback_res["content"]
+        used_model = fallback_res["model_used"]
+    
+    latency_ms = int((time.time()-start)*1000)
+
+    # Response ID oluştur ve context bilgilerini sakla
+    response_id = generate_response_id()
+    
+    # Assistant message'ı response ID ve context ile kaydet
+    m = Message(
+        conversation_id=conv.id, 
+        role="assistant", 
+        content=final, 
+        model_latency_ms=latency_ms,
+        response_id=response_id,
+        context_data=user_context
+    )
+    db.add(m); db.commit(); db.refresh(m)
+    
+    # Global context'i güncelle (yeni bilgiler varsa) - OPTIMIZED
+    if new_context and context_changed:
+        current_global = get_user_global_context(db, user.id)
+        if current_global:
+            # Mevcut context ile birleştir
+            updated_context = {**current_global, **new_context}
+            # None değerleri temizle
+            updated_context = {k: v for k, v in updated_context.items() if v is not None}
+            update_user_global_context(db, user.id, updated_context)
+        else:
+            # Yeni global context oluştur
+            update_user_global_context(db, user.id, new_context)
+    
+    # Database kaydı kaldırıldı - Asıl site zaten yapacak
+    # Sadece chat yanıtını döndür
+    
+    return ChatResponse(conversation_id=conv.id, reply=final, latency_ms=latency_ms)
 
 # ---------- ANALYZE (FREE: one-time), LAB ----------
 
@@ -512,8 +512,9 @@ async def analyze_quiz(body: QuizRequest,
         if quiz_context:
             updated_context = {**current_context, **quiz_context}
             update_user_global_context(db, user.id, updated_context)
-        
-        return data
+    
+    # Return quiz response
+    return data
 
 @app.post("/ai/lab/single", response_model=LabAnalysisResponse)
 def analyze_single_lab(body: SingleLabRequest,
@@ -643,35 +644,35 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     if "overall_status" not in data:
         data["overall_status"] = "analiz_tamamlandı"
     
-                        # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
-        if data and "test_details" in data:
-            from backend.db import get_user_global_context, update_user_global_context
-            
-            # Mevcut global context'i al
-            current_context = get_user_global_context(db, user.id) or {}
-            
-            # Lab sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
-            lab_context = {}
-            
-            # Test adları - SADECE İLK N TANESİ
-            if "test_details" in data:
-                test_adlari = list(data["test_details"].keys())
-                from backend.config import MAX_LAB_TESTS_IN_CONTEXT
-                lab_context["session_anormal_testler"] = test_adlari[:MAX_LAB_TESTS_IN_CONTEXT]
-            
-            # Genel lab durumu
-            if "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
-                lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
-            
-            # Lab tarihi
-            import time
-            lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
-            
-            # Global context'i güncelle
-            if lab_context:
-                updated_context = {**current_context, **lab_context}
-                update_user_global_context(db, user.id, updated_context)
-
+    # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
+    if data and "test_details" in data:
+        from backend.db import get_user_global_context, update_user_global_context
+        
+        # Mevcut global context'i al
+        current_context = get_user_global_context(db, user.id) or {}
+        
+        # Lab sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
+        lab_context = {}
+        
+        # Test adları - SADECE İLK N TANESİ
+        if "test_details" in data:
+            test_adlari = list(data["test_details"].keys())
+            from backend.config import MAX_LAB_TESTS_IN_CONTEXT
+            lab_context["session_anormal_testler"] = test_adlari[:MAX_LAB_TESTS_IN_CONTEXT]
+        
+        # Genel lab durumu
+        if "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
+            lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
+        
+        # Lab tarihi
+        import time
+        lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
+        
+        # Global context'i güncelle
+        if lab_context:
+            updated_context = {**current_context, **lab_context}
+            update_user_global_context(db, user.id, updated_context)
+    
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece AI yanıtını döndür
     
