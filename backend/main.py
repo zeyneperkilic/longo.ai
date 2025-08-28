@@ -223,7 +223,7 @@ async def chat_message(req: ChatMessageRequest,
                 # Encoding sorunlarını çöz: 'i̇si̇m' -> 'isim'
                 normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
                 if normalized_key and normalized_key not in normalized_global:
-                    normalized_global[key] = value
+                    normalized_global[normalized_key] = value  # ✅ DOĞRU KEY!
         user_context.update(normalized_global)
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
@@ -753,9 +753,15 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             from backend.config import MAX_LAB_TESTS_IN_CONTEXT
             lab_context["session_anormal_testler"] = test_adlari[:MAX_LAB_TESTS_IN_CONTEXT]
         
-        # Genel lab durumu
-        if "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
+        # Genel lab durumu - AI response'a göre ayarla
+        if "overall_status" in data:
+            lab_context["lab_genel_durum"] = data["overall_status"]
+        elif "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
             lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
+        elif "general_assessment" in data and "overall_summary" in data["general_assessment"]:
+            lab_context["lab_genel_durum"] = data["general_assessment"]["overall_summary"]
+        elif "general_assessment" in data and "metabolic_status" in data["general_assessment"]:
+            lab_context["lab_genel_durum"] = data["general_assessment"]["metabolic_status"]
         
         # Lab tarihi
         import time
