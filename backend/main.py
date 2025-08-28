@@ -237,55 +237,55 @@ async def chat_message(req: ChatMessageRequest,
             else:
                 # String değerleri güncelle
                 new_context[normalized_key] = value
+    
+    # 3. YENİ CONTEXT'İ GLOBAL CONTEXT'E EKLE (DÖNGÜ DIŞINDA!)
+    context_changed = False
+    if new_context and any(new_context.values()):
+        # Check if context actually changed
+        for key, value in new_context.items():
+            if key not in user_context or user_context[key] != value:
+                context_changed = True
+                break
         
-        # 3. Yeni context'i global context'e ekle (ONLY IF CHANGED)
-        context_changed = False
-        if new_context and any(new_context.values()):
-            # Check if context actually changed
-            for key, value in new_context.items():
-                if key not in user_context or user_context[key] != value:
-                    context_changed = True
-                    break
+        if context_changed:
+            update_user_global_context(db, user.id, new_context)
+            # Local context'i de güncelle
+            user_context.update(new_context)
+    
+    # 4. KULLANICI BİLGİLERİNİ AI'YA HATIRLAT (DÖNGÜ DIŞINDA!)
+    if user_context and any(user_context.values()):
+        system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
+        
+        # String ve integer değerler için özel format
+        if "isim" in user_context and user_context["isim"]:
+            system_prompt += f"KULLANICI ADI: {user_context['isim']}\n"
             
-            if context_changed:
-                update_user_global_context(db, user.id, new_context)
-                # Local context'i de güncelle
-                user_context.update(new_context)
-        
-        # Kullanıcı bilgilerini AI'ya hatırlat 
-        if user_context and any(user_context.values()):
-            system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
+        if "yas" in user_context and user_context["yas"]:
+            system_prompt += f"KULLANICI YAŞI: {user_context['yas']} yaşında\n"
             
-            # String ve integer değerler için özel format
-            if "isim" in user_context and user_context["isim"]:
-                system_prompt += f"KULLANICI ADI: {user_context['isim']}\n"
-                
-            if "yas" in user_context and user_context["yas"]:
-                system_prompt += f"KULLANICI YAŞI: {user_context['yas']} yaşında\n"
-                
-            if "tercihler" in user_context and user_context["tercihler"]:
-                tercihler_str = ', '.join(user_context['tercihler']) if isinstance(user_context['tercihler'], list) else str(user_context['tercihler'])
-                system_prompt += f"KULLANICI TERCİHLERİ: {tercihler_str}\n"
-                
-            if "hastaliklar" in user_context and user_context["hastaliklar"]:
-                hastaliklar_str = ', '.join(user_context['hastaliklar']) if isinstance(user_context['hastaliklar'], list) else str(user_context['hastaliklar'])
-                system_prompt += f"DEBUG: Added diseases: {hastaliklar_str}\n"
-                
-            if "cinsiyet" in user_context and user_context["cinsiyet"]:
-                system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
-                
-            system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
-        else:
-            # Context yoksa default prompt ekle
-            system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner."
-        
-        # User analyses context - OPTIMIZED (only add if exists)
-        if user_analyses:
-            system_prompt += "\n\nKULLANICI GEÇMİŞİ:\n"
-            for analysis in user_analyses:
-                if analysis.interaction_type in ["quiz", "lab_single", "lab_multiple"]:
-                    system_prompt += f"- {analysis.interaction_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
-            system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
+        if "tercihler" in user_context and user_context["tercihler"]:
+            tercihler_str = ', '.join(user_context['tercihler']) if isinstance(user_context['tercihler'], list) else str(user_context['tercihler'])
+            system_prompt += f"KULLANICI TERCİHLERİ: {tercihler_str}\n"
+            
+        if "hastaliklar" in user_context and user_context["hastaliklar"]:
+            hastaliklar_str = ', '.join(user_context['hastaliklar']) if isinstance(user_context['hastaliklar'], list) else str(user_context['hastaliklar'])
+            system_prompt += f"DEBUG: Added diseases: {hastaliklar_str}\n"
+            
+        if "cinsiyet" in user_context and user_context["cinsiyet"]:
+            system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
+            
+        system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
+    else:
+        # Context yoksa default prompt ekle
+        system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner."
+    
+    # User analyses context - OPTIMIZED (only add if exists)
+    if user_analyses:
+        system_prompt += "\n\nKULLANICI GEÇMİŞİ:\n"
+        for analysis in user_analyses:
+            if analysis.interaction_type in ["quiz", "lab_single", "lab_multiple"]:
+                system_prompt += f"- {analysis.interaction_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
+        system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
         
         # XML'den supplement listesini ekle - AI'ya ürün önerileri için
         from backend.config import SUPPLEMENTS_LIST
