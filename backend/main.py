@@ -117,8 +117,8 @@ def chat_start(body: ChatStartRequest = None,
     conv = Conversation(user_id=user.id, status="active")
     db.add(conv); db.commit(); db.refresh(conv)
     
-    # User-based conversation ID döndür
-    return ChatStartResponse(conversation_id=user_based_conv_id)
+    # Real DB conversation ID döndür (tutarlılık için)
+    return ChatStartResponse(conversation_id=conv.id)
 
 @app.get("/ai/chat/{conversation_id}/history")
 def chat_history(conversation_id: int,
@@ -126,7 +126,8 @@ def chat_history(conversation_id: int,
                  x_user_id: str | None = Header(default=None),
                  x_user_plan: str | None = Header(default=None)):
     user = get_or_create_user(db, x_user_id, x_user_plan)
-    conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
+    # Real DB conversation ID kullan (tutarlılık için)
+    conv = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == user.id).first()
     if not conv:
         raise HTTPException(404, "Konuşma bulunamadı")
     msgs = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
@@ -145,7 +146,8 @@ async def chat_message(req: ChatMessageRequest,
     if not conversation_id:
         raise HTTPException(400, "Conversation ID gerekli")
     
-    conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
+    # Real DB conversation ID kullan (tutarlılık için)
+    conv = db.query(Conversation).filter(Conversation.id == conversation_id, Conversation.user_id == user.id).first()
     if not conv:
         raise HTTPException(404, "Konuşma bulunamadı")
 
