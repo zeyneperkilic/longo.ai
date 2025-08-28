@@ -227,7 +227,7 @@ async def chat_message(req: ChatMessageRequest,
         user_context.update(normalized_global)
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
-    if not any(key in user_context for key in ["session_anormal_testler", "lab_genel_durum", "lab_tarih"]):
+    if not any(user_context.get(key) for key in ["session_anormal_testler", "lab_genel_durum", "lab_tarih"]):
         from backend.db import get_lab_test_history
         last_lab = get_lab_test_history(db, user.id, limit=1)
         if last_lab:
