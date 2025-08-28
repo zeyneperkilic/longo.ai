@@ -250,7 +250,10 @@ async def chat_message(req: ChatMessageRequest,
                 break
         
         if context_changed:
-            update_user_global_context(db, user.id, new_context)
+            # Mevcut global context'i al ve merge et (overwrite etme!)
+            current_global = get_user_global_context(db, user.id) or {}
+            updated_context = {**current_global, **new_context}
+            update_user_global_context(db, user.id, updated_context)
             # Local context'i de güncelle
             user_context.update(new_context)
     
