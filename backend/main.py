@@ -223,8 +223,8 @@ async def chat_message(req: ChatMessageRequest,
     # recent_messages = rows[-(CHAT_HISTORY_MAX-1):] if len(rows) > 0 else []
     new_context = {}
     
-    # 2. YENİ MESAJDAN CONTEXT ÇIKAR (her mesajda!)
-    current_message_context = extract_user_context_hybrid(message_text, user.email)
+    # 2. YENİ MESAJDAN CONTEXT ÇIKAR (opsiyonel - context yoksa da çalışsın)
+    current_message_context = extract_user_context_hybrid(message_text, user.email) or {}
     for key, value in current_message_context.items():
         # Key'i normalize et (encoding sorunlarını çöz)
         normalized_key = key.strip().lower()
@@ -275,6 +275,9 @@ async def chat_message(req: ChatMessageRequest,
                 system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
                 
             system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
+        else:
+            # Context yoksa default prompt ekle
+            system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner."
         
         # User analyses context - OPTIMIZED (only add if exists)
         if user_analyses:
