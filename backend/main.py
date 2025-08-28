@@ -849,13 +849,63 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
             "trends": "Trend analizi yapılamaz"
         }
     
-    # Basic trend analysis
+    # Real trend analysis - Compare lab results
     trends = {
         "total_tests": len(lab_history),
-        "test_frequency": "Test sıklığı analizi",
-        "improvement_areas": "İyileşme alanları",
-        "stable_areas": "Stabil alanlar"
+        "test_frequency": f"Son {len(lab_history)} test yapıldı",
+        "improvement_areas": [],
+        "stable_areas": [],
+        "worsening_areas": []
     }
+    
+    # Compare test results if we have at least 2 tests
+    if len(lab_history) >= 2:
+        latest_test = lab_history[0]  # Most recent
+        previous_test = lab_history[1]  # Previous
+        
+        if latest_test.test_results and previous_test.test_results:
+            # Extract test names and values for comparison
+            latest_results = {}
+            previous_results = {}
+            
+            # Parse test results (handle both list and dict formats)
+            if isinstance(latest_test.test_results, list):
+                for test in latest_test.test_results:
+                    if isinstance(test, dict) and 'name' in test:
+                        latest_results[test['name']] = test
+            elif isinstance(latest_test.test_results, dict):
+                latest_results = latest_test.test_results
+                
+            if isinstance(previous_test.test_results, list):
+                for test in previous_test.test_results:
+                    if isinstance(test, dict) and 'name' in test:
+                        previous_results[test['name']] = test
+            elif isinstance(previous_test.test_results, dict):
+                previous_results = previous_test.test_results
+            
+            # Compare each test
+            for test_name in set(latest_results.keys()) & set(previous_results.keys()):
+                latest = latest_results[test_name]
+                previous = previous_results[test_name]
+                
+                # Try to extract numeric values for comparison
+                try:
+                    latest_val = float(str(latest.get('value', '0')).replace(',', ''))
+                    previous_val = float(str(previous.get('value', '0')).replace(',', ''))
+                    
+                    if latest_val > previous_val:
+                        trends["improvement_areas"].append(f"{test_name}: {previous_val} → {latest_val} (İyileşme)")
+                    elif latest_val < previous_val:
+                        trends["worsening_areas"].append(f"{test_name}: {previous_val} → {latest_val} (Bozulma)")
+                    else:
+                        trends["stable_areas"].append(f"{test_name}: {latest_val} (Stabil)")
+                except (ValueError, TypeError):
+                    # Non-numeric values, just mark as stable
+                    trends["stable_areas"].append(f"{test_name}: Değer karşılaştırılamadı")
+    
+    # If no trends found, add default message
+    if not trends["improvement_areas"] and not trends["worsening_areas"] and not trends["stable_areas"]:
+        trends["stable_areas"].append("Trend analizi için yeterli veri yok")
     
     return {
         "user_id": user_id,
