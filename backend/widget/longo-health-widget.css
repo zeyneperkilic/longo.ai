@@ -1,0 +1,580 @@
+/* Longo Health Widget - Kahve.com Tasarımına Uygun + Longo Karakteri */
+
+#longo-health-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Chat Button - Kahve.com Stilinde */
+#chat-button {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(47, 93, 131, 0.4);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+#chat-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s;
+}
+
+#chat-button:hover::before {
+    left: 100%;
+}
+
+#chat-button:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 15px 40px rgba(47, 93, 131, 0.6);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+#chat-button:active {
+    transform: scale(0.95);
+}
+
+.chat-button-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    z-index: 2;
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Chat Window - Kahve.com Glassmorphism */
+#longo-chat-window {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 400px;
+    height: 600px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px);
+    border-radius: 25px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10001;
+}
+
+/* Chat Header - Şeffaf ve Modern - SABİT */
+#longo-chat-header {
+    background: linear-gradient(135deg, rgba(47, 93, 131, 0.9) 0%, rgba(74, 124, 154, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    color: white;
+    padding: 18px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 10;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+#longo-chat-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+    animation: float 8s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(180deg); }
+}
+
+#longo-chat-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-longo-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.longo-close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.longo-close-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.1) rotate(90deg);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Chat Messages - Şeffaf Arka Plan - SCROLL EDİLEBİLİR */
+#longo-chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: scroll;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    min-height: 0;
+    max-height: calc(100vh - 300px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(47, 93, 131, 0.5) transparent;
+}
+
+/* Webkit scrollbar stilleri */
+#longo-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#longo-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#longo-chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(47, 93, 131, 0.5);
+    border-radius: 3px;
+}
+
+#longo-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(47, 93, 131, 0.7);
+}
+
+.longo-welcome-message {
+    text-align: center;
+    color: #1e293b;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.longo-welcome-message p {
+    margin: 10px 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #334155;
+    font-weight: 500;
+}
+
+
+
+/* Longo Karakteri Alanı */
+.longo-character-area {
+    text-align: center;
+    margin: 15px 0;
+    padding: 15px;
+}
+
+.longo-character {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 15px;
+    background: linear-gradient(135deg, #4A7C9A 0%, #2F5D83 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(47, 93, 131, 0.4);
+    animation: longoFloat 3s ease-in-out infinite;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.longo-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+.longo-character:hover .longo-image {
+    transform: scale(1.1);
+}
+
+@keyframes longoFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.longo-character-text {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Message Bubbles - Kahve.com Stilinde */
+.longo-message {
+    margin: 20px 0;
+    padding: 18px 24px;
+    border-radius: 25px;
+    max-width: 85%;
+    word-wrap: break-word;
+    position: relative;
+    animation: messageSlide 0.4s ease;
+    backdrop-filter: blur(10px);
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.longo-message.user {
+    background: linear-gradient(135deg, rgba(47, 93, 131, 0.9) 0%, rgba(74, 124, 154, 0.9) 100%);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 10px;
+    box-shadow: 0 8px 25px rgba(47, 93, 131, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.longo-message.assistant {
+    background: rgba(255, 255, 255, 0.9);
+    color: #1e293b;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    margin-right: auto;
+    border-bottom-left-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.longo-message.loading {
+    background: rgba(255, 255, 255, 0.8);
+    color: #64748b;
+    font-style: italic;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    backdrop-filter: blur(15px);
+}
+
+.longo-message p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+/* Chat Input - Şeffaf ve Modern - SABİT */
+#longo-chat-input {
+    padding: 25px 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    gap: 15px;
+    backdrop-filter: blur(20px);
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+#longo-message-input {
+    flex: 1;
+    padding: 18px 24px;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 30px;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(15px);
+    color: #1e293b;
+    font-weight: 500;
+}
+
+#longo-message-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    background: white;
+    transform: scale(1.02);
+}
+
+.longo-send-btn {
+    background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
+    color: white;
+    border: none;
+    padding: 18px 26px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(47, 93, 131, 0.3);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.longo-send-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s;
+}
+
+.longo-send-btn:hover::before {
+    left: 100%;
+}
+
+.longo-send-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(47, 93, 131, 0.5);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.longo-send-btn:active {
+    transform: translateY(-1px);
+}
+
+/* Typing Indicator - Kahve.com Stilinde */
+.typing-indicator {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(59, 130, 246, 0.2) !important;
+    backdrop-filter: blur(15px) !important;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    height: 24px;
+}
+
+.typing-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    animation: typing 1.6s infinite ease-in-out;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+.typing-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+.typing-text {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #64748b;
+    font-style: italic;
+    text-align: center;
+}
+
+/* Pulse Ring Animation - Gelişmiş */
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(59, 130, 246, 0.4);
+    border-radius: 50%;
+    opacity: 0;
+    animation: pulse 2.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.8);
+        opacity: 0;
+    }
+}
+
+/* Button Ripple Effect */
+.btn-ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transition: width 0.8s, height 0.8s;
+}
+
+.longo-send-btn:active .btn-ripple {
+    width: 400px;
+    height: 400px;
+}
+
+/* Enhanced Hover Effects */
+#chat-button:hover .pulse-ring {
+    animation: none;
+    opacity: 0;
+}
+
+.longo-message.user:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(47, 93, 131, 0.4);
+}
+
+.longo-message.assistant:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* Focus Effects */
+#longo-message-input:focus {
+    transform: scale(1.02);
+}
+
+/* Smooth Scrolling */
+#longo-chat-messages {
+    scroll-behavior: smooth;
+}
+
+/* Loading State Enhancements */
+.longo-message.loading {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(15px);
+}
+
+.longo-message.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
+    animation: loadingShimmer 2s infinite;
+}
+
+@keyframes loadingShimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Scrollbar Styling - Modern ve Belirgin */
+#longo-chat-messages::-webkit-scrollbar {
+    width: 12px;
+}
+
+#longo-chat-messages::-webkit-scrollbar-track {
+    background: rgba(47, 93, 131, 0.15);
+    border-radius: 6px;
+    margin: 5px;
+}
+
+#longo-chat-messages::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(47, 93, 131, 0.3);
+}
+
+#longo-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #1e4a6b 0%, #2F5D83 100%);
+    box-shadow: 0 4px 12px rgba(47, 93, 131, 0.5);
+}
+
+/* Firefox için scrollbar */
+#longo-chat-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #2F5D83 rgba(47, 93, 131, 0.15);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    #longo-chat-window {
+        width: 360px;
+        height: 550px;
+        right: 10px;
+    }
+    
+    #longo-chat-window {
+        bottom: 90px;
+    }
+    
+    .longo-character {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Smooth Transitions */
+* {
+    transition: all 0.3s ease;
+}
