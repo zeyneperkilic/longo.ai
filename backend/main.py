@@ -90,16 +90,26 @@ app.add_middleware(
 def health_check():
     return {"status": "ok", "service": "longopass-ai"}
 
-@app.get("/widget.js")
+@app.get("/widget/longo-health-widget.js")
 def widget_js():
-    with open("frontend/widget.js", "r", encoding="utf-8") as f:
+    with open("backend/widget/longo-health-widget.js", "r", encoding="utf-8") as f:
         return f.read()
 
-@app.get("/test")
-def test_page():
+@app.get("/widget/longo-health-widget.css")
+def widget_css():
+    with open("backend/widget/longo-health-widget.css", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/widget/demo.html")
+def demo_page():
     from fastapi.responses import HTMLResponse
-    with open("frontend/test.html", "r", encoding="utf-8") as f:
+    with open("backend/widget/demo.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
+
+@app.get("/widget/longo.jpeg")
+def longo_image():
+    from fastapi.responses import FileResponse
+    return FileResponse("backend/widget/longo.jpeg")
 
 # ---------- CHAT (PREMIUM) ----------
 

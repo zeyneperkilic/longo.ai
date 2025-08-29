@@ -17,8 +17,13 @@ if DB_TYPE == "postgresql":
     # Check if all required PostgreSQL variables are set
     if all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
         DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        engine = create_engine(DATABASE_URL)
-        print(f"Connected to PostgreSQL database: {DB_HOST}:{DB_PORT}/{DB_NAME}")
+        engine = create_engine(
+            DATABASE_URL,
+            pool_size=20,        # 20 connection hazır tut
+            max_overflow=30,     # 30 ek connection oluştur
+            pool_pre_ping=True   # Connection'ları test et
+        )
+        print(f"Connected to PostgreSQL database: {DB_HOST}:{DB_PORT}/{DB_NAME} with connection pooling")
     else:
         print("PostgreSQL credentials incomplete, falling back to SQLite")
         DB_TYPE = "sqlite"
