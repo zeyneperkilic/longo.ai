@@ -57,7 +57,7 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         if len(PARALLEL_MODELS) == 1:
             # Tek model - direkt çağır, ThreadPool gereksiz
             try:
-                result = call_chat_model(PARALLEL_MODELS[0], updated_messages, 0.6, 1500)
+                result = call_chat_model(PARALLEL_MODELS[0], updated_messages, 0.6, 800)
                 if is_valid_chat(result["content"]):
                     responses.append({
                         "model": PARALLEL_MODELS[0],
@@ -69,7 +69,7 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
             # Çoklu model - paralel çağır
             with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
                 future_to_model = {
-                    executor.submit(call_chat_model, model, updated_messages, 0.6, 1500): model 
+                    executor.submit(call_chat_model, model, updated_messages, 0.6, 800): model 
                     for model in PARALLEL_MODELS
                 }
                 
@@ -221,7 +221,7 @@ def gpt4o_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         ]
         
         # Try GPT-4o
-        result = call_chat_model("openai/gpt-4o:online", updated_messages, 0.6, 1500)
+        result = call_chat_model("openai/gpt-4o:online", updated_messages, 0.6, 800)
         if is_valid_chat(result["content"]):
             result["content"] = _sanitize_links(result["content"])
             result["model_used"] = "openai/gpt-4o:online (fallback)"

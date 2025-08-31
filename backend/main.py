@@ -583,10 +583,8 @@ def analyze_single_lab(body: SingleLabRequest,
     # Convert test to dict for processing
     test_dict = body.test.model_dump()
     
-    # Geçmiş sonuçları dict'e çevir
-    historical_dict = None
-    if body.historical_results:
-        historical_dict = [result.model_dump() for result in body.historical_results]
+    # Geçmiş sonuçları zaten dict formatında
+    historical_dict = body.historical_results
     
     # Health Guard kaldırıldı - Lab analizi zaten kontrollü içerik üretiyor
 
