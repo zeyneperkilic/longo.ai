@@ -467,16 +467,13 @@ def extract_user_context_ai(message_content: str, user_id: str = None) -> dict:
         
         KESİN KURALLAR - HİÇBİRİNİ İHLAL ETME!:
         1. SADECE "ben", "benim", "bana" ile başlayan DOĞRUDAN AÇIKLAMALAR!
-        2. SORU İŞARETİ (?) VARSA → HİÇBİR ŞEY ÇIKARMA! 
         3. "HAKKINDA", "NEDİR", "NASIL" VARSA → HİÇBİR ŞEY ÇIKARMA!
-        4. "BİLGİ VERİR MİSİN" VARSA → HİÇBİR ŞEY ÇIKARMA!
         5. "HANGİ", "KAÇ", "NEREDE" VARSA → HİÇBİR ŞEY ÇIKARMA!
         6. SORU SORUYORSA → BOŞ JSON: {{}}
         7. SESSION ID'den asla bilgi çıkarma!
         8. Email'den asla bilgi çıkarma!
         9. SORU = BOŞ JSON, AÇIKLAMA = BİLGİ
         10. "D vitamini hakkında bilgi?" → {{}} (SORU!)
-        11. "Bilgi verir misin?" → {{}} (SORU!)
         12. "Nasıl kullanılır?" → {{}} (SORU!)
         
         DOĞRU ÖRNEKLER:
@@ -484,36 +481,22 @@ def extract_user_context_ai(message_content: str, user_id: str = None) -> dict:
         - "28 yaşındayım" → {{"yas": 28}}
         - "Ben D vitamini kullanıyorum" → {{"tercihler": ["D vitamini"]}}
         - "Hipertansiyonum var" → {{"hastaliklar": ["hipertansiyon"]}}
-        - "Ben D vitamini kullanamıyorum" → {{"alerjiler": ["D vitamini"]}}
         - "D vitamini alerjim var" → {{"alerjiler": ["D vitamini"]}}
         - "D vitamini kullanamam" → {{"alerjiler": ["D vitamini"]}}
         - "Metformin kullanıyorum" → {{"ilaclar": ["Metformin"]}}
-        - "Kalp ameliyatı oldum" → {{"ameliyatlar": ["Kalp ameliyatı"]}}
-        - "Apandisit ameliyatı geçirdim" → {{"ameliyatlar": ["Apandisit ameliyatı"]}}
         - "Aspirin kullanıyorum" → {{"ilaclar": ["Aspirin"]}}
         - "Hamileyim" → {{"ozel_durumlar": ["Hamilelik"]}}
         - "Emziriyorum" → {{"ozel_durumlar": ["Emzirme"]}}
-        - "Kanser tedavisi görüyorum" → {{"tedaviler": ["Kanser tedavisi"]}}
-        - "Kemoterapi alıyorum" → {{"tedaviler": ["Kemoterapi"]}}
-        - "Radyoterapi gördüm" → {{"tedaviler": ["Radyoterapi"]}}
-        - "Organ nakli oldum" → {{"ameliyatlar": ["Organ nakli"]}}
-        - "Kalp pili takıldı" → {{"cihazlar": ["Kalp pili"]}}
-        - "Diyaliz hastasıyım" → {{"tedaviler": ["Diyaliz"]}}
         - "Psikiyatrik ilaç kullanıyorum" → {{"ilaclar": ["Psikiyatrik ilaç"]}}
-        - "Uyku ilacı kullanıyorum" → {{"ilaclar": ["Uyku ilacı"]}}
+        
         
         YANLIŞ ÖRNEKLER (ALMA!):
         - "Diyabet için ne önerirsin?" → {{}} (SORU - bilgi değil!)
         - "PCOS için supplement önerir misin?" → {{}} (SORU - bilgi değil!)
         - "Hangi hastalığım var?" → {{}} (SORU - bilgi değil!)
         - "Ben hasta mıyım?" → {{}} (SORU - bilgi değil!)
-        
-        YANLIŞ ÖRNEKLER (ALMA!):
         - "D vitamini hakkında bilgi?" → {{}} (SORU - bilgi değil!)
-        - "Hangi hastalığım var?" → {{}} (SORU - bilgi vermiyor!)
-        - "Adım neydi?" → {{}} (SORU - bilgi vermiyor!)
-        - "Merhaba, nasılsın?" → {{}} (SORU - bilgi değil!)
-        - Session "ayse456" → {{}} (session'dan isim çıkarma!)
+       
         
         SADECE JSON döndür, açıklama ekleme!
         """

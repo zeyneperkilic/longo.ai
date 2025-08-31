@@ -219,7 +219,7 @@ async def chat_message(req: ChatMessageRequest,
     user_analyses = get_user_ai_interactions(db, user.id, limit=5)
     
     # Build enhanced system prompt with user context
-    system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! İsim anlamı, kültür, tarih, spor gibi konularda bilgi verme! Sadece sağlık konusuna odaklan!"
+    system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver,Sadece sağlık konusuna odaklan!"
     
     # Global + Local Context Sistemi - OPTIMIZED
     user_context = {}
@@ -237,32 +237,8 @@ async def chat_message(req: ChatMessageRequest,
         user_context.update(normalized_global)
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
-    if not any(user_context.get(key) for key in ["session_anormal_testler", "lab_genel_durum", "lab_tarih"]):
-        from backend.db import get_lab_test_history
-        last_lab = get_lab_test_history(db, user.id, limit=1)
-        if last_lab:
-            # Son lab verisini global context'e merge et
-            lab_context = {}
-            if last_lab[0].test_results:
-                # Test adları
-                if isinstance(last_lab[0].test_results, list):
-                    # List of dict formatında
-                    test_names = [test.get('name', '') for test in last_lab[0].test_results if test.get('name')]
-                else:
-                    # Dict formatında (eski format)
-                    test_names = list(last_lab[0].test_results.keys())
-                lab_context["session_anormal_testler"] = test_names[:5]  # İlk 5 test
-            
-            # Lab tarihi
-            lab_context["lab_tarih"] = last_lab[0].test_date.strftime("%Y-%m-%d")
-            
-            # Global context'e merge et
-            if lab_context:
-                current_global = get_user_global_context(db, user.id) or {}
-                updated_context = {**current_global, **lab_context}
-                update_user_global_context(db, user.id, updated_context)
-                # Local context'i de güncelle
-                user_context.update(lab_context)
+    # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
+    # Lab verileri hala context'te tutuluyor ama prompt'a eklenmiyor
     
     # 2. Son mesajlardan yeni context bilgilerini çıkar (ONLY IF NEEDED)
     # ÖNEMLİ: Global context user bazında olmalı, conversation bazında değil!
@@ -302,7 +278,7 @@ async def chat_message(req: ChatMessageRequest,
             # Local context'i de güncelle
             user_context.update(new_context)
     
-    # 4. KULLANICI BİLGİLERİNİ AI'YA HATIRLAT (DÖNGÜ DIŞINDA!)
+    # 4. KULLANICI BİLGİLERİNİ AI'YA HATIRLAT (LAB VERİLERİ ÇIKARILDI)
     if user_context and any(user_context.values()):
         system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
         
@@ -319,27 +295,16 @@ async def chat_message(req: ChatMessageRequest,
             
         if "hastaliklar" in user_context and user_context["hastaliklar"]:
             hastaliklar_str = ', '.join(user_context['hastaliklar']) if isinstance(user_context['hastaliklar'], list) else str(user_context['hastaliklar'])
-            system_prompt += f"DEBUG: Added diseases: {hastaliklar_str}\n"
+            system_prompt += f"HASTALIKLAR: {hastaliklar_str}\n"
             
         if "cinsiyet" in user_context and user_context["cinsiyet"]:
             system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
-        
-        # Lab verilerini de prompt'a ekle
-        if "session_anormal_testler" in user_context and user_context["session_anormal_testler"]:
-            test_str = ', '.join(user_context['session_anormal_testler']) if isinstance(user_context['session_anormal_testler'], list) else str(user_context['session_anormal_testler'])
-            system_prompt += f"ANORMAL LAB TESTLERİ: {test_str}\n"
-        
-        if "lab_genel_durum" in user_context and user_context["lab_genel_durum"]:
-            system_prompt += f"LAB GENEL DURUM: {user_context['lab_genel_durum']}\n"
-        
-        if "lab_tarih" in user_context and user_context["lab_tarih"]:
-            system_prompt += f"LAB TEST TARİHİ: {user_context['lab_tarih']}\n"
             
         system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
     else:
         # Context yoksa default prompt ekle
         system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner."
-    
+
     # User analyses context - OPTIMIZED (only add if exists)
     if user_analyses:
         system_prompt += "\n\nKULLANICI GEÇMİŞİ:\n"
@@ -363,32 +328,15 @@ async def chat_message(req: ChatMessageRequest,
     system_prompt += "\n- Off-topic konularda: 'Bu konu sağlıkla ilgili değil ama sana sağlık önerisi verebilirim'"
     system_prompt += "\n- Her durumda: Supplement önerisi yap ve sağlık konusuna çek"
     system_prompt += "\n- Örnek: 'Hava durumu yerine D vitamini eksikliği hakkında konuşalım'"
-    system_prompt += "\n\n🚫 KESİNLİKLE YASAK:"
-    system_prompt += "\n- İsim anlamı, köken, etimoloji bilgisi verme!"
-    system_prompt += "\n- Kültür, tarih, spor bilgisi verme!"
-    system_prompt += "\n- Off-topic konularda bilgi verme vedetaylar verme!"
     system_prompt += "\n- Sadece sağlık konusuna odaklan!"
-    system_prompt += "\n\n⚠️ ÖNEMLİ: Kullanıcı adını hatırla ama isim hakkında bilgi verme!"
-    system_prompt += "\n- Sadece: 'Evet [isim], seni hatırlıyorum' de!"
-    system_prompt += "\n- Sonra hemen sağlık konusuna geç!"
-    system_prompt += "\n\n⏱️ ZAMAN KISITLAMASI:"
     system_prompt += "\n- Sağlık dışı konularda konuşma!"
     system_prompt += "\n- Hemen sağlık konusuna geç!"
     system_prompt += "\n- Uzun açıklamalar yapma!"
-    system_prompt += "\n\n🔍 OTOMATİK VERİ ERİŞİMİ:"
     system_prompt += "\n- Quiz sonucu istenirse: Kullanıcının quiz geçmişini otomatik incele!"
-    system_prompt += "\n- Lab test istenirse: Kullanıcının lab test geçmişini otomatik incele!"
-    system_prompt += "\n- Prompt'ta verilen verileri kullan, kullanıcıdan tekrar isteme!"
     system_prompt += "\n- Mevcut verileri analiz et ve öneri yap!"
-    system_prompt += "\n\n🎯 AMBIGUOUS SORU YÖNLENDİRMESİ:"
     system_prompt += "\n- 'Ne alayım?', 'Bana bir şey öner', 'Ne yapayım?' gibi belirsiz sorular → HEMEN SAĞLIK!"
     system_prompt += "\n- 'Supplement öner', 'Hangi ürünleri alayım?' şeklinde yönlendir!"
-    system_prompt += "\n- Belirsiz sorularda genel sağlık paketi öner!"
-    system_prompt += "\n- Off-topic'e gitme, sadece sağlık!"
-    system_prompt += "\n\n💊 AKILLI SUPPLEMENT ÖNERİSİ:"
     system_prompt += "\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
-    system_prompt += "\n- Kullanıcının problemlerine, test sonuçlarına, eksikliklerine göre öner!"
-    system_prompt += "\n- 'Herkes için aynı paket' yerine 'kişiye özel çözüm' sun!"
     system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
     system_prompt += "\n- Değerler iyiyse Longevity, kötüyse problem çözücü öner!"
     

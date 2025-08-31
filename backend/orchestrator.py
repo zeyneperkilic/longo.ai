@@ -9,7 +9,6 @@ import re
 
 SYSTEM_HEALTH = ("Sen Longo AI'sın. SADECE sağlık/supplement/laboratuvar konularında yanıt ver. "
                  "Off-topic'te kibarca reddet. Yanıtlar bilgilendirme amaçlıdır; tanı/tedavi için hekim gerekir. "
-                 "Kullanıcının diline uygun yanıt ver. "
                  "DİL KURALI: Hangi dilde soru soruluyorsa o dilde cevap ver! "
                  "Türkçe soru → Türkçe cevap, İngilizce soru → İngilizce cevap! "
                  "KAYNAK/KAYNAKÇA EKLEME: Otomatik olarak link, site adı, referans veya citation EKLEME. Kullanıcı özellikle istemedikçe kaynak belirtme.")
@@ -17,8 +16,6 @@ SYSTEM_HEALTH = ("Sen Longo AI'sın. SADECE sağlık/supplement/laboratuvar konu
 SYSTEM_HEALTH_ENGLISH = ("You are Longo AI. Answer ONLY on health/supplement/laboratory topics. "
                           "Redeem off-topic requests. Answers are for informational purposes; a doctor is required for diagnosis/treatment. "
                           "CRITICAL: You MUST respond in ENGLISH language only! "
-                          "ONLY use English words and sentences! "
-                          "This is a strict requirement - ENGLISH ONLY! "
                           "IMPORTANT: Never use Turkish characters (ç, ğ, ı, ö, ş, ü) or Turkish words. "
                           "Your response must be 100% in English. If you cannot answer in English, do not answer at all.")
 
@@ -182,32 +179,7 @@ def cascade_chat_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     # if none acceptable, return last model name with empty content
     return {"content": "", "model_used": PARALLEL_MODELS[-1]}
 
-def build_chat_synthesis_prompt(responses: List[Dict[str, str]], user_question: str) -> List[Dict[str, str]]:
-    """Build synthesis prompt for chat responses"""
-    
-    system_prompt = (
-        SYSTEM_HEALTH + " Sen bir chat synthesis uzmanısın. "
-        "Birden fazla AI modelin verdiği yanıtları inceleyip, "
-        "en doğru, yararlı ve tutarlı yanıtı oluştur. "
-        "\n\nKurallar:"
-        "\n1. Kullanıcının sorusuna doğrudan yanıt ver"
-        "\n2. Sağlık/supplement konularında en güvenli bilgiyi ver"
-        "\n3. Off-topic sorularda kibarca reddet"
-        "\n4. Sadece nihai yanıtı döndür, 'Model 1' gibi atıflar yapma"
-        "\n5. DİL KURALI: Hangi dilde soru soruluyorsa o dilde cevap ver!"
-    )
-    
-    responses_text = f"Kullanıcı sorusu: {user_question}\n\n=== MODEL RESPONSES ===\n"
-    for i, resp in enumerate(responses, 1):
-        responses_text += f"\nMODEL {i} ({resp['model']}):\n{resp['response']}\n"
-    
-    responses_text += f"\n=== SYNTHESIS GÖREV ===\n"
-    responses_text += f"Yukarıdaki yanıtları analiz et ve kullanıcının sorusuna en iyi yanıtı oluştur."
-    
-    return [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": responses_text}
-    ]
+# Chat synthesis prompt fonksiyonu kaldırıldı - tek model kullanıldığı için gerekli değil
 
 # Keep old function for backward compatibility
 def cascade_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
@@ -325,8 +297,6 @@ def build_synthesis_prompt(responses: List[Dict[str, str]]) -> List[Dict[str, st
         "\n1. SADECE JSON formatında yanıt ver"
         "\n2. En tutarlı önerileri birleştir"
         "\n3. Çelişkili önerilerde en mantıklı olanı seç"
-        "\n4. Analysis kısmını en kapsamlı şekilde yaz"
-        "\n5. Risk level'ı en doğru şekilde değerlendir"
         "\n6. Tekrarlayan önerileri birleştir"
         "\n7. ÖNEMLI: Her öneri için 'source' alanı MUTLAKA 'consensus' olmalı"
     )
@@ -546,78 +516,19 @@ def parallel_quiz_analyze(quiz_answers: Dict[str, Any], available_supplements: L
             print("All quiz models failed, fallback to GPT-4o")
             return gpt4o_quiz_fallback(quiz_answers, available_supplements)
         
-        # Step 3: Synthesize with GPT-5 for quiz
-        synthesis_prompt = build_quiz_synthesis_prompt(responses)
-        final_result = call_chat_model(PARALLEL_MODELS[0], synthesis_prompt, temperature=0.1, max_tokens=4000)
-        if isinstance(final_result.get("content"), str):
-            final_result["content"] = _sanitize_links(final_result["content"]) 
-        
-        final_result["models_used"] = [r["model"] for r in responses]
-        final_result["synthesis_model"] = PARALLEL_MODELS[0]
-        return final_result
+        # Step 3: Tek model kullanıldığı için synthesis'e gerek yok - direkt response'u döndür
+        cleaned_response = _sanitize_links(responses[0]["response"])
+        return {
+            "content": cleaned_response,
+            "model_used": responses[0]["model"],
+            "models_used": [r["model"] for r in responses]
+        }
         
     except Exception as e:
         print(f"Quiz parallel analyze failed: {e}")
         return gpt4o_quiz_fallback(quiz_answers, available_supplements)
 
-def build_quiz_synthesis_prompt(responses: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    """Build synthesis prompt for quiz recommendations"""
-    system_prompt = (
-        SYSTEM_HEALTH + " Sen bir synthesis uzmanısın. "
-        "Birden fazla AI modelin verdiği supplement önerilerini inceleyip, "
-        "en doğru, tutarlı ve kullanışlı bir FINAL quiz sonucu üret. "
-        "\n\nKurallar:"
-        "\n1. SADECE JSON formatında yanıt ver"
-        "\n2. En uygun supplement önerilerini birleştir"
-        "\n3. Çelişkili önerilerde en güvenli olanı seç"
-        "\n4. Beslenme ve yaşam tarzı önerilerini de kapsamlı yap"
-        "\n5. Dozaj önerilerinde 'doktorunuza danışın' ekle"
-        "\n6. Priority: high/medium/low olarak belirle"
-        "\n7. MUTLAKA default supplement'leri de ekle (D Vitamini, Omega-3, Magnezyum, B12)"
-        "\n8. Default + kişiselleştirilmiş supplement'leri birleştir"
-        "\n9. MUTLAKA 'supplement_recommendations' field'ını ekle"
-        "\n10. supplement_recommendations = 4 DEFAULT (D, Omega-3, Magnezyum, B12) + 2-3 AVAILABLE listesinden"
-        "\n11. Schema: nutrition_advice, lifestyle_advice, general_warnings, supplement_recommendations, disclaimer"
-        "\n\nÖNEMLİ DEFAULT SUPPLEMENT KURALLARI:"
-        "\n- Eğer kullanıcı 'kan sulandırıcı kullanıyorum' dediyse:"
-        "\n  * Omega-3'ü default'tan ÇIKAR (kan sulandırıcı etkisi var)"
-        "\n  * Yerine 'Chia Tohumu' veya 'Keten Tohumu' ekle"
-        "\n- Eğer kullanıcı 'balık alerjim var' dediyse:"
-        "\n  * Omega-3'ü default'tan ÇIKAR"
-        "\n  * Yerine 'Chia Tohumu' veya 'Keten Tohumu' ekle"
-        "\n- Eğer kullanıcı 'diyabet hastasıyım' dediyse:"
-        "\n  * Şeker içeren supplement'leri ÇIKAR"
-        "\n  * Yerine 'Chromium' veya 'Cinnamon' ekle"
-        "\n\nSONUÇ: supplement_recommendations'da hem güvenli default'lar hem de kişiselleştirilmiş öneriler olmalı!"
-        "\n\nMUTLAKA UYGULA:"
-        "\n- Quiz'de 'kan sulandırıcı' geçiyorsa Omega-3'ü ÇIKAR!"
-        "\n- Quiz'de 'balık alerjisi' geçiyorsa Omega-3'ü ÇIKAR!"
-        "\n- Quiz'de 'diyabet' geçiyorsa şekerli supplement'leri ÇIKAR!"
-        "\n- Çıkarılan supplement'lerin yerine alternatifleri EKLE!"
-        "\n\n🚨 E-TİCARET STRATEJİSİ - HER DURUMDA ÜRÜN SAT!"
-        "\n- Eğer kullanıcının hiçbir sağlık sorunu yoksa:"
-        "\n  * 4 DEFAULT + 2-3 LONGEVITY = 6-7 Supplement"
-        "\n  * Longevity kategorisinden config'deki 45 üründen seç (Resveratrol, NMN/NR, Astaksantin, Ashwagandha, Koenzim Q10, Zeaksantin, Kurkumin, vs.)"
-        "\n- Eğer kullanıcının sağlık sorunu varsa:"
-        "\n  * 4 DEFAULT + 2-3 SORUNA ÖZEL = 6-7 Supplement"
-        "\n- HER ZAMAN EN AZ 6 SUPPLEMENT ÖNER!"
-        "\n- AMAÇ: ÜRÜN SATMAK VE KULLANICI SAĞLIĞINI KORUMAK!"
-    )
-    
-    responses_text = "\n\n=== MODEL RESPONSES ===\n"
-    for i, resp in enumerate(responses, 1):
-        responses_text += f"\nMODEL {i} ({resp['model']}):\n{resp['response']}\n"
-    
-    responses_text += "\n=== SYNTHESIS GÖREV ===\n"
-    responses_text += (
-        "Yukarıdaki supplement önerilerini analiz et ve en iyi quiz sonucunu oluştur. "
-        "E-ticaret sitesi için uygun ürün önerileri hazırla."
-    )
-    
-    return [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": responses_text}
-    ]
+# Quiz synthesis prompt fonksiyonu kaldırıldı - tek model kullanıldığı için gerekli değil
 
 def gpt4o_quiz_fallback(quiz_answers: Dict[str, Any], available_supplements: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Fallback to GPT-4o for quiz analysis when GPT-5 fails"""
@@ -1084,14 +995,13 @@ def parallel_single_lab_analyze(test_data: Dict[str, Any], historical_results: L
             print("No successful responses, using GPT-4o fallback")
             return gpt4o_lab_fallback(test_data, historical_results)
         
-        # Synthesis
-        synthesis_prompt = build_lab_synthesis_prompt(responses, "single")
-        final_result = call_chat_model(PARALLEL_MODELS[0], synthesis_prompt, temperature=0.1, max_tokens=1500)
-        if isinstance(final_result.get("content"), str):
-            final_result["content"] = _sanitize_links(final_result["content"]) 
-        
-        final_result["models_used"] = [r["model"] for r in responses]
-        return final_result
+        # Tek model kullanıldığı için synthesis'e gerek yok - direkt response'u döndür
+        cleaned_response = _sanitize_links(responses[0]["response"])
+        return {
+            "content": cleaned_response,
+            "model_used": responses[0]["model"],
+            "models_used": [r["model"] for r in responses]
+        }
         
     except Exception as e:
         print(f"Single lab analyze failed: {e}")
@@ -1241,115 +1151,21 @@ def parallel_multiple_lab_analyze(tests_data: List[Dict[str, Any]], session_coun
             print("No successful responses, using GPT-4o fallback")
             return gpt4o_multiple_lab_fallback(tests_data, session_count, available_supplements, user_profile)
         
-        # Synthesis
-        synthesis_prompt = build_lab_synthesis_prompt(responses, "multiple")
-        final_result = call_chat_model(PARALLEL_MODELS[0], synthesis_prompt, temperature=0.1, max_tokens=2500)
-        if isinstance(final_result.get("content"), str):
-            final_result["content"] = _sanitize_links(final_result["content"]) 
-        
-        final_result["models_used"] = [r["model"] for r in responses]
-        return final_result
+        # Tek model kullanıldığı için synthesis'e gerek yok - direkt response'u döndür
+        cleaned_response = _sanitize_links(responses[0]["response"])
+        return {
+            "content": cleaned_response,
+            "model_used": responses[0]["model"],
+            "models_used": [r["model"] for r in responses]
+        }
         
     except Exception as e:
         print(f"Multiple lab analyze failed: {e}")
         return gpt4o_multiple_lab_fallback(tests_data, session_count, available_supplements, user_profile)
 
-def build_session_synthesis_prompt(responses: List[Dict[str, str]], analysis_type: str) -> List[Dict[str, str]]:
-    """Build synthesis prompt for session analysis"""
-    system_prompt = (
-        SYSTEM_HEALTH + " Sen bir laboratuvar seans analizi synthesis uzmanısın. "
-        "Birden fazla AI modelin verdiği seans analiz sonuçlarını inceleyip, "
-        "en doğru, tutarlı ve faydalı bir FINAL seans analizi üret. "
-        "\n\nKurallar:"
-        "\n1. SADECE JSON formatında yanıt ver"
-        "\n2. En tutarlı analizleri birleştir"
-        "\n3. Test gruplarını doğru kategorize et"
-        "\n4. Genel sağlık yorumunu geliştir"
-        "\n5. Önerileri birleştir ve optimize et"
-        "\n6. DİL: SADECE TÜRKÇE YANIT VER!"
-    )
-    
-    responses_text = "\n\n=== MODEL RESPONSES ===\n"
-    for i, resp in enumerate(responses, 1):
-        responses_text += f"\nMODEL {i} ({resp['model']}):\n{resp['response']}\n"
-    
-    responses_text += "\n=== SYNTHESIS GÖREV ===\n"
-    responses_text += (
-        "Yukarıdaki seans analiz sonuçlarını analiz et ve tek bir tutarlı JSON oluştur. "
-        "Test gruplarını, özet istatistikleri ve genel önerileri optimize et."
-    )
-    
-    return [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": responses_text}
-    ]
+# Session synthesis prompt fonksiyonu kaldırıldı - tek model kullanıldığı için gerekli değil
 
-def build_lab_synthesis_prompt(responses: List[Dict[str, str]], analysis_type: str) -> List[Dict[str, str]]:
-    """Build synthesis prompt for lab analysis"""
-    
-    if analysis_type == "single":
-        system_prompt = (
-            SYSTEM_HEALTH + " Sen bir laboratuvar analizi synthesis uzmanısın. "
-            "Birden fazla AI modelin verdiği tek test analizlerini inceleyip, "
-            "en doğru ve kapsamlı analizi üret. "
-            "\n\nKurallar:"
-            "\n1. SADECE JSON formatında yanıt ver"
-            "\n2. SADECE ANALİZ yap, supplement/ilaç önerisi verme"
-            "\n3. En doğru ve tutarlı yorumu birleştir"
-            "\n4. Klinik anlamı net açıkla"
-            "\n5. Genel tıbbi takip önerileri ver"
-            "\n6. Kullanıcının diline uygun yanıt ver"
-        )
-    else:  # multiple
-        system_prompt = (
-            SYSTEM_HEALTH + " Sen bir laboratuvar analizi ve sağlık danışmanlığı synthesis uzmanısın. "
-            "Birden fazla AI modelin verdiği genel lab analizlerini inceleyip, "
-            "en doğru ve kapsamlı analizi üret. "
-            "\n\nKurallar:"
-            "\n1. SADECE JSON formatında yanıt ver"
-            "\n2. Genel sağlık durumu değerlendirmesi yap"
-            "\n3. Günlük hayat önerileri ver (egzersiz, beslenme, uyku, stres)"
-            "\n4. Eksik değerler için supplement önerileri yap"
-            "\n5. Her test için detaylı yorum ekle"
-            "\n6. Tıbbi tanı koyma, sadece bilgilendirme amaçlı öneriler ver"
-            "\n7. Kullanıcının diline uygun yanıt ver"
-            "\n8. test_details field'ını DICT olarak ver, LIST değil!"
-            "\n9. test_details formatı: {'test_name': {'interpretation': '...', 'clinical_significance': '...', 'recommendations': [...]}}"
-            "\n\n🚨 MUTLAK SUPPLEMENT KURALI (QUIZ GİBİ):"
-            "\n- KESINLIKLE 6-7 ürün öner (4 default + 2-3 ekstra)"
-            "\n- 4 DEFAULT SUPPLEMENT (her zaman): D Vitamini, Omega-3, Magnezyum, B12 Vitamini"
-            "\n- 2-3 EKSTRA SUPPLEMENT (lab sonuçlarına göre): Demir, C Vitamini, Selenyum, vs."
-            "\n\nLAB SONUÇLARINA GÖRE AKILLI ÇIKARMA:"
-            "\n- D Vitamini normal/yüksekse → D Vitamini'ni çıkar, yerine Selenyum ekle"
-            "\n- B12 normal/yüksekse → B12'yi çıkar, yerine Çinko ekle"
-            "\n- Magnezyum normal/yüksekse → Magnezyum'u çıkar, yerine Potasyum ekle"
-            "\n- Omega-3 normal/yüksekse → Omega-3'ü çıkar, yerine Chia Tohumu ekle"
-            "\n\nRİSK DURUMLARINDA ÇIKARMA:"
-            "\n- Böbrek sorunu varsa → Magnezyum'u çıkar, yerine B6 Vitamini ekle"
-            "\n- Kan sulandırıcı varsa → Omega-3'ü çıkar, yerine Chia Tohumu ekle"
-            "\n- Tiroit sorunu varsa → İyot'u çıkar, yerine Selenyum ekle"
-            "\n- Mide sorunu varsa → Demir'i çıkar, yerine B12 Vitamini ekle"
-            "\n\nMUTLAKA UYGULA:"
-            "\n- Lab'da 'D Vitamini normal/yüksek' geçiyorsa D Vitamini'ni ÇIKAR!"
-            "\n- Lab'da 'B12 normal/yüksek' geçiyorsa B12'yi ÇIKAR!"
-            "\n- Lab'da 'Magnezyum normal/yüksek' geçiyorsa Magnezyum'u ÇIKAR!"
-            "\n- Lab'da 'Omega-3 normal/yüksek' geçiyorsa Omega-3'ü ÇIKAR!"
-            "\n- ÇIKARILAN HER SUPPLEMENT'İN YERİNE ALTERNATİF EKLE!"
-            "\n- HER ZAMAN 6-7 SUPPLEMENT OLSUN!"
-        )
-    
-    responses_text = "\n\n=== MODEL RESPONSES ===\n"
-    for i, resp in enumerate(responses, 1):
-        responses_text += f"\nMODEL {i} ({resp['model']}):\n{resp['response']}\n"
-    
-    task_desc = "tek test analizi" if analysis_type == "single" else "kapsamlı genel test analizi"
-    responses_text += f"\n=== SYNTHESIS GÖREV ===\n"
-    responses_text += f"Yukarıdaki {task_desc} sonuçlarını analiz et ve en iyi laboratuvar yorumu oluştur."
-    
-    return [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": responses_text}
-    ]
+# Lab synthesis prompt fonksiyonu kaldırıldı - tek model kullanıldığı için gerekli değil
 
 def gpt4o_lab_fallback(test_data: Dict[str, Any], historical_results: List[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Fallback to GPT-4o for lab analysis when GPT-5 fails"""
