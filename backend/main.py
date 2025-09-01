@@ -504,6 +504,24 @@ async def chat_message(req: ChatMessageRequest,
     system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
     system_prompt += "\n- Değerler iyiyse Longevity, kötüyse problem çözücü öner!"
     
+    # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
+    lab_info = ""
+    if user_context and "son_lab_test" in user_context and user_context["son_lab_test"]:
+        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
+        lab_info += f"SON LAB TEST: {user_context['son_lab_test']}\n"
+        
+        if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
+            lab_info += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
+            
+        if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
+            lab_info += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
+            
+        if "lab_tarih" in user_context and user_context["lab_tarih"]:
+            lab_info += f"LAB TARİH: {user_context['lab_tarih']}\n"
+        
+        lab_info += "\n"
+        print(f"🔍 DEBUG: Lab verileri user message'a da eklendi!")
+    
     # Supplement listesini user message olarak ekle (quiz'deki gibi)
     # Kategori bazlı gruplandırma - token tasarrufu için
     categories = list(set([s['category'] for s in supplements_list]))
@@ -529,6 +547,11 @@ async def chat_message(req: ChatMessageRequest,
     print(f"🔍 DEBUG: Prompt uzunluğu: {len(system_prompt)} karakter")
     
     history = [{"role": "system", "content": system_prompt, "context_data": user_context}]
+    
+    # Lab verilerini user message olarak ekle (AI'nin kesinlikle görmesi için)
+    if lab_info:
+        history.append({"role": "user", "content": lab_info})
+        print(f"🔍 DEBUG: Lab user message history'e eklendi!")
     
     # Supplement listesi user message olarak ekle (quiz'deki gibi)
     history.append({"role": "user", "content": supplements_info})
