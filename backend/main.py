@@ -92,8 +92,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve widget js and static frontend (optional)
-# app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# Serve widget js and static frontend
+app.mount("/widget", StaticFiles(directory="backend/widget"), name="widget")
 
 @app.get("/health")
 def health_check():
