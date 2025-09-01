@@ -422,43 +422,57 @@ async def chat_message(req: ChatMessageRequest,
             user_context.update(new_context)
     
     # 4. KULLANICI BİLGİLERİNİ AI'YA HATIRLAT (LAB VERİLERİ ÇIKARILDI)
+    print(f"🔍 DEBUG: Chat endpoint'inde user_context: {user_context}")
+    
     if user_context and any(user_context.values()):
         system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
+        print(f"🔍 DEBUG: Kullanıcı bilgileri prompt'a ekleniyor...")
         
         # String ve integer değerler için özel format
         if "isim" in user_context and user_context["isim"]:
             system_prompt += f"KULLANICI ADI: {user_context['isim']}\n"
+            print(f"🔍 DEBUG: Kullanıcı adı eklendi: {user_context['isim']}")
             
         if "yas" in user_context and user_context["yas"]:
             system_prompt += f"KULLANICI YAŞI: {user_context['yas']} yaşında\n"
+            print(f"🔍 DEBUG: Kullanıcı yaşı eklendi: {user_context['yas']}")
             
         if "tercihler" in user_context and user_context["tercihler"]:
             tercihler_str = ', '.join(user_context['tercihler']) if isinstance(user_context['tercihler'], list) else str(user_context['tercihler'])
             system_prompt += f"KULLANICI TERCİHLERİ: {tercihler_str}\n"
+            print(f"🔍 DEBUG: Kullanıcı tercihleri eklendi: {tercihler_str}")
             
         if "hastaliklar" in user_context and user_context["hastaliklar"]:
             hastaliklar_str = ', '.join(user_context['hastaliklar']) if isinstance(user_context['hastaliklar'], list) else str(user_context['hastaliklar'])
             system_prompt += f"HASTALIKLAR: {hastaliklar_str}\n"
+            print(f"🔍 DEBUG: Hastalıklar eklendi: {hastaliklar_str}")
             
         if "cinsiyet" in user_context and user_context["cinsiyet"]:
             system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
+            print(f"🔍 DEBUG: Kullanıcı cinsiyeti eklendi: {user_context['cinsiyet']}")
         
         # Lab verilerini de göster
         if "son_lab_test" in user_context and user_context["son_lab_test"]:
             system_prompt += f"SON LAB TEST: {user_context['son_lab_test']}\n"
+            print(f"🔍 DEBUG: Son lab test eklendi: {user_context['son_lab_test']}")
             
         if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
             system_prompt += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
+            print(f"🔍 DEBUG: Son lab değer eklendi: {user_context['son_lab_deger']}")
             
         if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
             system_prompt += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
+            print(f"🔍 DEBUG: Son lab durum eklendi: {user_context['son_lab_durum']}")
             
         if "lab_tarih" in user_context and user_context["lab_tarih"]:
             system_prompt += f"LAB TARİH: {user_context['lab_tarih']}\n"
+            print(f"🔍 DEBUG: Lab tarih eklendi: {user_context['lab_tarih']}")
             
+        print(f"🔍 DEBUG: Final system prompt lab verileri ile hazırlandı!")
         system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını, hastalığını veya lab sonuçlarını sorduğunda yukarıdaki bilgilerle cevap ver!"
     else:
         # Context yoksa default prompt ekle
+        print(f"🔍 DEBUG: User context boş, default prompt kullanılıyor!")
         system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner."
 
     # User analyses context - OPTIMIZED (only add if exists)
