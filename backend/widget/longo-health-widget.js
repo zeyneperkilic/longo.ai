@@ -2,6 +2,10 @@
 (function() {
     'use strict';
     
+    // Test için değişkenler (Ideasoft'ta gerçek değerler gelecek)
+    window.longoUserPlan = 'free'; // 'free', 'premium', 'premium_plus'
+    window.longoRealUserId = null; // Premium kullanıcılar için gerçek user ID
+    
     // CSS Stillerini ekle
     const widgetStyles = `
         <style>
@@ -835,6 +839,17 @@
         return userId;
     }
     
+    // Chat için user ID seçimi (Free: Session ID, Premium: Real ID)
+    function getUserIdForChat() {
+        const userPlan = window.longoUserPlan || 'free';
+        
+        if (userPlan === 'free') {
+            return getSessionUserId(); // Session-based ID
+        } else {
+            return window.longoRealUserId; // Gerçek user ID
+        }
+    }
+    
     // Widget HTML oluştur
     function createWidget() {
         const widgetHTML = `
@@ -1151,7 +1166,7 @@
                 headers: {
                     'username': 'longopass',
                     'password': '123456',
-                    'x-user-id': getSessionUserId(),
+                    'x-user-id': getUserIdForChat(),
                     'x-user-plan': window.longoUserPlan || 'free',
                     'Content-Type': 'application/json'
                 },
@@ -1210,7 +1225,7 @@
                 headers: {
                     'username': 'longopass',
                     'password': '123456',
-                    'x-user-id': getSessionUserId(),
+                    'x-user-id': getUserIdForChat(),
                     'x-user-plan': window.longoUserPlan || 'free',
                     'Content-Type': 'application/json'
                 },

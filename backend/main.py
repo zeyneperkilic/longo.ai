@@ -50,11 +50,20 @@ def get_conversation_by_user_based_id(db: Session, user_id: int, user_based_conv
     # Kullanıcının conversation'larını tarihe göre sırala (eskiden yeniye)
     conversations = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.started_at.asc()).all()
     
-    # user_based_conv_id (1, 2, 3...) ile indexle
+    # user_based_conv_id (1, 2,3...) ile indexle
     if user_based_conv_id <= 0 or user_based_conv_id > len(conversations):
         return None
     
     return conversations[user_based_conv_id - 1]  # 1-based to 0-based
+
+def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
+    """Chat için user ID validasyonu (Free: Session ID, Premium: Real ID)"""
+    if user_plan in ['premium', 'premium_plus']:
+        # Premium için session ID kabul etme
+        return not user_id.startswith('session-')
+    else:
+        # Free için her türlü ID kabul et
+        return True
 
 app = FastAPI(title="Longopass AI Gateway")
 
@@ -205,6 +214,10 @@ def chat_start(body: ChatStartRequest = None,
     user_plan = x_user_plan or "free"
     is_premium = user_plan in ["premium", "premium_plus"]
     
+    # User ID validasyonu (Free: Session ID, Premium: Real ID)
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
+    
     # Free kullanıcılar için session-based conversation
     if not is_premium:
         # Free kullanıcılar için basit conversation ID (session-based)
@@ -244,6 +257,10 @@ def chat_history(conversation_id: int,
     user_plan = x_user_plan or "free"
     is_premium = user_plan in ["premium", "premium_plus"]
     
+    # User ID validasyonu (Free: Session ID, Premium: Real ID)
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
+    
     # Free kullanıcılar için session-based history (boş)
     if not is_premium:
         return []  # Free kullanıcılar için geçmiş yok
@@ -274,6 +291,10 @@ async def chat_message(req: ChatMessageRequest,
     # Plan kontrolü
     user_plan = x_user_plan or "free"
     is_premium = user_plan in ["premium", "premium_plus"]
+    
+    # User ID validasyonu (Free: Session ID, Premium: Real ID)
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
     
     # Free kullanıcılar için session-based chat
     if not is_premium:
