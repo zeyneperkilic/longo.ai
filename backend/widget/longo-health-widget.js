@@ -5,7 +5,7 @@
     // CSS Stillerini ekle
     const widgetStyles = `
         <style>
-        /* Longo Health Widget - Kahve.com Tasarımına Uygun + Longo Karakteri */
+        
 
         #longo-health-widget {
             position: fixed;
@@ -13,6 +13,23 @@
             right: 20px;
             z-index: 10000;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Widget kapsami: kutu modelini sabitle */
+        #longo-health-widget, #longo-health-widget * {
+            box-sizing: border-box !important;
+        }
+
+        /* Tema cakismalarini engelle: input & button reset */
+        #longo-health-widget input, #longo-health-widget button {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            line-height: 1 !important;
+            font-size: 15px !important;
+            border-radius: 30px !important;
         }
 
         
@@ -327,8 +344,10 @@
             background: rgba(255, 255, 255, 0.05);
             border-top: 1px solid rgba(255, 255, 255, 0.15);
             display: flex;
+            align-items: center; /* Safari dikey hizalama */
             gap: 15px;
             backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
             position: absolute;
             bottom: 0;
             left: 0;
@@ -339,7 +358,8 @@
 
         #longo-message-input {
             flex: 1;
-            padding: 18px 24px;
+            padding: 0 24px;
+            height: 48px; /* butonla hizalı sabit yükseklik */
             border: 2px solid rgba(59, 130, 246, 0.3);
             border-radius: 30px;
             font-size: 15px;
@@ -347,8 +367,10 @@
             transition: all 0.3s ease;
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             color: #1e293b;
             font-weight: 500;
+            box-sizing: border-box; /* Safari padding-border hesaplaması */
         }
 
         #longo-message-input:focus {
@@ -362,7 +384,7 @@
             background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
             color: white;
             border: none;
-            padding: 18px 26px;
+            padding: 0 26px;
             border-radius: 30px;
             cursor: pointer;
             font-weight: 600;
@@ -372,6 +394,17 @@
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            /* Safari/iOS uyumluluğu */
+            -webkit-appearance: none;
+            appearance: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 48px;
+            line-height: 1;
+            -webkit-font-smoothing: antialiased;
+            box-sizing: border-box;
+            min-width: 96px; /* label kesilmesini engelle */
         }
 
         .longo-send-btn::before {
@@ -607,19 +640,29 @@
     // CSS'i head'e ekle
     document.head.insertAdjacentHTML('beforeend', widgetStyles);
     
+    // Session-based user ID yönetimi
+    function getSessionUserId() {
+        let userId = sessionStorage.getItem('longo_session_user_id');
+        if (!userId) {
+            userId = 'session-user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem('longo_session_user_id', userId);
+        }
+        return userId;
+    }
+    
     // Widget HTML oluştur
     function createWidget() {
         const widgetHTML = `
             <div id="longo-health-widget">
                 <div id="chat-button" onclick="longoToggleChat()" title="Longo Sağlık Asistanı">
-                    <img src="longo.jpeg" alt="Longo" class="chat-button-image">
+                    <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo" class="chat-button-image">
                     <div class="pulse-ring"></div>
                 </div>
                 
                 <div id="longo-chat-window" style="display: none;">
                     <div id="longo-chat-header">
                         <h3>
-                            <img src="longo.jpeg" alt="Longo" class="header-longo-icon">
+                            <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo" class="header-longo-icon">
                             Longo AI
                         </h3>
                         <button onclick="longoCloseChat()" class="longo-close-btn">✕</button>
@@ -627,7 +670,8 @@
                     
                     <div id="longo-chat-messages">
                         <div class="longo-welcome-message">
-                            <p>Merhaba! Ben Longo, senin sağlık asistanın</p>
+                            <p>Merhaba! Ben Longo, sağlık asistanın.</p>
+                            <p>Nasıl yardımcı olabilirim?</p>
                             
                             
                         </div>
@@ -635,7 +679,7 @@
                         <!-- Longo Karakteri -->
                         <div class="longo-character-area">
                             <div class="longo-character">
-                                <img src="longo.jpeg" alt="Longo AI Asistan" class="longo-image">
+                                <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo AI Asistan" class="longo-image">
                             </div>
                             <div class="longo-character-text"></div>
                         </div>
@@ -764,6 +808,49 @@
         }
     }
     
+    // Conversation ID state - sessionStorage'da sakla
+    function getConversationId() {
+        return sessionStorage.getItem('longo_conversation_id');
+    }
+    
+    function setConversationId(id) {
+        if (id) {
+            sessionStorage.setItem('longo_conversation_id', id);
+        } else {
+            sessionStorage.removeItem('longo_conversation_id');
+        }
+    }
+    
+    // Chat start endpoint
+    async function startConversation() {
+        try {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
+            
+            const response = await fetch(`${apiUrl}/ai/chat/start`, {
+                method: 'POST',
+                headers: {
+                    'username': 'longopass',
+                    'password': '123456',
+                    'x-user-id': getSessionUserId(),
+                    'x-user-plan': 'premium',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.conversation_id;
+        } catch (error) {
+            console.error('Error starting conversation:', error);
+            return null;
+        }
+    }
+    
     // Mesaj gönder
     window.longoSendMessage = async function() {
         const input = document.getElementById('longo-message-input');
@@ -785,22 +872,38 @@
         
         // API'ye gönder
         try {
+            // Start conversation if needed
+            let conversationId = getConversationId();
+            if (!conversationId) {
+                conversationId = await startConversation();
+                if (!conversationId) {
+                    throw new Error('Konuşma başlatılamadı');
+                }
+                setConversationId(conversationId);
+            }
+            
             // Local veya production için URL seç
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiUrl = isLocal ? 'http://localhost:8000/ai/chat' : 'https://longo-ai.onrender.com/ai/chat';
+            const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
             
-            const response = await fetch(apiUrl, {
+            const response = await fetch(`${apiUrl}/ai/chat`, {
                 method: 'POST',
                 headers: {
                     'username': 'longopass',
                     'password': '123456',
+                    'x-user-id': getSessionUserId(),
+                    'x-user-plan': 'premium',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    message: message,
-                    conv_id: 1
+                    conversation_id: conversationId,
+                    text: message
                 })
             });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             
             const result = await response.json();
             
@@ -811,6 +914,7 @@
             longoAddMessage('assistant', result.reply);
             
         } catch (error) {
+            console.error('Error sending message:', error);
             longoRemoveTypingIndicator();
             longoAddMessage('assistant', 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.');
         } finally {
@@ -825,7 +929,11 @@
         const messagesDiv = document.getElementById('longo-chat-messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = `longo-message ${role} ${type}`;
-        messageDiv.innerHTML = `<p>${content}</p>`;
+        
+        // XSS güvenliği için textContent kullan
+        const paragraph = document.createElement('p');
+        paragraph.textContent = content;
+        messageDiv.appendChild(paragraph);
         
         // Başlangıçta görünmez yap
         messageDiv.style.opacity = '0';
