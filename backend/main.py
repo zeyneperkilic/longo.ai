@@ -111,14 +111,111 @@ def longo_image():
     from fastapi.responses import FileResponse
     return FileResponse("backend/widget/longo.jpeg")
 
-# ---------- CHAT (PREMIUM) ----------
+# ---------- FREE USER SESSION-BASED CHAT ----------
+
+async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
+    """Free kullanıcılar için session-based chat handler"""
+    from backend.cache_utils import get_session_question_count, increment_session_question_count
+    
+    # Session-based question count kontrolü
+    question_count = get_session_question_count(x_user_id)
+    
+    # 10 soru limiti kontrolü
+    if question_count >= 10:
+        return ChatResponse(
+            conversation_id=0,
+            reply="LIMIT_POPUP:🎯 Günlük 10 soru limitiniz doldu! Yarın tekrar konuşmaya devam edebilirsiniz. 💡 Premium plana geçerek sınırsız soru sorma imkanına sahip olun!",
+            latency_ms=0
+        )
+    
+    # Soru sayısını artır
+    increment_session_question_count(x_user_id)
+    
+    # Health Guard ile kategori kontrolü
+    message_text = req.text or req.message
+    if not message_text:
+        raise HTTPException(400, "Mesaj metni gerekli")
+    
+    ok, msg = guard_or_message(message_text)
+    if not ok:
+        return ChatResponse(conversation_id=0, reply=msg, latency_ms=0)
+    
+    # Selamlama kontrolü
+    txt = message_text.lower().strip()
+    pure_greeting_keywords = [
+        "selam", "naber", "günaydın", "gunaydin",
+        "iyi akşamlar", "iyi aksamlar", "iyi geceler", "iyi günler", "iyi gunler"
+    ]
+    
+    if any(kw == txt for kw in pure_greeting_keywords):
+        reply = f"Merhaba! Ben Longo AI. Sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim? (Kalan soru: {10 - question_count})"
+        return ChatResponse(conversation_id=0, reply=reply, latency_ms=0)
+    
+    # AI yanıtı için OpenRouter kullan
+    try:
+        from backend.openrouter_client import get_ai_response
+        
+        # Tüm kullanıcılar için aynı kalitede prompt
+        system_prompt = """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. 
+        Off-topic'te kibarca reddet. KAYNAK EKLEME!
+        
+        🚨 SAĞLIK YÖNLENDİRME: Her konuyu sağlık alanına çek!
+        ❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında detaya girme!
+        
+        Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!"""
+        
+        # Kalan soru sayısını belirt
+        user_message = f"{message_text}\n\nNot: Bu kullanıcının kalan soru hakkı: {10 - question_count}"
+        
+        ai_response = await get_ai_response(
+            system_prompt=system_prompt,
+            user_message=user_message,
+            model="openai/gpt-5-chat:online"  # Tüm kullanıcılar için aynı kalite
+        )
+        
+        # Kalan soru sayısını yanıta ekle
+        reply = f"{ai_response}\n\n💡 Kalan soru hakkınız: {10 - question_count - 1}"
+        
+        return ChatResponse(conversation_id=0, reply=reply, latency_ms=0)
+        
+    except Exception as e:
+        print(f"Free user chat error: {e}")
+        return ChatResponse(
+            conversation_id=0,
+            reply="Üzgünüm, şu anda yanıt veremiyorum. Lütfen daha sonra tekrar deneyin.",
+            latency_ms=0
+        )
+
+# ---------- PREMIUM USER DATABASE-BASED CHAT ----------
 
 @app.post("/ai/chat/start", response_model=ChatStartResponse)
 def chat_start(body: ChatStartRequest = None,
                db: Session = Depends(get_db),
                x_user_id: str | None = Header(default=None),
                x_user_plan: str | None = Header(default=None)):
-    user = get_or_create_user(db, x_user_id, x_user_plan)
+    
+    # Plan kontrolü
+    user_plan = x_user_plan or "free"
+    is_premium = user_plan in ["premium", "premium_plus"]
+    
+    # Free kullanıcılar için session-based conversation
+    if not is_premium:
+        # Free kullanıcılar için basit conversation ID (session-based)
+        from backend.cache_utils import get_session_question_count
+        question_count = get_session_question_count(x_user_id or "anonymous")
+        
+        # 10 soru limiti kontrolü
+        if question_count >= 10:
+            return ChatStartResponse(
+                conversation_id=0,
+                detail="🎯 Günlük 10 soru limitiniz doldu! Yarın tekrar konuşmaya devam edebilirsiniz. 💡 Premium plana geçerek sınırsız soru sorma imkanına sahip olun!"
+            )
+        
+        # Free kullanıcılar için session-based conversation ID
+        return ChatStartResponse(conversation_id=1)  # Her zaman 1, session'da takip edilir
+    
+    # Premium kullanıcılar için database-based conversation
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # Bu kullanıcının kaç conversation'ı var? +1 yaparak user-based ID oluştur
     user_conv_count = db.query(Conversation).filter(Conversation.user_id == user.id).count()
@@ -135,7 +232,17 @@ def chat_history(conversation_id: int,
                  db: Session = Depends(get_db),
                  x_user_id: str | None = Header(default=None),
                  x_user_plan: str | None = Header(default=None)):
-    user = get_or_create_user(db, x_user_id, x_user_plan)
+    
+    # Plan kontrolü
+    user_plan = x_user_plan or "free"
+    is_premium = user_plan in ["premium", "premium_plus"]
+    
+    # Free kullanıcılar için session-based history (boş)
+    if not is_premium:
+        return []  # Free kullanıcılar için geçmiş yok
+    
+    # Premium kullanıcılar için database-based history
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # User-based conversation ID'yi real DB ID'ye çevir
     conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
@@ -156,7 +263,17 @@ async def chat_message(req: ChatMessageRequest,
                   db: Session = Depends(get_db),
                   x_user_id: str | None = Header(default=None),
                   x_user_plan: str | None = Header(default=None)):
-    user = get_or_create_user(db, x_user_id, x_user_plan)  # Asıl site zaten kontrol ediyor
+    
+    # Plan kontrolü
+    user_plan = x_user_plan or "free"
+    is_premium = user_plan in ["premium", "premium_plus"]
+    
+    # Free kullanıcılar için session-based chat
+    if not is_premium:
+        return await handle_free_user_chat(req, x_user_id)
+    
+    # Premium kullanıcılar için database-based chat
+    user = get_or_create_user(db, x_user_id, user_plan)
 
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
@@ -167,8 +284,6 @@ async def chat_message(req: ChatMessageRequest,
     conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
     if not conv:
         raise HTTPException(404, "Konuşma bulunamadı")
-
-    # Günlük chat limiti kaldırıldı - Gereksiz
 
     # Global context'i önce al (hafıza sorusu için gerekli)
     global_context = get_user_global_context(db, user.id)
@@ -319,7 +434,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Supplement listesi kuralları (quiz'deki gibi)
     system_prompt += "\n- MUTLAKA sadece user message'da verilen supplement listesindeki ürünleri öner başka ürün sakın önerme!"
-    system_prompt += "\n- Sakın Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
+    system_prompt += "\n- Sakın ürünlerin id'lerini, Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
     system_prompt += "\n- DİL: SADECE TÜRKÇE YANIT VER!"
     system_prompt += "\n\n🎯 SAĞLIK YÖNLENDİRME STRATEJİSİ:"
     system_prompt += "\n- Off-topic konularda: 'Bu konu sağlıkla ilgili değil ama sana sağlık önerisi verebilirim'"

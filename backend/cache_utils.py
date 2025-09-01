@@ -71,6 +71,30 @@ class MemoryCache:
 # Global cache instance
 cache = MemoryCache()
 
+# Session-based question count cache (free users için)
+session_question_cache = MemoryCache()
+
+def get_session_question_count(user_id: str) -> int:
+    """Free kullanıcının günlük soru sayısını getir"""
+    key = f"free_user_questions:{user_id}"
+    count = session_question_cache.get(key)
+    return count if count is not None else 0
+
+def increment_session_question_count(user_id: str) -> int:
+    """Free kullanıcının günlük soru sayısını artır"""
+    key = f"free_user_questions:{user_id}"
+    current_count = get_session_question_count(user_id)
+    new_count = current_count + 1
+    
+    # 24 saat TTL (günlük reset için)
+    session_question_cache.set(key, new_count, ttl_seconds=86400)
+    return new_count
+
+def reset_session_question_count(user_id: str) -> None:
+    """Free kullanıcının günlük soru sayısını sıfırla"""
+    key = f"free_user_questions:{user_id}"
+    session_question_cache.delete(key)
+
 def cached(ttl_seconds: int = 300, key_prefix: str = ""):
     """
     Decorator for caching function results

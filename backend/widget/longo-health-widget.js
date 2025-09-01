@@ -184,6 +184,191 @@
             transform: scale(1.1) rotate(90deg);
             border-color: rgba(255, 255, 255, 0.4);
         }
+        
+        /* Plan Badge Stilleri */
+        .plan-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .plan-badge.free {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border-color: rgba(255, 193, 7, 0.5);
+        }
+        
+        .plan-badge.premium {
+            background: rgba(156, 39, 176, 0.2);
+            color: #9c27b0;
+            border-color: rgba(156, 39, 176, 0.5);
+        }
+        
+        .plan-badge.premium-plus {
+            background: rgba(255, 87, 34, 0.2);
+            color: #ff5722;
+            border-color: rgba(255, 87, 34, 0.5);
+        }
+        
+        /* Limit Popup Stilleri */
+        .limit-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 10004;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .limit-popup-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideUp 0.4s ease;
+        }
+        
+        .limit-popup-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 25px 30px 20px;
+            border-radius: 25px 25px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .limit-popup-header h3 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .popup-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .popup-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .limit-popup-body {
+            padding: 30px;
+        }
+        
+        .limit-popup-body p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 25px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        
+        .limit-popup-features {
+            margin-bottom: 30px;
+        }
+        
+        .limit-popup-features h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .limit-popup-features ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .limit-popup-features li {
+            padding: 8px 0;
+            color: #555;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .limit-popup-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .limit-popup-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .popup-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+        
+        .popup-btn.secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+        
+        .popup-btn.secondary:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        
+        .popup-btn.primary {
+            background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
+            color: white;
+        }
+        
+        .popup-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(47, 93, 131, 0.4);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
 
         /* Chat Messages - Şeffaf Arka Plan - SCROLL EDİLEBİLİR */
         #longo-chat-messages {
@@ -700,6 +885,9 @@
         
         // Pulse animasyonu başlat
         startPulseAnimation();
+        
+        // Plan bilgisini güncelle
+        updatePlanDisplay(window.longoUserPlan || 'free');
     }
     
     // Pulse animasyonu
@@ -714,6 +902,10 @@
     
     // Chat toggle
     window.longoToggleChat = function() {
+        // Kullanıcı planını kontrol et (Ideasoft'tan gelecek)
+        const userPlan = window.longoUserPlan || 'free';
+        const isPremium = userPlan === 'premium' || userPlan === 'premium_plus';
+        
         const chatWindow = document.getElementById('longo-chat-window');
         const isVisible = chatWindow.style.display === 'block';
         
@@ -722,6 +914,71 @@
         } else {
             longoOpenChat();
         }
+        
+        // Plan bilgisini header'da göster
+        updatePlanDisplay(userPlan);
+    };
+    
+    // Plan bilgisini header'da güncelle
+    function updatePlanDisplay(userPlan) {
+        // Plan badge'leri gizli tutuluyor
+        // Sadece popup'ta plan bilgisi gösteriliyor
+    }
+    
+    // Free kullanıcılar için limit popup'ı göster
+    window.showLimitPopup = function() {
+        const existingPopup = document.getElementById('limit-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+        
+        const popupHTML = `
+            <div id="limit-popup" class="limit-popup-overlay">
+                <div class="limit-popup-content">
+                    <div class="limit-popup-header">
+                        <h3>🎯 Günlük Limit Doldu!</h3>
+                        <button onclick="closeLimitPopup()" class="popup-close-btn">✕</button>
+                    </div>
+                    
+                    <div class="limit-popup-body">
+                        <p>Günlük 10 soru hakkınız doldu. Yarın tekrar konuşmaya devam edebilirsiniz!</p>
+                        
+                        <div class="limit-popup-features">
+                            <h4>✨ Premium'a Geçerek Neler Kazanırsınız:</h4>
+                            <ul>
+                                <li>🚀 <strong>Sınırsız soru sorma</strong></li>
+                                <li>💾 <strong>Konuşma geçmişi saklanır</strong></li>
+                                <li>🧠 <strong>Kişiselleştirilmiş yanıtlar</strong></li>
+                                <li>📊 <strong>Detaylı sağlık analizleri</strong></li>
+                                <li>🎯 <strong>Özel supplement önerileri</strong></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="limit-popup-actions">
+                            <button onclick="closeLimitPopup()" class="popup-btn secondary">Şimdilik Bekle</button>
+                            <button onclick="upgradeToPremium()" class="popup-btn primary">Premium'a Geç</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', popupHTML);
+    }
+    
+    // Limit popup'ını kapat
+    window.closeLimitPopup = function() {
+        const popup = document.getElementById('limit-popup');
+        if (popup) {
+            popup.remove();
+        }
+    };
+    
+    // Premium'a geç
+    window.upgradeToPremium = function() {
+        // Premium sayfasına yönlendir
+        window.open('https://longopass.com/premium', '_blank');
+        closeLimitPopup();
     };
     
     // Chat butonunu her zaman görünür tut
@@ -911,7 +1168,16 @@
             longoRemoveTypingIndicator();
             
             // AI yanıtını göster
-            longoAddMessage('assistant', result.reply);
+            const reply = result.reply;
+            
+            // Limit popup kontrolü
+            if (reply.startsWith('LIMIT_POPUP:')) {
+                const cleanReply = reply.replace('LIMIT_POPUP:', '');
+                longoAddMessage('assistant', cleanReply);
+                showLimitPopup();
+            } else {
+                longoAddMessage('assistant', reply);
+            }
             
         } catch (error) {
             console.error('Error sending message:', error);
