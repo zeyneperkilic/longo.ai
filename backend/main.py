@@ -442,8 +442,21 @@ async def chat_message(req: ChatMessageRequest,
             
         if "cinsiyet" in user_context and user_context["cinsiyet"]:
             system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
+        
+        # Lab verilerini de göster
+        if "son_lab_test" in user_context and user_context["son_lab_test"]:
+            system_prompt += f"SON LAB TEST: {user_context['son_lab_test']}\n"
             
-        system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını veya hastalığını sorduğunda yukarıdaki bilgilerle cevap ver!"
+        if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
+            system_prompt += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
+            
+        if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
+            system_prompt += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
+            
+        if "lab_tarih" in user_context and user_context["lab_tarih"]:
+            system_prompt += f"LAB TARİH: {user_context['lab_tarih']}\n"
+            
+        system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını, hastalığını veya lab sonuçlarını sorduğunda yukarıdaki bilgilerle cevap ver!"
     else:
         # Context yoksa default prompt ekle
         system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner."
@@ -713,9 +726,10 @@ async def analyze_quiz(body: QuizRequest,
 def analyze_single_lab(body: SingleLabRequest,
                         current_user: str = Depends(get_current_user),
                        db: Session = Depends(get_db),
-                        x_user_id: str | None = Header(default=None)):
+                        x_user_id: str | None = Header(default=None),
+                        x_user_plan: str | None = Header(default=None)):
     """Analyze single lab test result with historical trend analysis"""
-    user = get_or_create_user(db, x_user_id, "premium")  # Asıl site zaten kontrol ediyor
+    user = get_or_create_user(db, x_user_id, x_user_plan or "premium")
     
     # Convert test to dict for processing
     test_dict = body.test.model_dump()
@@ -730,8 +744,58 @@ def analyze_single_lab(body: SingleLabRequest,
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
     
-    # Database kaydı kaldırıldı - Asıl site zaten yapacak
-    # Sadece AI yanıtını döndür
+    # Lab sonuçlarını global context'e ekle (QUIZ GİBİ)
+    if data and "analysis" in data:
+        from backend.db import get_user_global_context, update_user_global_context, create_ai_interaction
+        
+        # Mevcut global context'i al
+        current_context = get_user_global_context(db, user.id) or {}
+        
+        # Lab sonuçlarından ÖZET BİLGİLERİ çıkar
+        lab_context = {}
+        
+        # Test adı
+        if "name" in test_dict:
+            lab_context["son_lab_test"] = test_dict["name"]
+        
+        # Test değeri ve durumu
+        if "value" in test_dict:
+            lab_context["son_lab_deger"] = str(test_dict["value"])
+        
+        # Test birimi
+        if "unit" in test_dict:
+            lab_context["son_lab_birim"] = test_dict["unit"]
+        
+        # Referans aralığı
+        if "reference_range" in test_dict:
+            lab_context["son_lab_referans"] = test_dict["reference_range"]
+        
+        # AI analiz sonucu
+        if "analysis" in data and "summary" in data["analysis"]:
+            lab_context["son_lab_durum"] = data["analysis"]["summary"]
+        
+        # Lab tarihi
+        import time
+        lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
+        
+        # Global context'i güncelle
+        if lab_context:
+            updated_context = {**current_context, **lab_context}
+            update_user_global_context(db, user.id, updated_context)
+        
+        # AI interaction kaydı ekle
+        try:
+            create_ai_interaction(
+                db=db,
+                user_id=user.id,
+                interaction_type="lab_single",
+                user_input=str(test_dict),
+                ai_response=str(data),
+                model_used="parallel_single_lab_analyze",
+                interaction_metadata={"test_name": test_dict.get("name", "unknown")}
+            )
+        except Exception as e:
+            print(f"Lab single database kaydı hatası: {e}")
     
     return data
 
