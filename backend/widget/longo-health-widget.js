@@ -1004,6 +1004,11 @@
         // Chat butonunu her zaman görünür tut
         keepChatButtonVisible();
         
+        // Free kullanıcılar için session history'yi yükle
+        if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+            loadSessionChatHistory();
+        }
+        
         document.getElementById('longo-message-input').focus();
     };
     
@@ -1078,6 +1083,63 @@
         }
     }
     
+    // Session-based chat history (free kullanıcılar için)
+    function getSessionChatHistory() {
+        const history = sessionStorage.getItem('longo_session_chat_history');
+        return history ? JSON.parse(history) : [];
+    }
+    
+    function addToSessionChatHistory(role, content) {
+        const history = getSessionChatHistory();
+        history.push({
+            role: role,
+            content: content,
+            timestamp: new Date().toISOString()
+        });
+        sessionStorage.setItem('longo_session_chat_history', JSON.stringify(history));
+    }
+    
+    function clearSessionChatHistory() {
+        sessionStorage.removeItem('longo_session_chat_history');
+    }
+    
+    // Session history'yi UI'da göster
+    function loadSessionChatHistory() {
+        const history = getSessionChatHistory();
+        if (history.length === 0) return;
+        
+        // Mevcut mesajları temizle (welcome message hariç)
+        const messagesDiv = document.getElementById('longo-chat-messages');
+        const welcomeMessage = messagesDiv.querySelector('.longo-welcome-message');
+        const longoCharacterArea = messagesDiv.querySelector('.longo-character-area');
+        
+        // Tüm mesajları temizle
+        messagesDiv.innerHTML = '';
+        
+        // Welcome message ve Longo character'ı geri ekle
+        if (welcomeMessage) {
+            messagesDiv.appendChild(welcomeMessage);
+        }
+        if (longoCharacterArea) {
+            messagesDiv.appendChild(longoCharacterArea);
+        }
+        
+        // Session history'den mesajları yükle
+        history.forEach(item => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `longo-message ${item.role}`;
+            
+            const paragraph = document.createElement('p');
+            paragraph.textContent = item.content;
+            messageDiv.appendChild(paragraph);
+            
+            messagesDiv.appendChild(messageDiv);
+        });
+        
+        // En alta scroll
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    
     // Chat start endpoint
     async function startConversation() {
         try {
@@ -1090,7 +1152,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getSessionUserId(),
-                    'x-user-plan': 'premium',
+                    'x-user-plan': window.longoUserPlan || 'free',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({})
@@ -1149,7 +1211,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getSessionUserId(),
-                    'x-user-plan': 'premium',
+                    'x-user-plan': window.longoUserPlan || 'free',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1214,6 +1276,11 @@
         }, 100);
         
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        // Session history'ye ekle (free kullanıcılar için)
+        if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+            addToSessionChatHistory(role, content);
+        }
     }
     
     // Loading mesajını kaldır

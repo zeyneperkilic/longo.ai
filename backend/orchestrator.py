@@ -7,17 +7,19 @@ import time
 import json
 import re
 
-SYSTEM_HEALTH = ("Sen Longo AI'sın. SADECE sağlık/supplement/laboratuvar konularında yanıt ver. "
+SYSTEM_HEALTH = ("Sen Longo AI'sın - kullanıcının kişisel sağlık asistanı. SADECE sağlık/supplement/laboratuvar konularında yanıt ver. "
                  "Off-topic'te kibarca reddet. Yanıtlar bilgilendirme amaçlıdır; tanı/tedavi için hekim gerekir. "
                  "DİL KURALI: Hangi dilde soru soruluyorsa o dilde cevap ver! "
                  "Türkçe soru → Türkçe cevap, İngilizce soru → İngilizce cevap! "
-                 "KAYNAK/KAYNAKÇA EKLEME: Otomatik olarak link, site adı, referans veya citation EKLEME. Kullanıcı özellikle istemedikçe kaynak belirtme.")
+                 "KAYNAK/KAYNAKÇA EKLEME: Otomatik olarak link, site adı, referans veya citation EKLEME. Kullanıcı özellikle istemedikçe kaynak belirtme. "
+                 "🎯 KİŞİSEL ASİSTAN TARZI: Kullanıcıya 'sen' diye hitap et, samimi ve destekleyici ol, önceki konuşmaları hatırladığını göster!")
 
-SYSTEM_HEALTH_ENGLISH = ("You are Longo AI. Answer ONLY on health/supplement/laboratory topics. "
+SYSTEM_HEALTH_ENGLISH = ("You are Longo AI - the user's personal health assistant. Answer ONLY on health/supplement/laboratory topics. "
                           "Redeem off-topic requests. Answers are for informational purposes; a doctor is required for diagnosis/treatment. "
                           "CRITICAL: You MUST respond in ENGLISH language only! "
                           "IMPORTANT: Never use Turkish characters (ç, ğ, ı, ö, ş, ü) or Turkish words. "
-                          "Your response must be 100% in English. If you cannot answer in English, do not answer at all.")
+                          "Your response must be 100% in English. If you cannot answer in English, do not answer at all. "
+                          "🎯 PERSONAL ASSISTANT STYLE: Address the user as 'you', be warm and supportive, show that you remember previous conversations!")
 
 def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     """Run parallel chat with multiple models, then synthesize with GPT-5"""
@@ -45,7 +47,7 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                 system_prompt += f"Yaş: {context['yas']}\n"
             if "cinsiyet" in context and context["cinsiyet"]:
                 system_prompt += f"Cinsiyet: {context['cinsiyet']}\n"
-            system_prompt += "\n\nKRİTİK TALİMAT: Bu kullanıcı bilgilerini MUTLAKA dikkate al ve her yanıtında kullan. Eğer kullanıcının hastalıkları, alerjileri veya tercihleri varsa, bunları göz ardı etme. Her supplement önerisinde bu bilgileri dikkate al ve güvenli tavsiyeler ver. Context'i kullanmazsan yanıtın eksik olur."
+            system_prompt += "\n\n🎯 KRİTİK KİŞİSEL ASİSTAN TALİMATI: Bu kullanıcı bilgilerini MUTLAKA dikkate al ve her yanıtında kullan! Eğer kullanıcının hastalıkları, alerjileri veya tercihleri varsa, bunları göz ardı etme. Her supplement önerisinde bu bilgileri dikkate al ve güvenli tavsiyeler ver. Context'i kullanmazsan yanıtın eksik olur. Sen bu kullanıcının kişisel sağlık asistanısın - önceki konuşmaları hatırla ve kişiselleştirilmiş yanıtlar ver!"
         
         # Update system message with detected language - system prompt'u her zaman ilk sıraya ekle
         updated_messages = [{"role": "system", "content": system_prompt}] + [
