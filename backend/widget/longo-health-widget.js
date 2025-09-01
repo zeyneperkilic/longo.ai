@@ -219,115 +219,85 @@
             border-color: rgba(255, 87, 34, 0.5);
         }
         
-        /* Limit Popup Stilleri */
-        .limit-popup-overlay {
+        /* Mini Limit Popup Stilleri (Chatbot'un üstünde) */
+        .limit-popup-mini {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
+            bottom: 200px;
+            right: 20px;
             z-index: 10004;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease;
+            animation: slideInRight 0.3s ease;
         }
         
-        .limit-popup-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            padding: 0;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideUp 0.4s ease;
-        }
-        
-        .limit-popup-header {
+        .limit-popup-content-mini {
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
             color: white;
-            padding: 25px 30px 20px;
-            border-radius: 25px 25px 0 0;
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
+            max-width: 300px;
         }
         
-        .limit-popup-header h3 {
-            margin: 0;
+        .limit-popup-icon {
             font-size: 24px;
-            font-weight: 700;
+            flex-shrink: 0;
         }
         
-        .popup-close-btn {
+        .limit-popup-text {
+            flex: 1;
+        }
+        
+        .limit-popup-text h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .limit-popup-text p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.3;
+        }
+        
+        /* Premium'a geç butonu kaldırıldı */
+        
+        .limit-popup-close {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
-            font-size: 20px;
+            font-size: 14px;
             cursor: pointer;
-            padding: 10px;
+            padding: 6px;
             border-radius: 50%;
             transition: all 0.3s ease;
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        .popup-close-btn:hover {
+        .limit-popup-close:hover {
             background: rgba(255, 255, 255, 0.3);
             transform: scale(1.1);
         }
         
-        .limit-popup-body {
-            padding: 30px;
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
-        
-        .limit-popup-body p {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 25px;
-            text-align: center;
-            line-height: 1.6;
-        }
-        
-        .limit-popup-features {
-            margin-bottom: 30px;
-        }
-        
-        .limit-popup-features h4 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 18px;
-            text-align: center;
-        }
-        
-        .limit-popup-features ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .limit-popup-features li {
-            padding: 8px 0;
-            color: #555;
-            font-size: 14px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        
-        .limit-popup-features li:last-child {
-            border-bottom: none;
-        }
-        
-        .limit-popup-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-        
-        .popup-btn {
             padding: 15px 25px;
             border: none;
             border-radius: 15px;
@@ -338,25 +308,7 @@
             min-width: 120px;
         }
         
-        .popup-btn.secondary {
-            background: #f0f0f0;
-            color: #666;
-        }
-        
-        .popup-btn.secondary:hover {
-            background: #e0e0e0;
-            transform: translateY(-2px);
-        }
-        
-        .popup-btn.primary {
-            background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
-            color: white;
-        }
-        
-        .popup-btn.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(47, 93, 131, 0.4);
-        }
+        /* Eski popup buton stilleri kaldırıldı */
         
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -940,7 +892,7 @@
         // Sadece popup'ta plan bilgisi gösteriliyor
     }
     
-    // Free kullanıcılar için limit popup'ı göster
+    // Free kullanıcılar için limit popup'ı göster (Chatbot'un üstünde küçük)
     window.showLimitPopup = function() {
         const existingPopup = document.getElementById('limit-popup');
         if (existingPopup) {
@@ -948,37 +900,24 @@
         }
         
         const popupHTML = `
-            <div id="limit-popup" class="limit-popup-overlay">
-                <div class="limit-popup-content">
-                    <div class="limit-popup-header">
-                        <h3>🎯 Günlük Limit Doldu!</h3>
-                        <button onclick="closeLimitPopup()" class="popup-close-btn">✕</button>
+            <div id="limit-popup" class="limit-popup-mini">
+                <div class="limit-popup-content-mini">
+                    <div class="limit-popup-icon">🎯</div>
+                    <div class="limit-popup-text">
+                        <h4>Günlük limit doldu!</h4>
+                        <p>Yarın tekrar konuşmaya devam edebilirsiniz</p>
                     </div>
-                    
-                    <div class="limit-popup-body">
-                        <p>Günlük 10 soru hakkınız doldu. Yarın tekrar konuşmaya devam edebilirsiniz!</p>
-                        
-                        <div class="limit-popup-features">
-                            <h4>✨ Premium'a Geçerek Neler Kazanırsınız:</h4>
-                            <ul>
-                                <li>🚀 <strong>Sınırsız soru sorma</strong></li>
-                                <li>💾 <strong>Konuşma geçmişi saklanır</strong></li>
-                                <li>🧠 <strong>Kişiselleştirilmiş yanıtlar</strong></li>
-                                <li>📊 <strong>Detaylı sağlık analizleri</strong></li>
-                                <li>🎯 <strong>Özel supplement önerileri</strong></li>
-                            </ul>
-                        </div>
-                        
-                        <div class="limit-popup-actions">
-                            <button onclick="closeLimitPopup()" class="popup-btn secondary">Şimdilik Bekle</button>
-                            <button onclick="upgradeToPremium()" class="popup-btn primary">Premium'a Geç</button>
-                        </div>
-                    </div>
+                    <button onclick="closeLimitPopup()" class="limit-popup-close">✕</button>
                 </div>
             </div>
         `;
         
         document.body.insertAdjacentHTML('beforeend', popupHTML);
+        
+        // 5 saniye sonra otomatik kapat
+        setTimeout(() => {
+            closeLimitPopup();
+        }, 5000);
     }
     
     // Limit popup'ını kapat
@@ -989,12 +928,7 @@
         }
     };
     
-    // Premium'a geç
-    window.upgradeToPremium = function() {
-        // Premium sayfasına yönlendir
-        window.open('https://longopass.com/premium', '_blank');
-        closeLimitPopup();
-    };
+    // Premium'a geç fonksiyonu kaldırıldı
     
     // Chat butonunu her zaman görünür tut
     function keepChatButtonVisible() {
