@@ -524,6 +524,10 @@ async def chat_message(req: ChatMessageRequest,
     # Context'i ilk message'a ekle
     
     # System message
+    print(f"🔍 DEBUG: Final system prompt:")
+    print(f"🔍 DEBUG: {system_prompt}")
+    print(f"🔍 DEBUG: Prompt uzunluğu: {len(system_prompt)} karakter")
+    
     history = [{"role": "system", "content": system_prompt, "context_data": user_context}]
     
     # Supplement listesi user message olarak ekle (quiz'deki gibi)
