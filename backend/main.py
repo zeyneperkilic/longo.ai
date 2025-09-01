@@ -748,8 +748,12 @@ def analyze_single_lab(body: SingleLabRequest,
     if data and "analysis" in data:
         from backend.db import get_user_global_context, update_user_global_context, create_ai_interaction
         
+        print(f"🔍 DEBUG: Lab endpoint'inde user context güncelleme başladı")
+        print(f"🔍 DEBUG: User ID: {user.id}")
+        
         # Mevcut global context'i al
         current_context = get_user_global_context(db, user.id) or {}
+        print(f"🔍 DEBUG: Mevcut context: {current_context}")
         
         # Lab sonuçlarından ÖZET BİLGİLERİ çıkar
         lab_context = {}
@@ -757,31 +761,43 @@ def analyze_single_lab(body: SingleLabRequest,
         # Test adı
         if "name" in test_dict:
             lab_context["son_lab_test"] = test_dict["name"]
+            print(f"🔍 DEBUG: Test adı eklendi: {test_dict['name']}")
         
         # Test değeri ve durumu
         if "value" in test_dict:
             lab_context["son_lab_deger"] = str(test_dict["value"])
+            print(f"🔍 DEBUG: Test değeri eklendi: {test_dict['value']}")
         
         # Test birimi
         if "unit" in test_dict:
             lab_context["son_lab_birim"] = test_dict["unit"]
+            print(f"🔍 DEBUG: Test birimi eklendi: {test_dict['unit']}")
         
         # Referans aralığı
         if "reference_range" in test_dict:
             lab_context["son_lab_referans"] = test_dict["reference_range"]
+            print(f"🔍 DEBUG: Referans aralığı eklendi: {test_dict['reference_range']}")
         
         # AI analiz sonucu
         if "analysis" in data and "summary" in data["analysis"]:
             lab_context["son_lab_durum"] = data["analysis"]["summary"]
+            print(f"🔍 DEBUG: Lab durumu eklendi: {data['analysis']['summary']}")
         
         # Lab tarihi
         import time
         lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
+        print(f"🔍 DEBUG: Lab tarihi eklendi: {lab_context['lab_tarih']}")
+        
+        print(f"🔍 DEBUG: Oluşturulan lab_context: {lab_context}")
         
         # Global context'i güncelle
         if lab_context:
             updated_context = {**current_context, **lab_context}
+            print(f"🔍 DEBUG: Güncellenecek context: {updated_context}")
             update_user_global_context(db, user.id, updated_context)
+            print(f"🔍 DEBUG: Context güncellendi!")
+        else:
+            print(f"🔍 DEBUG: Lab context boş, güncelleme yapılmadı!")
         
         # AI interaction kaydı ekle
         try:
@@ -794,8 +810,12 @@ def analyze_single_lab(body: SingleLabRequest,
                 model_used="parallel_single_lab_analyze",
                 interaction_metadata={"test_name": test_dict.get("name", "unknown")}
             )
+            print(f"🔍 DEBUG: AI interaction kaydı eklendi!")
         except Exception as e:
-            print(f"Lab single database kaydı hatası: {e}")
+            print(f"🔍 DEBUG: Lab single database kaydı hatası: {e}")
+    else:
+        print(f"🔍 DEBUG: Lab endpoint'inde data veya analysis yok!")
+        print(f"🔍 DEBUG: Data: {data}")
     
     return data
 
