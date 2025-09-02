@@ -1083,8 +1083,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
                 "durum": lab_context.get("son_lab_durum", "")
             })
             
-            # Son 5 testi tut (çok eski olanları sil)
-            lab_gecmisi = lab_gecmisi[-5:]
+            # Son 20 testi tut (çok eski olanları sil)
+            lab_gecmisi = lab_gecmisi[-20:]
             
             # Güncellenmiş context
             updated_context = {**current_context, **lab_context}
