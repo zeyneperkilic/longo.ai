@@ -510,22 +510,22 @@
         /* Disclaimer Stilleri */
         .longo-disclaimer {
             font-size: 12px;
-            color: rgba(100, 116, 139, 0.9);
+            color: #1e293b; /* Siyah renk */
             text-align: center;
             margin-top: 5px;
             line-height: 1.4;
-            font-weight: 500;
+            font-weight: 600; /* Daha kalın */
             opacity: 1;
             max-width: 100%;
             word-wrap: break-word;
             padding: 0 10px;
             z-index: 11;
             position: relative;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.9); /* Daha opak arka plan */
             border-radius: 8px;
             padding: 6px 12px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 0, 0, 0.1); /* Siyah border */
         }
 
         #longo-message-input {
