@@ -330,7 +330,7 @@
         #longo-chat-messages {
             flex: 1;
             padding: 20px;
-            padding-bottom: 100px;
+            padding-bottom: 130px; /* Disclaimer için daha fazla yer */
             overflow-y: scroll;
             background: rgba(255, 255, 255, 0.02);
             backdrop-filter: blur(25px);
@@ -481,13 +481,13 @@
 
         /* Chat Input - Şeffaf ve Modern - SABİT */
         #longo-chat-input {
-            padding: 25px 30px;
+            padding: 25px 30px 15px 30px; /* Alt padding azaltıldı */
             background: rgba(255, 255, 255, 0.05);
             border-top: 1px solid rgba(255, 255, 255, 0.15);
             display: flex;
             flex-direction: column;
             align-items: center; /* Safari dikey hizalama */
-            gap: 15px;
+            gap: 10px; /* Gap azaltıldı */
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
             position: absolute;
@@ -496,6 +496,7 @@
             right: 0;
             z-index: 10;
             flex-shrink: 0;
+            min-height: 120px; /* Minimum yükseklik eklendi */
         }
         
         /* Input ve button container */
@@ -508,15 +509,23 @@
         
         /* Disclaimer Stilleri */
         .longo-disclaimer {
-            font-size: 11px;
-            color: rgba(100, 116, 139, 0.8);
+            font-size: 12px;
+            color: rgba(100, 116, 139, 0.9);
             text-align: center;
-            margin-top: 8px;
-            line-height: 1.3;
-            font-weight: 400;
-            opacity: 0.9;
+            margin-top: 5px;
+            line-height: 1.4;
+            font-weight: 500;
+            opacity: 1;
             max-width: 100%;
             word-wrap: break-word;
+            padding: 0 10px;
+            z-index: 11;
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         #longo-message-input {
