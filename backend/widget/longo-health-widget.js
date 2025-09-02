@@ -73,9 +73,8 @@
             left: 100%;
         }
 
-        /* Tooltip baloncuk */
-        #chat-button::after {
-            content: 'Nasıl yardımcı olabilirim?';
+        /* Tooltip baloncuk - HTML element olarak */
+        .longo-tooltip {
             position: absolute;
             right: 80px;
             top: 50%;
@@ -94,9 +93,10 @@
             box-shadow: 0 4px 20px rgba(47, 93, 131, 0.3);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: none;
         }
 
-        #chat-button:hover::after {
+        #chat-button:hover .longo-tooltip {
             opacity: 1;
             visibility: visible;
         }
@@ -868,6 +868,7 @@
                 <div id="chat-button" onclick="longoToggleChat()" title="Longo Sağlık Asistanı">
                     <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo" class="chat-button-image">
                     <div class="pulse-ring"></div>
+                    <div class="longo-tooltip">Nasıl yardımcı olabilirim?</div>
                 </div>
                 
                 <div id="longo-chat-window" style="display: none;">
