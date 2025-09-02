@@ -191,7 +191,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     ]
     
     if any(kw == txt for kw in pure_greeting_keywords):
-        reply = f"Merhaba! Ben Longo AI. Sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim? (Kalan soru: {10 - question_count})"
+        reply = "Merhaba! Ben Longo AI. Sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
         return ChatResponse(conversation_id=0, reply=reply, latency_ms=0)
     
     # AI yanıtı için OpenRouter kullan
@@ -208,6 +208,8 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Sağlık dışında konulardan bahsetme
 - Off-topic soruları kibarca sağlık alanına yönlendir
 - Kaynak link'leri veya referans'lar ekleme
+- Web sitelerinden link verme
+- Liste hakkında konuşma (kullanıcı listeyi görmemeli)
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık ve supplement alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
@@ -219,20 +221,23 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - SADECE aşağıdaki listedeki ürünleri öner
 - Liste dışından hiçbir ürün önerme
 - Sağlık ve supplement dışında hiçbir konuşma yapma
-- Off-topic soruları kesinlikle reddet"""
+- Off-topic soruları kesinlikle reddet
+- Web sitelerinden link verme
+- Liste hakkında konuşma (kullanıcı listeyi görmemeli)
+- Sadece ürün isimlerini öner, açıklama yapma"""
         
         # XML'den ürünleri çek
         xml_products = get_xml_products()
         
-        # Kalan soru sayısını belirt
-        user_message = f"{message_text}\n\nNot: Bu kullanıcının kalan soru hakkı: {10 - question_count}"
+        # Kullanıcı mesajını hazırla
+        user_message = message_text
         
         # XML ürünlerini user message'a ekle
         if xml_products:
             user_message += f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(xml_products)} ürün):\n"
             for i, product in enumerate(xml_products, 1):
                 user_message += f"{i}. {product['name']}\n"
-            user_message += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç!"
+            user_message += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
             print(f"🔍 DEBUG: Free kullanıcı için {len(xml_products)} XML ürünü eklendi")
         
         ai_response = await get_ai_response(
@@ -241,8 +246,8 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
             model="openai/gpt-5-chat:online"  # Tüm kullanıcılar için aynı kalite
         )
         
-        # Kalan soru sayısını yanıta ekle
-        reply = f"{ai_response}\n\n💡 Kalan soru hakkınız: {10 - question_count - 1}"
+        # AI yanıtını al
+        reply = ai_response
         
         return ChatResponse(conversation_id=0, reply=reply, latency_ms=0)
         

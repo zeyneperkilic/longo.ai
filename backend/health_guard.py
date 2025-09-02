@@ -45,12 +45,14 @@ def classify_topic_simple(text: str) -> str:
         "- Lab test inceleme ('lab test sonucumu incele', 'kan tahlilimi incele')\n"
         "- Quiz sonucu inceleme ('quiz sonucumu incele', 'test sonucumu incele')\n"
         "- Ambiguous sorular ('ne alayım?', 'bana bir şey öner', 'ne yapayım?') → SAFE ama sağlığa yönlendir\n"
-        "- Sağlıkla ilgili her şey ama riskli konular dışında (ilaç, doz, antidepresan, teşhis vb.)"
+        "- Konuşma devam ettirme cümleleri ve normal sohbet cümleleri('devam et', 'anlat', 'daha fazla', 'başka ne var')\n"
+        "- Sağlıkla ilgili her şey ama riskli konular dışında (ilaç, doz, antidepresan, teşhis vb.)\n"
+        "- Genel sohbet cümleleri (sağlık konusunda devam ediyorsa)\n\n"
         "🔴 BLOCK (örnekler):\n"
         "- Spor, eğlence, hava durumu, gündem\n"
         "- Kültür, tarih, kelime anlamı, etimoloji\n"
         "- İlaç dozu (reçeteli ilaçlar), teşhis\n"
-        "- Sağlıkla ilgili olmayan başka konular block ama sohbet ediyorsa sağlık alanına kayarak sohbete devam edilebilir"
+        "- Tamamen sağlık dışı konular\n\n"
         "SADECE 'SAFE' veya 'BLOCK' döndür!"
     )
     
