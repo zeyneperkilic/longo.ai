@@ -512,29 +512,25 @@ async def chat_message(req: ChatMessageRequest,
             system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
             print(f"🔍 DEBUG: Kullanıcı cinsiyeti eklendi: {user_context['cinsiyet']}")
         
-        # Lab verilerini de göster - ESKİ ÖZET + YENİ TEST
+        # Lab verilerini de göster - LAB SUMMARY BİLGİLERİ
         if "lab_gecmisi" in user_context and user_context["lab_gecmisi"]:
-            system_prompt += f"LAB TEST GEÇMİŞİ:\n"
+            system_prompt += f"LAB TEST GEÇMİŞİ (Son 1 Yıl):\n"
             for i, lab in enumerate(user_context["lab_gecmisi"], 1):
                 system_prompt += f"{i}. {lab.get('ozet', '')}\n"
             print(f"🔍 DEBUG: Lab geçmişi eklendi: {len(user_context['lab_gecmisi'])} test")
         
-        # Son lab test detayları (en güncel)
-        if "son_lab_test" in user_context and user_context["son_lab_test"]:
-            system_prompt += f"\nEN SON LAB TEST: {user_context['son_lab_test']}\n"
-            print(f"🔍 DEBUG: En son lab test eklendi: {user_context['son_lab_test']}")
+        # Lab summary bilgileri (en güncel)
+        if "lab_genel_durum" in user_context and user_context["lab_genel_durum"]:
+            system_prompt += f"\nLAB GENEL DURUM: {user_context['lab_genel_durum']}\n"
+            print(f"🔍 DEBUG: Lab genel durum eklendi: {user_context['lab_genel_durum']}")
             
-        if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
-            system_prompt += f"EN SON LAB DEĞER: {user_context['son_lab_deger']}\n"
-            print(f"🔍 DEBUG: En son lab değer eklendi: {user_context['son_lab_deger']}")
-            
-        if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
-            system_prompt += f"EN SON LAB DURUM: {user_context['son_lab_durum']}\n"
-            print(f"🔍 DEBUG: En son lab durum eklendi: {user_context['son_lab_durum']}")
+        if "lab_summary" in user_context and user_context["lab_summary"]:
+            system_prompt += f"LAB ÖZET: {user_context['lab_summary']}\n"
+            print(f"🔍 DEBUG: Lab özet eklendi: {user_context['lab_summary']}")
             
         if "lab_tarih" in user_context and user_context["lab_tarih"]:
-            system_prompt += f"EN SON LAB TARİH: {user_context['lab_tarih']}\n"
-            print(f"🔍 DEBUG: En son lab tarih eklendi: {user_context['lab_tarih']}")
+            system_prompt += f"LAB TARİH: {user_context['lab_tarih']}\n"
+            print(f"🔍 DEBUG: Lab tarih eklendi: {user_context['lab_tarih']}")
             
         print(f"🔍 DEBUG: Final system prompt lab verileri ile hazırlandı!")
         system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını, hastalığını veya lab sonuçlarını sorduğunda yukarıdaki bilgilerle cevap ver!"
