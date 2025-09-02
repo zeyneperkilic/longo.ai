@@ -179,7 +179,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     if any(keyword in txt for keyword in off_topic_keywords):
         return ChatResponse(
             conversation_id=0, 
-            reply="Üzgünüm, sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size sağlık konusunda nasıl yardımcı olabilirim?", 
+            reply="Üzgünüm, sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size sağlık konusunda nasıl yardımcı olabilirim?", 
             latency_ms=0
         )
     
@@ -191,7 +191,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     ]
     
     if any(kw == txt for kw in pure_greeting_keywords):
-        reply = "Merhaba! Ben Longo AI. Sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
+        reply = "Merhaba! Ben Longo AI. Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
         return ChatResponse(conversation_id=0, reply=reply, latency_ms=0)
     
     # AI yanıtı için OpenRouter kullan
@@ -215,7 +215,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 💡 YANIT STİLİ: Kısa, net ve anlaşılır ol. Sadece sağlık konusuna odaklan!
 
-🎯 ÜRÜN ÖNERİSİ: Kullanıcının ihtiyacına göre 3-5 supplement öner. SADECE aşağıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme!
+🎯 ÜRÜN ÖNERİSİ: Kullanıcı supplement önerisi isterse, ihtiyacına göre 3-5 supplement öner. SADECE aşağıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme!
 
 🚫 KESIN KURALLAR:
 - SADECE aşağıdaki listedeki ürünleri öner
@@ -403,7 +403,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Eğer saf selamlama ise özel yanıt ver
     if any(kw == txt for kw in pure_greeting_keywords):
-        reply = "Merhaba! Ben Longo AI. Sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
+        reply = "Merhaba! Ben Longo AI. Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
         m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
         db.add(m); db.commit()
         return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
