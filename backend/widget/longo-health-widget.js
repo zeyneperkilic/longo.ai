@@ -76,9 +76,8 @@
         /* Tooltip baloncuk - HTML element olarak */
         .longo-tooltip {
             position: absolute;
-            left: -180px;
-            top: 50%;
-            transform: translateY(-50%);
+            right: 80px;
+            top: 20px;
             background: #2F5D83 !important;
             color: white !important;
             padding: 10px 15px !important;
@@ -86,9 +85,8 @@
             font-size: 13px !important;
             font-weight: 600 !important;
             white-space: nowrap !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            transition: all 0.3s ease !important;
+            opacity: 1 !important;
+            visibility: visible !important;
             z-index: 10004 !important;
             box-shadow: 0 4px 15px rgba(47, 93, 131, 0.5) !important;
             border: 2px solid #4A7C9A !important;
@@ -96,17 +94,6 @@
             width: 160px !important;
             text-align: center !important;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        }
-
-        #chat-button:hover .longo-tooltip {
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
-
-        /* Test için - her zaman görünür */
-        .longo-tooltip {
-            opacity: 1 !important;
-            visibility: visible !important;
         }
 
         #chat-button:hover {
@@ -873,10 +860,10 @@
     function createWidget() {
         const widgetHTML = `
             <div id="longo-health-widget">
+                <div class="longo-tooltip">Nasıl yardımcı olabilirim?</div>
                 <div id="chat-button" onclick="longoToggleChat()" title="Longo Sağlık Asistanı">
                     <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo" class="chat-button-image">
                     <div class="pulse-ring"></div>
-                    <div class="longo-tooltip">Nasıl yardımcı olabilirim?</div>
                 </div>
                 
                 <div id="longo-chat-window" style="display: none;">
