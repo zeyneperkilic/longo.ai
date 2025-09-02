@@ -97,6 +97,20 @@
             word-wrap: break-word !important;
         }
 
+        /* Düşünce balonu ok işareti */
+        .longo-tooltip::after {
+            content: '' !important;
+            position: absolute !important;
+            right: -8px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 0 !important;
+            height: 0 !important;
+            border-left: 8px solid #2F5D83 !important;
+            border-top: 8px solid transparent !important;
+            border-bottom: 8px solid transparent !important;
+        }
+
         #chat-button:hover {
             transform: scale(1.1) rotate(5deg);
             box-shadow: 0 15px 40px rgba(47, 93, 131, 0.6);
