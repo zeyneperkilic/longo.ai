@@ -211,7 +211,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Web sitelerinden link verme
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
 
-✨ SAĞLIK ODAĞI: Her konuyu sağlık ve supplement alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
+✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
 💡 YANIT STİLİ: Kısa, net ve anlaşılır ol. Sadece sağlık konusuna odaklan!
 
@@ -512,22 +512,29 @@ async def chat_message(req: ChatMessageRequest,
             system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
             print(f"🔍 DEBUG: Kullanıcı cinsiyeti eklendi: {user_context['cinsiyet']}")
         
-        # Lab verilerini de göster
+        # Lab verilerini de göster - ESKİ ÖZET + YENİ TEST
+        if "lab_gecmisi" in user_context and user_context["lab_gecmisi"]:
+            system_prompt += f"LAB TEST GEÇMİŞİ:\n"
+            for i, lab in enumerate(user_context["lab_gecmisi"], 1):
+                system_prompt += f"{i}. {lab.get('ozet', '')}\n"
+            print(f"🔍 DEBUG: Lab geçmişi eklendi: {len(user_context['lab_gecmisi'])} test")
+        
+        # Son lab test detayları (en güncel)
         if "son_lab_test" in user_context and user_context["son_lab_test"]:
-            system_prompt += f"SON LAB TEST: {user_context['son_lab_test']}\n"
-            print(f"🔍 DEBUG: Son lab test eklendi: {user_context['son_lab_test']}")
+            system_prompt += f"\nEN SON LAB TEST: {user_context['son_lab_test']}\n"
+            print(f"🔍 DEBUG: En son lab test eklendi: {user_context['son_lab_test']}")
             
         if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
-            system_prompt += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
-            print(f"🔍 DEBUG: Son lab değer eklendi: {user_context['son_lab_deger']}")
+            system_prompt += f"EN SON LAB DEĞER: {user_context['son_lab_deger']}\n"
+            print(f"🔍 DEBUG: En son lab değer eklendi: {user_context['son_lab_deger']}")
             
         if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
-            system_prompt += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
-            print(f"🔍 DEBUG: Son lab durum eklendi: {user_context['son_lab_durum']}")
+            system_prompt += f"EN SON LAB DURUM: {user_context['son_lab_durum']}\n"
+            print(f"🔍 DEBUG: En son lab durum eklendi: {user_context['son_lab_durum']}")
             
         if "lab_tarih" in user_context and user_context["lab_tarih"]:
-            system_prompt += f"LAB TARİH: {user_context['lab_tarih']}\n"
-            print(f"🔍 DEBUG: Lab tarih eklendi: {user_context['lab_tarih']}")
+            system_prompt += f"EN SON LAB TARİH: {user_context['lab_tarih']}\n"
+            print(f"🔍 DEBUG: En son lab tarih eklendi: {user_context['lab_tarih']}")
             
         print(f"🔍 DEBUG: Final system prompt lab verileri ile hazırlandı!")
         system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını, hastalığını veya lab sonuçlarını sorduğunda yukarıdaki bilgilerle cevap ver!"
@@ -1051,9 +1058,38 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
         import time
         lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
         
-        # Global context'i güncelle
+        # Global context'i güncelle - ESKİ ÖZET + YENİ TEST
         if lab_context:
+            # Mevcut lab geçmişini al
+            lab_gecmisi = current_context.get("lab_gecmisi", [])
+            
+            # Eski test varsa özetle
+            if "son_lab_test" in current_context and current_context["son_lab_test"]:
+                eski_ozet = f"{current_context.get('son_lab_test', '')} - {current_context.get('son_lab_durum', '')} ({current_context.get('lab_tarih', '')})"
+                if eski_ozet not in [item.get("ozet", "") for item in lab_gecmisi]:
+                    lab_gecmisi.append({
+                        "ozet": eski_ozet,
+                        "tarih": current_context.get("lab_tarih", ""),
+                        "test": current_context.get("son_lab_test", ""),
+                        "durum": current_context.get("son_lab_durum", "")
+                    })
+            
+            # Yeni test bilgilerini ekle
+            yeni_test_ozet = f"{lab_context.get('son_lab_test', '')} - {lab_context.get('son_lab_durum', '')} ({lab_context.get('lab_tarih', '')})"
+            lab_gecmisi.append({
+                "ozet": yeni_test_ozet,
+                "tarih": lab_context.get("lab_tarih", ""),
+                "test": lab_context.get("son_lab_test", ""),
+                "durum": lab_context.get("son_lab_durum", "")
+            })
+            
+            # Son 5 testi tut (çok eski olanları sil)
+            lab_gecmisi = lab_gecmisi[-5:]
+            
+            # Güncellenmiş context
             updated_context = {**current_context, **lab_context}
+            updated_context["lab_gecmisi"] = lab_gecmisi
+            
             update_user_global_context(db, user.id, updated_context)
         
         # Database'e lab test kaydı yaz (read-through sistemi için)
