@@ -76,7 +76,7 @@
         /* Tooltip baloncuk - HTML element olarak */
         .longo-tooltip {
             position: fixed !important;
-            bottom: 80px !important;
+            bottom: 60px !important;
             right: 100px !important;
             background: #2F5D83 !important;
             color: white !important;
