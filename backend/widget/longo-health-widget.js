@@ -73,6 +73,34 @@
             left: 100%;
         }
 
+        /* Tooltip baloncuk */
+        #chat-button::after {
+            content: 'Nasıl yardımcı olabilirim?';
+            position: absolute;
+            right: 80px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(47, 93, 131, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 10003;
+            box-shadow: 0 4px 20px rgba(47, 93, 131, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #chat-button:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
         #chat-button:hover {
             transform: scale(1.1) rotate(5deg);
             box-shadow: 0 15px 40px rgba(47, 93, 131, 0.6);
@@ -877,7 +905,7 @@
                             </button>
                         </div>
                         <div class="longo-disclaimer">
-                            Longo yapay zeka desteklidir, hata yapabilir. Doktorunuza danışın.
+                            Longo yapay zeka desteklidir. Öneriler için doktorunuza danışın.
                         </div>
                     </div>
                 </div>
