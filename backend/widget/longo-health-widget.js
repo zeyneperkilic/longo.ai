@@ -76,7 +76,7 @@
         /* Tooltip baloncuk - HTML element olarak */
         .longo-tooltip {
             position: absolute;
-            right: 80px;
+            left: -200px;
             top: 50%;
             transform: translateY(-50%);
             background: rgba(47, 93, 131, 0.95);
@@ -94,6 +94,8 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             pointer-events: none;
+            width: 180px;
+            text-align: center;
         }
 
         #chat-button:hover .longo-tooltip {
