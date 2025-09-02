@@ -620,6 +620,29 @@ async def chat_message(req: ChatMessageRequest,
     # Supplement listesi user message olarak ekle (quiz'deki gibi)
     history.append({"role": "user", "content": supplements_info})
     
+    # Lab bilgilerini user message olarak ekle (quiz'deki gibi)
+    if user_context and any(user_context.values()):
+        lab_info = "\n\n=== LAB BİLGİLERİ ===\n"
+        
+        # Lab geçmişi
+        if "lab_gecmisi" in user_context and user_context["lab_gecmisi"]:
+            lab_info += "LAB TEST GEÇMİŞİ (Son 1 Yıl):\n"
+            for i, lab in enumerate(user_context["lab_gecmisi"], 1):
+                lab_info += f"{i}. {lab.get('ozet', '')}\n"
+        
+        # Lab summary bilgileri
+        if "lab_genel_durum" in user_context and user_context["lab_genel_durum"]:
+            lab_info += f"\nLAB GENEL DURUM: {user_context['lab_genel_durum']}\n"
+            
+        if "lab_summary" in user_context and user_context["lab_summary"]:
+            lab_info += f"LAB ÖZET: {user_context['lab_summary']}\n"
+            
+        if "lab_tarih" in user_context and user_context["lab_tarih"]:
+            lab_info += f"LAB TARİH: {user_context['lab_tarih']}\n"
+        
+        history.append({"role": "user", "content": lab_info})
+        print(f"🔍 DEBUG: Lab bilgileri user message'a eklendi")
+    
     # Chat history
     for r in rows[-(CHAT_HISTORY_MAX-1):]:
         history.append({"role": r.role, "content": r.content})
