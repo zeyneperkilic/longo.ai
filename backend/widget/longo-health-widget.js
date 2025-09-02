@@ -76,31 +76,37 @@
         /* Tooltip baloncuk - HTML element olarak */
         .longo-tooltip {
             position: absolute;
-            left: -200px;
+            left: -180px;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(47, 93, 131, 0.95);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 10003;
-            box-shadow: 0 4px 20px rgba(47, 93, 131, 0.3);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            pointer-events: none;
-            width: 180px;
-            text-align: center;
+            background: #2F5D83 !important;
+            color: white !important;
+            padding: 10px 15px !important;
+            border-radius: 15px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            white-space: nowrap !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            transition: all 0.3s ease !important;
+            z-index: 10004 !important;
+            box-shadow: 0 4px 15px rgba(47, 93, 131, 0.5) !important;
+            border: 2px solid #4A7C9A !important;
+            pointer-events: none !important;
+            width: 160px !important;
+            text-align: center !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
 
         #chat-button:hover .longo-tooltip {
-            opacity: 1;
-            visibility: visible;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* Test için - her zaman görünür */
+        .longo-tooltip {
+            opacity: 1 !important;
+            visibility: visible !important;
         }
 
         #chat-button:hover {
