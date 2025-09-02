@@ -215,7 +215,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 💡 YANIT STİLİ: Kısa, net ve anlaşılır ol. Sadece sağlık konusuna odaklan!
 
-🎯 ÜRÜN ÖNERİSİ: SADECE kullanıcı açıkça "supplement öner", "ne alayım", "hangi ürünleri alayım" gibi öneri isterse ya da bir şikayeti varsa öner. Diğer durumlarda öneri yapma! Liste hakkında konuşma!
+🎯 ÜRÜN ÖNERİSİ: SADECE kullanıcı açıkça "supplement öner", "ne alayım", "hangi ürünleri alayım" gibi öneri isterse ya da bir şikayeti varsa öner. Diğer durumlarda öneri yapma! Liste hakkında konuşma! Konuşmanın devamlılığını sağla, sürekli "ne önermemi istersin?" sorma!
 
 🚫 KESIN KURALLAR:
 - SADECE kullanıcı açıkça öneri isterse ya da bir şikayeti varsa supplement öner
@@ -227,6 +227,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Web sitelerinden link verme
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
 - "Senin verdiğin liste" gibi ifadeler kullanma
+- Sürekli "ne önermemi istersin?" sorma, konuşmanın devamlılığını sağla
 - Sadece ürün isimlerini öner, açıklama yapma"""
         
         # XML'den ürünleri çek
