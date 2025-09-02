@@ -9,6 +9,8 @@ import os
 from functools import wraps
 from collections import defaultdict
 import time
+import requests
+import xml.etree.ElementTree as ET
 
 from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
 from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context
@@ -64,6 +66,24 @@ def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
     else:
         # Free için her türlü ID kabul et
         return True
+
+def get_xml_products():
+    """XML'den 74 ürünü çek - Free kullanıcılar için"""
+    try:
+        response = requests.get('https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml', timeout=10)
+        root = ET.fromstring(response.text)
+        products = []
+        for item in root.findall('.//item'):
+            label_elem = item.find('label')
+            if label_elem is not None and label_elem.text:
+                # CDATA içeriğini temizle
+                product_name = label_elem.text.strip()
+                products.append({'name': product_name})
+        print(f"🔍 DEBUG: XML'den {len(products)} ürün çekildi")
+        return products
+    except Exception as e:
+        print(f"🔍 DEBUG: XML ürünleri çekme hatası: {e}")
+        return []
 
 app = FastAPI(title="Longopass AI Gateway")
 
@@ -140,7 +160,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     # Soru sayısını artır
     increment_session_question_count(x_user_id)
     
-    # Health Guard ile kategori kontrolü
+    # Health Guard ile kategori kontrolü - SIKI KONTROL
     message_text = req.text or req.message
     if not message_text:
         raise HTTPException(400, "Mesaj metni gerekli")
@@ -148,6 +168,20 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     ok, msg = guard_or_message(message_text)
     if not ok:
         return ChatResponse(conversation_id=0, reply=msg, latency_ms=0)
+    
+    # Ekstra kontrol: Sağlık/supplement dışı konuları reddet
+    txt = message_text.lower().strip()
+    off_topic_keywords = [
+        "hava durumu", "spor", "futbol", "film", "müzik", "oyun", "teknoloji",
+        "siyaset", "ekonomi", "haber", "eğlence", "seyahat", "alışveriş"
+    ]
+    
+    if any(keyword in txt for keyword in off_topic_keywords):
+        return ChatResponse(
+            conversation_id=0, 
+            reply="Üzgünüm, sadece sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size sağlık konusunda nasıl yardımcı olabilirim?", 
+            latency_ms=0
+        )
     
     # Selamlama kontrolü
     txt = message_text.lower().strip()
@@ -169,7 +203,6 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 🎯 GÖREVİN: Sadece sağlık, supplement, beslenme ve laboratuvar konularında yanıt ver.
 
-💬 KONUŞMA TARZI: Samimi, destekleyici ve yardımsever ol. Kullanıcıya "sen" diye hitap et.
 
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
@@ -178,10 +211,29 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık ve supplement alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
-💡 YANIT STİLİ: Kısa, net ve anlaşılır ol. Sadece sağlık konusuna odaklan!"""
+💡 YANIT STİLİ: Kısa, net ve anlaşılır ol. Sadece sağlık konusuna odaklan!
+
+🎯 ÜRÜN ÖNERİSİ: Kullanıcının ihtiyacına göre 3-5 supplement öner. SADECE aşağıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme!
+
+🚫 KESIN KURALLAR:
+- SADECE aşağıdaki listedeki ürünleri öner
+- Liste dışından hiçbir ürün önerme
+- Sağlık ve supplement dışında hiçbir konuşma yapma
+- Off-topic soruları kesinlikle reddet"""
+        
+        # XML'den ürünleri çek
+        xml_products = get_xml_products()
         
         # Kalan soru sayısını belirt
         user_message = f"{message_text}\n\nNot: Bu kullanıcının kalan soru hakkı: {10 - question_count}"
+        
+        # XML ürünlerini user message'a ekle
+        if xml_products:
+            user_message += f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(xml_products)} ürün):\n"
+            for i, product in enumerate(xml_products, 1):
+                user_message += f"{i}. {product['name']}\n"
+            user_message += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç!"
+            print(f"🔍 DEBUG: Free kullanıcı için {len(xml_products)} XML ürünü eklendi")
         
         ai_response = await get_ai_response(
             system_prompt=system_prompt,

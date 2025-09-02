@@ -229,11 +229,11 @@
         }
         
         .limit-popup-content-mini {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
             color: white;
             padding: 15px 20px;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(47, 93, 131, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(15px);
             display: flex;
