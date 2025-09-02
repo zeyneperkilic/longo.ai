@@ -509,23 +509,23 @@
         
         /* Disclaimer Stilleri */
         .longo-disclaimer {
-            font-size: 10px; /* 12px'den 10px'e küçültüldü */
+            font-size: 9px; /* 10px'den 9px'e küçültüldü */
             color: #1e293b; /* Siyah renk */
             text-align: center;
-            margin-top: 5px;
-            line-height: 1.3; /* 1.4'ten 1.3'e küçültüldü */
-            font-weight: 600; /* Daha kalın */
-            opacity: 1;
+            margin-top: 3px; /* 5px'den 3px'e küçültüldü */
+            line-height: 1.2; /* 1.3'ten 1.2'ye küçültüldü */
+            font-weight: 500; /* 600'den 500'e küçültüldü */
+            opacity: 0.8; /* 1'den 0.8'e küçültüldü */
             max-width: 100%;
             word-wrap: break-word;
-            padding: 0 10px;
+            padding: 0 5px; /* 0 10px'den 0 5px'e küçültüldü */
             z-index: 11;
             position: relative;
-            background: rgba(255, 255, 255, 0.9); /* Daha opak arka plan */
-            border-radius: 6px; /* 8px'den 6px'e küçültüldü */
-            padding: 4px 8px; /* 6px 12px'den 4px 8px'e küçültüldü */
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 0, 0, 0.1); /* Siyah border */
+            background: transparent; /* Arka plan kaldırıldı */
+            border-radius: 0; /* Border radius kaldırıldı */
+            padding: 2px 4px; /* 4px 8px'den 2px 4px'e küçültüldü */
+            backdrop-filter: none; /* Backdrop filter kaldırıldı */
+            border: none; /* Border kaldırıldı */
         }
 
         #longo-message-input {
