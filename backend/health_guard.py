@@ -46,6 +46,7 @@ def classify_topic_simple(text: str) -> str:
         "- Quiz sonucu inceleme ('quiz sonucumu incele', 'test sonucumu incele')\n"
         "- Ambiguous sorular ('ne alayım?', 'bana bir şey öner', 'ne yapayım?') → SAFE ama sağlığa yönlendir\n"
         "- Konuşma devam ettirme cümleleri ve normal sohbet cümleleri('devam et', 'anlat', 'daha fazla', 'başka ne var')\n"
+        "- Onay/red cümleleri ('evet', 'hayır', 'isterim', 'istemem', 'tamam', 'olur')\n"
         "- Sağlıkla ilgili her şey ama riskli konular dışında (ilaç, doz, antidepresan, teşhis vb.)\n"
         "- Genel sohbet cümleleri (sağlık konusunda devam ediyorsa)\n\n"
         "🔴 BLOCK (örnekler):\n"
