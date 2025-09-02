@@ -75,9 +75,9 @@
 
         /* Tooltip baloncuk - HTML element olarak */
         .longo-tooltip {
-            position: absolute;
-            right: 80px;
-            top: 20px;
+            position: fixed !important;
+            bottom: 100px !important;
+            right: 100px !important;
             background: #2F5D83 !important;
             color: white !important;
             padding: 10px 15px !important;
@@ -87,13 +87,14 @@
             white-space: nowrap !important;
             opacity: 1 !important;
             visibility: visible !important;
-            z-index: 10004 !important;
+            z-index: 99999 !important;
             box-shadow: 0 4px 15px rgba(47, 93, 131, 0.5) !important;
             border: 2px solid #4A7C9A !important;
             pointer-events: none !important;
-            width: 160px !important;
+            max-width: 180px !important;
             text-align: center !important;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            word-wrap: break-word !important;
         }
 
         #chat-button:hover {
@@ -320,15 +321,6 @@
                 opacity: 1;
                 transform: translateX(0);
             }
-        }
-            padding: 15px 25px;
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
         }
         
         /* Eski popup buton stilleri kaldırıldı */
@@ -1004,6 +996,12 @@
         const chatWindow = document.getElementById('longo-chat-window');
         chatWindow.style.display = 'block';
         
+        // Tooltip'i gizle
+        const tooltip = document.querySelector('.longo-tooltip');
+        if (tooltip) {
+            tooltip.style.display = 'none';
+        }
+        
         // Animasyon için
         setTimeout(() => {
             chatWindow.style.opacity = '1';
@@ -1029,6 +1027,12 @@
         
         setTimeout(() => {
             chatWindow.style.display = 'none';
+            
+            // Tooltip'i göster
+            const tooltip = document.querySelector('.longo-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'block';
+            }
         }, 300);
     };
     
