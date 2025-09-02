@@ -485,6 +485,7 @@
             background: rgba(255, 255, 255, 0.05);
             border-top: 1px solid rgba(255, 255, 255, 0.15);
             display: flex;
+            flex-direction: column;
             align-items: center; /* Safari dikey hizalama */
             gap: 15px;
             backdrop-filter: blur(30px);
@@ -495,6 +496,27 @@
             right: 0;
             z-index: 10;
             flex-shrink: 0;
+        }
+        
+        /* Input ve button container */
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        /* Disclaimer Stilleri */
+        .longo-disclaimer {
+            font-size: 11px;
+            color: rgba(100, 116, 139, 0.8);
+            text-align: center;
+            margin-top: 8px;
+            line-height: 1.3;
+            font-weight: 400;
+            opacity: 0.9;
+            max-width: 100%;
+            word-wrap: break-word;
         }
 
         #longo-message-input {
@@ -838,11 +860,16 @@
                     </div>
                     
                     <div id="longo-chat-input">
-                        <input type="text" id="longo-message-input" placeholder="Mesajınızı yazın..." onkeypress="longoHandleKeyPress(event)">
-                        <button onclick="longoSendMessage()" class="longo-send-btn">
-                            <span>Gönder</span>
-                            <div class="btn-ripple"></div>
-                        </button>
+                        <div class="input-container">
+                            <input type="text" id="longo-message-input" placeholder="Mesajınızı yazın..." onkeypress="longoHandleKeyPress(event)">
+                            <button onclick="longoSendMessage()" class="longo-send-btn">
+                                <span>Gönder</span>
+                                <div class="btn-ripple"></div>
+                            </button>
+                        </div>
+                        <div class="longo-disclaimer">
+                            Longo yapay zeka desteklidir, hata yapabilir. Doktorunuza danışın.
+                        </div>
                     </div>
                 </div>
             </div>
