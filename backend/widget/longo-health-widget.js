@@ -509,11 +509,11 @@
         
         /* Disclaimer Stilleri */
         .longo-disclaimer {
-            font-size: 12px;
+            font-size: 10px; /* 12px'den 10px'e küçültüldü */
             color: #1e293b; /* Siyah renk */
             text-align: center;
             margin-top: 5px;
-            line-height: 1.4;
+            line-height: 1.3; /* 1.4'ten 1.3'e küçültüldü */
             font-weight: 600; /* Daha kalın */
             opacity: 1;
             max-width: 100%;
@@ -522,8 +522,8 @@
             z-index: 11;
             position: relative;
             background: rgba(255, 255, 255, 0.9); /* Daha opak arka plan */
-            border-radius: 8px;
-            padding: 6px 12px;
+            border-radius: 6px; /* 8px'den 6px'e küçültüldü */
+            padding: 4px 8px; /* 6px 12px'den 4px 8px'e küçültüldü */
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 0, 0, 0.1); /* Siyah border */
         }
