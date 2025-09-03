@@ -1496,8 +1496,9 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
     
     # Quiz verilerini ekle
     if user_context:
+        user_message += f"\n📋 QUIZ VERİLERİ:\n"
         for key, value in user_context.items():
-            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo']:
+            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
                 user_message += f"- {key.upper()}: {value}\n"
     
     # Quiz geçmişini ekle
@@ -1513,6 +1514,17 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
         for analysis in lab_analyses[-1:]:  # En son analiz
             if analysis.get('summary'):
                 user_message += f"- {analysis['summary']}\n"
+    
+    # Global context'ten lab verilerini de ekle
+    if user_context:
+        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        lab_data_found = False
+        for key in lab_keys:
+            if key in user_context and user_context[key]:
+                if not lab_data_found:
+                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    lab_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
     
     user_message += f"""
 
