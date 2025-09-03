@@ -142,6 +142,10 @@ def longo_image():
 
 # ---------- FREE USER SESSION-BASED CHAT ----------
 
+# Global free user conversation memory (basit dict)
+free_user_conversations = {}
+import time
+
 async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     """Free kullanıcılar için session-based chat handler"""
     from backend.cache_utils import get_session_question_count, increment_session_question_count
@@ -160,6 +164,27 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     # Soru sayısını artır
     increment_session_question_count(x_user_id)
     
+    # Free user conversation memory'yi başlat (timestamp ile)
+    if x_user_id not in free_user_conversations:
+        free_user_conversations[x_user_id] = {
+            "messages": [],
+            "last_activity": time.time()
+        }
+    
+    # Eski session'ları temizle (2 saatten eski)
+    current_time = time.time()
+    expired_users = []
+    for user_id, data in free_user_conversations.items():
+        if current_time - data["last_activity"] > 7200:  # 2 saat = 7200 saniye
+            expired_users.append(user_id)
+    
+    for user_id in expired_users:
+        del free_user_conversations[user_id]
+        print(f"🔍 DEBUG: Eski session temizlendi: {user_id}")
+    
+    # Son aktivite zamanını güncelle
+    free_user_conversations[x_user_id]["last_activity"] = current_time
+    
     # Health Guard ile kategori kontrolü - SIKI KONTROL
     message_text = req.text or req.message
     if not message_text:
@@ -167,7 +192,11 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     
     ok, msg = guard_or_message(message_text)
     if not ok:
-        return ChatResponse(conversation_id=0, reply=msg, latency_ms=0)
+        # User mesajını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
+        # AI yanıtını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "assistant", "content": msg})
+        return ChatResponse(conversation_id=1, reply=msg, latency_ms=0)
     
     # Ekstra kontrol: Sağlık/supplement dışı konuları reddet
     txt = message_text.lower().strip()
@@ -177,11 +206,12 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     ]
     
     if any(keyword in txt for keyword in off_topic_keywords):
-        return ChatResponse(
-            conversation_id=0, 
-            reply="Üzgünüm, sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size sağlık konusunda nasıl yardımcı olabilirim?", 
-            latency_ms=0
-        )
+        reply = "Üzgünüm, sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size sağlık konusunda nasıl yardımcı olabilirim?"
+        # User mesajını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
+        # AI yanıtını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "assistant", "content": reply})
+        return ChatResponse(conversation_id=1, reply=reply, latency_ms=0)
     
     # Selamlama kontrolü
     txt = message_text.lower().strip()
@@ -192,7 +222,11 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     
     if any(kw == txt for kw in pure_greeting_keywords):
         reply = "Merhaba! Ben Longo AI. Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
-        return ChatResponse(conversation_id=0, reply=reply, latency_ms=0)
+        # User mesajını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
+        # AI yanıtını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "assistant", "content": reply})
+        return ChatResponse(conversation_id=1, reply=reply, latency_ms=0)
     
     # AI yanıtı için OpenRouter kullan
     try:
@@ -233,8 +267,19 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         # XML'den ürünleri çek
         xml_products = get_xml_products()
         
+        # Conversation history'yi al (son 5 mesaj)
+        conversation_history = free_user_conversations[x_user_id]["messages"][-10:] if len(free_user_conversations[x_user_id]["messages"]) > 0 else []
+        
         # Kullanıcı mesajını hazırla
         user_message = message_text
+        
+        # Conversation history'yi context olarak ekle
+        if conversation_history:
+            context_message = "\n\n=== KONUŞMA GEÇMİŞİ ===\n"
+            for msg in conversation_history[-5:]:  # Son 5 mesajı al
+                context_message += f"{msg['role'].upper()}: {msg['content']}\n"
+            user_message = context_message + "\n" + user_message
+            print(f"🔍 DEBUG: Free kullanıcı için {len(conversation_history)} mesaj geçmişi eklendi")
         
         # XML ürünlerini user message'a ekle
         if xml_products:
@@ -253,15 +298,21 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         # AI yanıtını al
         reply = ai_response
         
-        return ChatResponse(conversation_id=0, reply=reply, latency_ms=0)
+        # User mesajını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
+        # AI yanıtını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "assistant", "content": reply})
+        
+        return ChatResponse(conversation_id=1, reply=reply, latency_ms=0)
         
     except Exception as e:
         print(f"Free user chat error: {e}")
-        return ChatResponse(
-            conversation_id=0,
-            reply="Üzgünüm, şu anda yanıt veremiyorum. Lütfen daha sonra tekrar deneyin.",
-            latency_ms=0
-        )
+        reply = "Üzgünüm, şu anda yanıt veremiyorum. Lütfen daha sonra tekrar deneyin."
+        # User mesajını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
+        # AI yanıtını memory'ye ekle
+        free_user_conversations[x_user_id]["messages"].append({"role": "assistant", "content": reply})
+        return ChatResponse(conversation_id=1, reply=reply, latency_ms=0)
 
 # ---------- PREMIUM USER DATABASE-BASED CHAT ----------
 
@@ -1306,6 +1357,14 @@ def get_supplements_xml():
 #     from backend.cache_utils import cleanup_cache
 #     removed_count = cleanup_cache()
 #     return {"message": f"{removed_count} expired item temizlendi", "status": "success"}
+
+@app.post("/ai/chat/clear-session")
+def clear_free_user_session(x_user_id: str | None = Header(default=None)):
+    """Free kullanıcının session'ını temizle"""
+    if x_user_id and x_user_id in free_user_conversations:
+        del free_user_conversations[x_user_id]
+        return {"message": "Session temizlendi", "user_id": x_user_id}
+    return {"message": "Session bulunamadı", "user_id": x_user_id}
 
 @app.get("/users/{external_user_id}/info")
 def get_user_info(external_user_id: str, db: Session = Depends(get_db)):
