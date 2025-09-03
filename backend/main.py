@@ -603,7 +603,6 @@ async def chat_message(req: ChatMessageRequest,
     supplements_list = SUPPLEMENTS_LIST
     
     # Supplement listesi kuralları (quiz'deki gibi)
-    system_prompt += "\n- MUTLAKA sadece user message'da verilen supplement listesindeki ürünleri öner başka ürün sakın önerme!"
     system_prompt += "\n- Sakın ürünlerin id'lerini, Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
     system_prompt += "\n- DİL: SADECE TÜRKÇE YANIT VER!"
     system_prompt += "\n\n🎯 SAĞLIK YÖNLENDİRME STRATEJİSİ:"
