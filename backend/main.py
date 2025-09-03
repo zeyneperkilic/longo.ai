@@ -654,7 +654,7 @@ async def chat_message(req: ChatMessageRequest,
             supplements_info += f"  {i}. {supplement['name']}\n"
         supplements_info += "\n"
     
-    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! Link verme! Ürün ID'lerini kullanıcıya gösterme!"
+    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin için listedeki', 'listede var', 'Senin listende' gibi ifadeler kullanma! Link verme! Ürün ID'lerini kullanıcıya gösterme!"
     
     # Context'i ilk message'a ekle
     
