@@ -1523,12 +1523,7 @@ Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
     try:
         from backend.openrouter_client import get_ai_response
         
-        history = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
-        
-        reply = await get_ai_response(history)
+        reply = await get_ai_response(system_prompt, user_message)
         
         return {
             "status": "success",
