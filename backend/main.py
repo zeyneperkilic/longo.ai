@@ -1399,6 +1399,148 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
+# ---------- PREMIUM PLUS BESLENME/SPOR/EGZERSİZ ÖNERİLERİ ----------
+
+@app.post("/ai/premium-plus/lifestyle-recommendations")
+async def premium_plus_lifestyle_recommendations(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_plan: str | None = Header(default=None)
+):
+    """Premium Plus kullanıcıları için beslenme, spor ve egzersiz önerileri"""
+    
+    # Plan kontrolü - sadece premium_plus
+    user_plan = x_user_plan or "free"
+    if user_plan != "premium_plus":
+        raise HTTPException(
+            status_code=403, 
+            detail="Bu özellik sadece Premium Plus kullanıcıları için mevcuttur"
+        )
+    
+    # User ID validasyonu
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="User ID gerekli")
+    
+    # Kullanıcıyı bul/oluştur
+    user = get_or_create_user(db, x_user_id, user_plan)
+    
+    # Global context'i al (quiz + lab verileri)
+    global_context = get_user_global_context(db, user.id)
+    
+    # Quiz geçmişini al
+    quiz_history = get_user_quiz_history(db, user.id, limit=3)
+    
+    # Lab analizlerini al
+    lab_analyses = get_user_ai_interactions(db, user.id, limit=3)
+    
+    # AI'ya gönderilecek context'i hazırla
+    user_context = {}
+    if global_context:
+        # Key'leri normalize et
+        normalized_global = {}
+        for key, value in global_context.items():
+            if key and value:
+                normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
+                if normalized_key and normalized_key not in normalized_global:
+                    normalized_global[normalized_key] = value
+        user_context.update(normalized_global)
+    
+    # System prompt - Premium Plus özel
+    system_prompt = """Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
+
+🎯 GÖREVİN: Kullanıcının quiz sonuçları ve lab verilerine göre kişiselleştirilmiş beslenme, spor ve egzersiz önerileri ver.
+
+📊 VERİ ANALİZİ:
+- Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi
+- Lab sonuçlarından vitamin/mineral eksiklikleri, sağlık durumu
+- Bu verileri birleştirerek holistik yaklaşım
+
+🏃‍♂️ SPOR/EGZERSİZ ÖNERİLERİ:
+- Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
+- Haftalık program önerisi (kaç gün, ne kadar süre)
+- Kardiyovasküler, güç antrenmanı, esneklik dengesi
+- Başlangıç seviyesi için güvenli ve sürdürülebilir
+
+🥗 BESLENME ÖNERİLERİ:
+- Lab sonuçlarına göre eksik vitamin/mineraller için besin önerileri
+- Quiz'deki hedeflere uygun makro besin dağılımı
+- Öğün planlama ve porsiyon önerileri
+- Supplement ile beslenme dengesi
+
+⚡ ENERJİ VE PERFORMANS:
+- Egzersiz öncesi/sonrası beslenme
+- Hidrasyon stratejileri
+- Uyku ve recovery önerileri
+
+🚫 KISITLAMALAR:
+- Sadece genel öneriler, tıbbi tavsiye değil
+- Kişisel antrenör veya diyetisyen yerine geçmez
+- Güvenlik öncelikli yaklaşım
+
+💡 YANIT FORMATI:
+1. 📊 MEVCUT DURUM ANALİZİ
+2. 🏃‍♂️ SPOR/EGZERSİZ PROGRAMI
+3. 🥗 BESLENME ÖNERİLERİ
+4. ⚡ PERFORMANS İPUÇLARI
+5. 📅 HAFTALIK PLAN ÖNERİSİ
+
+DİL: SADECE TÜRKÇE YANIT VER!"""
+
+    # User message'ı hazırla
+    user_message = f"""Kullanıcının mevcut durumu:
+
+📊 KULLANICI BİLGİLERİ:
+"""
+    
+    # Quiz verilerini ekle
+    if user_context:
+        for key, value in user_context.items():
+            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo']:
+                user_message += f"- {key.upper()}: {value}\n"
+    
+    # Quiz geçmişini ekle
+    if quiz_history:
+        user_message += f"\n📋 SON QUIZ SONUÇLARI:\n"
+        for quiz in quiz_history[-1:]:  # En son quiz
+            if quiz.get('summary'):
+                user_message += f"- {quiz['summary']}\n"
+    
+    # Lab analizlerini ekle
+    if lab_analyses:
+        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        for analysis in lab_analyses[-1:]:  # En son analiz
+            if analysis.get('summary'):
+                user_message += f"- {analysis['summary']}\n"
+    
+    user_message += f"""
+
+Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
+Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
+
+    # AI'ya gönder
+    try:
+        from backend.openrouter_client import get_ai_response
+        
+        history = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ]
+        
+        reply = await get_ai_response(history)
+        
+        return {
+            "status": "success",
+            "recommendations": reply,
+            "user_context": user_context,
+            "quiz_count": len(quiz_history),
+            "lab_count": len(lab_analyses)
+        }
+        
+    except Exception as e:
+        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
+        raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
+
 # Input validation helper
 def validate_input_data(data: dict, required_fields: list = None) -> dict:
     """Input data validation for production - TAMAMEN ESNEK"""
