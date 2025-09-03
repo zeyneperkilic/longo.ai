@@ -603,7 +603,9 @@ async def chat_message(req: ChatMessageRequest,
     supplements_list = SUPPLEMENTS_LIST
     
     # Supplement listesi kuralları (quiz'deki gibi)
-    system_prompt += "\n- Sakın ürünlerin id'lerini, Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
+    system_prompt += "\n- Sakın ürünlerin id'lerini kullanıcıya gösterme!"
+    system_prompt += "\n- Liste hakkında konuşma!"
+    system_prompt += "\n- Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
     system_prompt += "\n- DİL: SADECE TÜRKÇE YANIT VER!"
     system_prompt += "\n\n🎯 SAĞLIK YÖNLENDİRME STRATEJİSİ:"
     system_prompt += "\n- Off-topic konularda: 'Bu konu sağlıkla ilgili değil ama sana sağlık önerisi verebilirim'"
@@ -648,10 +650,10 @@ async def chat_message(req: ChatMessageRequest,
         category_products = [s for s in supplements_list if s['category'] == category]
         supplements_info += f" {category.upper()} ({len(category_products)} ürün):\n"
         for i, supplement in enumerate(category_products, 1):
-            supplements_info += f"  {i}. {supplement['name']} (ID: {supplement['id']})\n"
+            supplements_info += f"  {i}. {supplement['name']}\n"
         supplements_info += "\n"
     
-    supplements_info += "💡 AI: Tüm bu 128 ürün arasından en uygun olanları seç!"
+    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün ID'lerini kullanıcıya gösterme!"
     
     # Context'i ilk message'a ekle
     
