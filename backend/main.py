@@ -260,7 +260,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Off-topic soruları kesinlikle reddet
 - Web sitelerinden link verme
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
-- "Senin listende", "listende var", "listende bulunan" gibi ifadeler kullanma
+- Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! "Senin listende", "listende var" gibi ifadeler kullanma
 - "Senin verdiğin liste" gibi ifadeler kullanma
 - Sürekli "ne önermemi istersin?" sorma, konuşmanın devamlılığını sağla
 - Sadece ürün isimlerini öner, açıklama yapma"""
@@ -605,7 +605,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Supplement listesi kuralları (quiz'deki gibi)
     system_prompt += "\n- Sakın ürünlerin id'lerini kullanıcıya gösterme!"
-    system_prompt += "\n- Liste hakkında konuşma! 'Senin listende', 'listende var', 'listende bulunan' gibi ifadeler kullanma!"
+    system_prompt += "\n- Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin listende', 'listende var' gibi ifadeler kullanma!"
     system_prompt += "\n- Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
     system_prompt += "\n- DİL: SADECE TÜRKÇE YANIT VER!"
     system_prompt += "\n\n🎯 SAĞLIK YÖNLENDİRME STRATEJİSİ:"
