@@ -1428,8 +1428,8 @@ async def premium_plus_lifestyle_recommendations(
     # Global context'i al (quiz + lab verileri)
     global_context = get_user_global_context(db, user.id)
     
-    # Quiz geçmişini al
-    quiz_history = get_user_quiz_history(db, user.id, limit=3)
+    # Quiz geçmişini al (basit implementasyon - quiz tablosu yok)
+    quiz_history = []  # TODO: Quiz geçmişi için ayrı tablo gerekli
     
     # Lab analizlerini al
     lab_analyses = get_user_ai_interactions(db, user.id, limit=3)
