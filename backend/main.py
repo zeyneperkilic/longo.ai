@@ -1512,7 +1512,9 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
     if lab_analyses:
         user_message += f"\n🧪 LAB ANALİZLERİ:\n"
         for analysis in lab_analyses[-1:]:  # En son analiz
-            if analysis.get('summary'):
+            if hasattr(analysis, 'summary') and analysis.summary:
+                user_message += f"- {analysis.summary}\n"
+            elif isinstance(analysis, dict) and analysis.get('summary'):
                 user_message += f"- {analysis['summary']}\n"
     
     # Global context'ten lab verilerini de ekle
