@@ -1517,8 +1517,19 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
             elif isinstance(analysis, dict) and analysis.get('summary'):
                 user_message += f"- {analysis['summary']}\n"
     
-    # Global context'ten lab verilerini de ekle
+    # Global context'ten tüm verileri ekle
     if user_context:
+        # Quiz verilerini ekle
+        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        quiz_data_found = False
+        for key in quiz_keys:
+            if key in user_context and user_context[key]:
+                if not quiz_data_found:
+                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    quiz_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+        
+        # Lab verilerini ekle
         lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
         lab_data_found = False
         for key in lab_keys:
