@@ -1432,6 +1432,7 @@ async def premium_plus_lifestyle_recommendations(
     quiz_history = []  # TODO: Quiz geçmişi için ayrı tablo gerekli
     
     # Lab analizlerini al
+    from backend.db import get_user_ai_interactions
     lab_analyses = get_user_ai_interactions(db, user.id, limit=3)
     
     # AI'ya gönderilecek context'i hazırla
