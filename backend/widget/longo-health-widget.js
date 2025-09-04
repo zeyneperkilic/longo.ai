@@ -200,8 +200,8 @@
         }
 
         .header-longo-icon {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(255, 255, 255, 0.3);
@@ -879,7 +879,7 @@
                     <div id="longo-chat-header">
                         <h3>
                             <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo" class="header-longo-icon">
-                            Longo AI
+                            LONGO AI
                         </h3>
                         <button onclick="longoCloseChat()" class="longo-close-btn">✕</button>
                     </div>
@@ -910,7 +910,7 @@
                             </button>
                         </div>
                         <div class="longo-disclaimer">
-                            Longo yapay zeka desteklidir. Öneriler için doktorunuza danışın.
+                            Longo yapay zeka desteklidir. Öneriler için doktorunuza danışınız.
                         </div>
                     </div>
                 </div>
