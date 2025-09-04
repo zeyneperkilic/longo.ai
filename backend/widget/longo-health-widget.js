@@ -140,7 +140,7 @@
             bottom: 100px;
             right: 20px;
             width: 400px;
-            height: 600px;
+            height: min(600px, calc(100vh - 120px));
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(35px);
             border-radius: 25px;
@@ -362,11 +362,11 @@
             flex: 1;
             padding: 20px;
             padding-bottom: 130px; /* Disclaimer için daha fazla yer */
-            overflow-y: scroll;
+            overflow-y: auto;
             background: rgba(255, 255, 255, 0.02);
             backdrop-filter: blur(25px);
             min-height: 0;
-            max-height: calc(100vh - 300px);
+            height: calc(100% - 80px); /* Header yüksekliğini çıkar */
             scrollbar-width: thin;
             scrollbar-color: rgba(47, 93, 131, 0.5) transparent;
         }
@@ -777,25 +777,26 @@
 
         /* Scrollbar Styling - Modern ve Belirgin */
         #longo-chat-messages::-webkit-scrollbar {
-            width: 12px;
+            width: 16px;
         }
 
         #longo-chat-messages::-webkit-scrollbar-track {
-            background: rgba(47, 93, 131, 0.15);
-            border-radius: 6px;
+            background: rgba(47, 93, 131, 0.25);
+            border-radius: 8px;
             margin: 5px;
         }
 
         #longo-chat-messages::-webkit-scrollbar-thumb {
             background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
-            border-radius: 6px;
-            border: 2px solid rgba(255,255,255,0.9);
-            box-shadow: 0 2px 8px rgba(47, 93, 131, 0.3);
+            border-radius: 8px;
+            border: 3px solid rgba(255,255,255,0.9);
+            box-shadow: 0 2px 8px rgba(47, 93, 131, 0.4);
         }
 
         #longo-chat-messages::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(135deg, #1e4a6b 0%, #2F5D83 100%);
-            box-shadow: 0 4px 12px rgba(47, 93, 131, 0.5);
+            box-shadow: 0 4px 12px rgba(47, 93, 131, 0.6);
+            transform: scale(1.1);
         }
 
         /* Firefox için scrollbar */
@@ -808,7 +809,7 @@
         @media (max-width: 480px) {
             #longo-chat-window {
                 width: 360px;
-                height: 550px;
+                height: min(600px, calc(100vh - 120px));
                 right: 10px;
             }
             
