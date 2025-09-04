@@ -2,9 +2,11 @@
 (function() {
     'use strict';
     
-    // Test için değişkenler (Ideasoft'ta gerçek değerler gelecek)
-    window.longoUserPlan = 'free'; // 'free', 'premium', 'premium_plus'
-    window.longoRealUserId = null; // Premium kullanıcılar için gerçek user ID
+    // DOM hazır olunca widget'ı başlat
+    function initWidget() {
+        // Test için değişkenler (Ideasoft'ta gerçek değerler gelecek)
+        window.longoUserPlan = 'free'; // 'free', 'premium', 'premium_plus'
+        window.longoRealUserId = null; // Premium kullanıcılar için gerçek user ID
     
     // CSS Stillerini ekle
     const widgetStyles = `
@@ -1326,5 +1328,14 @@
     
     // Widget'ı başlat
     createWidget();
+    }
+    
+    // DOM hazır olunca widget'ı başlat
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWidget);
+    } else {
+        // DOM zaten hazır
+        initWidget();
+    }
     
 })();
