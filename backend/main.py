@@ -108,7 +108,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS!=["*"] else ["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],  # Restrict to needed methods only
+    allow_methods=["GET", "POST", "OPTIONS"],  # OPTIONS for CORS preflight
     allow_headers=["*"],
 )
 
