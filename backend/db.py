@@ -193,9 +193,14 @@ def update_user_global_context(db: Session, user_id: int, new_context: dict):
                 updated_context[key] = value
             elif isinstance(value, list) and isinstance(updated_context[key], list):
                 # Listeleri birleştir (duplicate'ları kaldır)
-                updated_context[key] = list(set(updated_context[key] + value))
+                # Sadece hashable elemanlar için set kullan
+                try:
+                    updated_context[key] = list(set(updated_context[key] + value))
+                except TypeError:
+                    # Hashable olmayan elemanlar varsa (dict gibi), sadece ekle
+                    updated_context[key] = updated_context[key] + value
             else:
-                # String değerleri güncelle
+                # String, dict veya diğer değerleri güncelle
                 updated_context[key] = value
         
         # SQLAlchemy JSON field'ı force update et
