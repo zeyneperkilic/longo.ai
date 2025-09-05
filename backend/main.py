@@ -617,7 +617,7 @@ async def chat_message(req: ChatMessageRequest,
     system_prompt += "\n- Mevcut verileri analiz et ve öneri yap!"
     system_prompt += "\n- 'Ne alayım?', 'Bana bir şey öner', 'Ne yapayım?' gibi belirsiz sorular → HEMEN SAĞLIK!"
     system_prompt += "\n- 'Supplement öner', 'Hangi ürünleri alayım?' şeklinde yönlendir!"
-    system_prompt += "\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
+    system_prompt += "\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!\n- Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme!\n- Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al!\n- Riskli durumlar varsa o supplement'i önerme!\n- Kullanıcı özel olarak supplement istemiyorsa, sadece gerçekten gerekli olanları öner!"
     system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
     system_prompt += "\n- Değerler iyiyse Longevity, kötüyse problem çözücü öner!"
     
@@ -654,7 +654,7 @@ async def chat_message(req: ChatMessageRequest,
             supplements_info += f"  {i}. {supplement['name']}\n"
         supplements_info += "\n"
     
-    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin için listedeki', 'listede var', 'Senin listende' gibi ifadeler kullanma! Link verme! Ürün ID'lerini kullanıcıya gösterme!"
+    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin için listedeki', 'listede var', 'Senin listende' gibi ifadeler kullanma! Link verme! Ürün ID'lerini kullanıcıya gösterme!\n\n🎯 SUPPLEMENT ÖNERİSİ KURALLARI:\n- SADECE kullanıcının gerçek ihtiyacı olan supplementleri öner!\n- Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme!\n- Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al!\n- Riskli durumlar varsa o supplement'i önerme!\n- Kullanıcı özel olarak supplement istemiyorsa, sadece gerçekten gerekli olanları öner!\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
     
     # Context'i ilk message'a ekle
     
