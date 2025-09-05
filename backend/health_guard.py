@@ -48,6 +48,7 @@ def classify_topic_simple(text: str) -> str:
         "- Konuşma devam ettirme cümleleri ('devam et', 'anlat', 'daha fazla', 'başka ne var')\n"
         "- Onay/red cümleleri ('evet', 'hayır', 'isterim', 'istemem', 'tamam', 'olur')\n"
         "- Normal sohbet cümleleri ('nasılsın', 'iyi misin', 'teşekkürler', 'rica ederim')\n"
+        "- AI yetenek soruları ('ne yapabiliyorsun', 'neler yapabiliyorsun', 'hangi konularda yardımcı olabilirsin')\n"
         "- Genel konuşma cümleleri (sağlık dışı ama zararsız sohbet)\n"
         "- Sağlıkla ilgili her şey ama riskli konular dışında (ilaç, doz, antidepresan, teşhis vb.)\n\n"
         "🔴 BLOCK (örnekler):\n"
