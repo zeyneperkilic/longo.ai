@@ -1540,4 +1540,109 @@ async def premium_plus_lifestyle_recommendations(
 
 ⚡ ENERJİ VE PERFORMANS:
 - Egzersiz öncesi/sonrası beslenme
-- Hidrasyon st
+- Hidrasyon stratejileri
+- Uyku ve recovery önerileri
+
+🚫 KISITLAMALAR:
+- Sadece genel öneriler, tıbbi tavsiye değil
+- Kişisel antrenör veya diyetisyen yerine geçmez
+- Güvenlik öncelikli yaklaşım
+
+💡 YANIT FORMATI:
+1. 📊 MEVCUT DURUM ANALİZİ
+2. 🏃‍♂️ SPOR/EGZERSİZ PROGRAMI
+3. 🥗 BESLENME ÖNERİLERİ
+4. ⚡ PERFORMANS İPUÇLARI
+5. 📅 HAFTALIK PLAN ÖNERİSİ
+
+DİL: SADECE TÜRKÇE YANIT VER!"""
+
+    # User message'ı hazırla
+    user_message = f"""Kullanıcının mevcut durumu:
+
+📊 KULLANICI BİLGİLERİ:
+"""
+    
+    # Quiz verilerini ekle
+    if user_context:
+        user_message += f"\n📋 QUIZ VERİLERİ:\n"
+        for key, value in user_context.items():
+            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
+                user_message += f"- {key.upper()}: {value}\n"
+    
+    # Quiz geçmişini ekle
+    if quiz_history:
+        user_message += f"\n📋 SON QUIZ SONUÇLARI:\n"
+        for quiz in quiz_history[-1:]:  # En son quiz
+            if quiz.get('summary'):
+                user_message += f"- {quiz['summary']}\n"
+    
+    # Lab analizlerini ekle
+    if lab_analyses:
+        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        for analysis in lab_analyses[-1:]:  # En son analiz
+            if hasattr(analysis, 'summary') and analysis.summary:
+                user_message += f"- {analysis.summary}\n"
+            elif isinstance(analysis, dict) and analysis.get('summary'):
+                user_message += f"- {analysis['summary']}\n"
+    
+    # Global context'ten tüm verileri ekle
+    if user_context:
+        # Quiz verilerini ekle
+        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        quiz_data_found = False
+        for key in quiz_keys:
+            if key in user_context and user_context[key]:
+                if not quiz_data_found:
+                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    quiz_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+        
+        # Lab verilerini ekle
+        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        lab_data_found = False
+        for key in lab_keys:
+            if key in user_context and user_context[key]:
+                if not lab_data_found:
+                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    lab_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+    
+    user_message += f"""
+
+Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
+Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
+
+    # AI'ya gönder
+    try:
+        from backend.openrouter_client import get_ai_response
+        
+        reply = await get_ai_response(system_prompt, user_message)
+        
+        return {
+            "status": "success",
+            "recommendations": reply,
+            "user_context": user_context,
+            "quiz_count": len(quiz_history),
+            "lab_count": len(lab_analyses)
+        }
+        
+    except Exception as e:
+        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
+        raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
+
+# Input validation helper
+def validate_input_data(data: dict, required_fields: list = None) -> dict:
+    """Input data validation for production - TAMAMEN ESNEK"""
+    if not data:
+        data = {}
+    
+    # Required fields için default değer ata (ama strict validation yapma)
+    if required_fields:
+        for field in required_fields:
+            if field not in data:
+                data[field] = None
+    
+    # Her türlü input'u kabul et (string, int, float, dict, list)
+    # Pydantic schema'lar zaten extra = "allow" ile esnek
+    return data
