@@ -667,6 +667,7 @@ def build_single_lab_prompt(test_data: Dict[str, Any], historical_results: List[
     5. Test kategorisine göre özel yorumlar yap
     6. GEÇMİŞ SONUÇLARLA TREND ANALİZİ YAP (varsa)
     7. Genel tıbbi takip önerileri ver (supplement önerisi verme!)
+    8. SADECE ANALİZ YAP, SUPPLEMENT ÖNERİSİ VERME!
     
     TREND ANALİZİ (geçmiş sonuçlar varsa):
     - Değerlerin zaman içindeki değişimi nasıl?
@@ -708,6 +709,7 @@ def build_single_lab_prompt(test_data: Dict[str, Any], historical_results: List[
         "GEÇMİŞ SONUÇLARLA TREND ANALİZİ YAP (varsa). "
         "Eksik veriler varsa bunları belirt ve gerekli ek testleri öner. "
         "Kullanıcının diline uygun yanıt ver. "
+        "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme! "
         "DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
     )
@@ -770,13 +772,14 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
     summary_stats += f"{attention_count} Dikkat Gereken\n"
     
     # Basit talimat
-    instructions = "ÖNEMLİ: Tek seans analizi yap, supplement önerisi verme, sadece genel sağlık yorumu ve önerileri ver!"
+    instructions = "ÖNEMLİ: Tek seans analizi yap, supplement önerisi verme, sadece genel sağlık yorumu ve önerileri ver! SADECE ANALİZ YAP!"
     
     system_prompt = (
         SYSTEM_HEALTH + " Sen bir laboratuvar seans analiz uzmanısın. "
         "Tek bir test seansındaki tüm testleri analiz et ve genel sağlık durumu yorumu yap. "
         "Test gruplarını kategorize et, normal/anormal sayılarını belirt. "
         "Genel sağlık önerileri ver ama supplement önerisi verme. "
+        "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "Sadece bilgilendirme amaçlı yorum yap, tıbbi tanı koyma. "
         "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"
         "\n- SADECE TÜRKÇE KULLAN!"
