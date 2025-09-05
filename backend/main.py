@@ -399,10 +399,23 @@ async def chat_message(req: ChatMessageRequest,
                   current_user: str = Depends(get_current_user),
                   db: Session = Depends(get_db),
                   x_user_id: str | None = Header(default=None),
-                  x_user_plan: str | None = Header(default=None)):
+                  x_user_plan: str | None = Header(default=None),
+                  x_user_level: int | None = Header(default=None)):
     
-    # Plan kontrolü
-    user_plan = x_user_plan or "free"
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        user_plan = x_user_plan or "free"
+    
     is_premium = user_plan in ["premium", "premium_plus"]
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
@@ -779,10 +792,25 @@ async def analyze_quiz(body: QuizRequest,
                  current_user: str = Depends(get_current_user),
                  db: Session = Depends(get_db),
                  x_user_id: str | None = Header(default=None),
-                 x_user_plan: str | None = Header(default=None)):
+                 x_user_plan: str | None = Header(default=None),
+                 x_user_level: int | None = Header(default=None)):
     """Quiz endpoint - Sadece AI model işlemi, asıl site entegrasyonu için optimize edildi"""
     
-    user = get_or_create_user(db, x_user_id, x_user_plan)
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        user_plan = x_user_plan or "free"
+    
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # Quiz data'yı dict'e çevir ve validate et - TAMAMEN ESNEK
     quiz_dict = validate_input_data(body.quiz_answers or {}, [])  # Required fields yok, her şeyi kabul et
@@ -908,9 +936,25 @@ def analyze_single_lab(body: SingleLabRequest,
                         current_user: str = Depends(get_current_user),
                        db: Session = Depends(get_db),
                         x_user_id: str | None = Header(default=None),
-                        x_user_plan: str | None = Header(default=None)):
+                        x_user_plan: str | None = Header(default=None),
+                        x_user_level: int | None = Header(default=None)):
     """Analyze single lab test result with historical trend analysis"""
-    user = get_or_create_user(db, x_user_id, x_user_plan or "premium")
+    
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        user_plan = x_user_plan or "premium"
+    
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # Convert test to dict for processing
     test_dict = body.test.model_dump()
@@ -1051,9 +1095,25 @@ def analyze_single_session(body: SingleSessionRequest,
 def analyze_multiple_lab_summary(body: MultipleLabRequest,
                                  current_user: str = Depends(get_current_user),
                                  db: Session = Depends(get_db),
-                                 x_user_id: str | None = Header(default=None)):
+                                 x_user_id: str | None = Header(default=None),
+                                 x_user_level: int | None = Header(default=None)):
     """Generate general summary of multiple lab tests with supplement recommendations and progress tracking"""
-    user = get_or_create_user(db, x_user_id, "premium")  # Asıl site zaten kontrol ediyor
+    
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        user_plan = "premium"  # Asıl site zaten kontrol ediyor
+    
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     tests_dict = []
@@ -1406,12 +1466,21 @@ async def premium_plus_lifestyle_recommendations(
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db),
     x_user_id: str | None = Header(default=None),
-    x_user_plan: str | None = Header(default=None)
+    x_user_plan: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None)
 ):
     """Premium Plus kullanıcıları için beslenme, spor ve egzersiz önerileri"""
     
-    # Plan kontrolü - sadece premium_plus
-    user_plan = x_user_plan or "free"
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Premium Plus değilse free
+    else:
+        # Eski sistem fallback
+        user_plan = x_user_plan or "free"
+    
     if user_plan != "premium_plus":
         raise HTTPException(
             status_code=403, 
@@ -1471,109 +1540,4 @@ async def premium_plus_lifestyle_recommendations(
 
 ⚡ ENERJİ VE PERFORMANS:
 - Egzersiz öncesi/sonrası beslenme
-- Hidrasyon stratejileri
-- Uyku ve recovery önerileri
-
-🚫 KISITLAMALAR:
-- Sadece genel öneriler, tıbbi tavsiye değil
-- Kişisel antrenör veya diyetisyen yerine geçmez
-- Güvenlik öncelikli yaklaşım
-
-💡 YANIT FORMATI:
-1. 📊 MEVCUT DURUM ANALİZİ
-2. 🏃‍♂️ SPOR/EGZERSİZ PROGRAMI
-3. 🥗 BESLENME ÖNERİLERİ
-4. ⚡ PERFORMANS İPUÇLARI
-5. 📅 HAFTALIK PLAN ÖNERİSİ
-
-DİL: SADECE TÜRKÇE YANIT VER!"""
-
-    # User message'ı hazırla
-    user_message = f"""Kullanıcının mevcut durumu:
-
-📊 KULLANICI BİLGİLERİ:
-"""
-    
-    # Quiz verilerini ekle
-    if user_context:
-        user_message += f"\n📋 QUIZ VERİLERİ:\n"
-        for key, value in user_context.items():
-            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
-                user_message += f"- {key.upper()}: {value}\n"
-    
-    # Quiz geçmişini ekle
-    if quiz_history:
-        user_message += f"\n📋 SON QUIZ SONUÇLARI:\n"
-        for quiz in quiz_history[-1:]:  # En son quiz
-            if quiz.get('summary'):
-                user_message += f"- {quiz['summary']}\n"
-    
-    # Lab analizlerini ekle
-    if lab_analyses:
-        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
-        for analysis in lab_analyses[-1:]:  # En son analiz
-            if hasattr(analysis, 'summary') and analysis.summary:
-                user_message += f"- {analysis.summary}\n"
-            elif isinstance(analysis, dict) and analysis.get('summary'):
-                user_message += f"- {analysis['summary']}\n"
-    
-    # Global context'ten tüm verileri ekle
-    if user_context:
-        # Quiz verilerini ekle
-        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
-        quiz_data_found = False
-        for key in quiz_keys:
-            if key in user_context and user_context[key]:
-                if not quiz_data_found:
-                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
-                    quiz_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
-        
-        # Lab verilerini ekle
-        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
-        lab_data_found = False
-        for key in lab_keys:
-            if key in user_context and user_context[key]:
-                if not lab_data_found:
-                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
-                    lab_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
-    
-    user_message += f"""
-
-Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
-Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
-
-    # AI'ya gönder
-    try:
-        from backend.openrouter_client import get_ai_response
-        
-        reply = await get_ai_response(system_prompt, user_message)
-        
-        return {
-            "status": "success",
-            "recommendations": reply,
-            "user_context": user_context,
-            "quiz_count": len(quiz_history),
-            "lab_count": len(lab_analyses)
-        }
-        
-    except Exception as e:
-        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
-        raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
-
-# Input validation helper
-def validate_input_data(data: dict, required_fields: list = None) -> dict:
-    """Input data validation for production - TAMAMEN ESNEK"""
-    if not data:
-        data = {}
-    
-    # Required fields için default değer ata (ama strict validation yapma)
-    if required_fields:
-        for field in required_fields:
-            if field not in data:
-                data[field] = None
-    
-    # Her türlü input'u kabul et (string, int, float, dict, list)
-    # Pydantic schema'lar zaten extra = "allow" ile esnek
-    return data
+- Hidrasyon st
