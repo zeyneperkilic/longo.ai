@@ -166,8 +166,12 @@ class QuizResponse(BaseModel):
 
 # Lab Response Schemas - ESNEK YAPI
 class LabAnalysisResponse(BaseModel):
-    analysis: Dict[str, Any] = Field(default_factory=dict)
-    disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
+    title: str = "Test Sonucu Yorumu"
+    test_name: Optional[str] = Field(default="Test Adı Sonucu Değerlendirmesi")
+    last_result: Optional[str] = Field(default="Son Test Sonucunuz: X değer Durum")
+    reference_range: Optional[str] = Field(default="Referans Aralığı: X-Y birim")
+    test_analysis: Optional[str] = Field(default="Test analizi ve trend analizi")
+    disclaimer: str = "Bu yorum sadece bilgilendirme amaçlıdır. Kesin tanı ve tedavi için mutlaka doktorunuza başvurunuz."
     
     class Config:
         extra = "allow"

@@ -654,31 +654,26 @@ def build_single_lab_prompt(test_data: Dict[str, Any], historical_results: List[
     """
     
     schema = (
-        "STRICT JSON ŞEMASI - LAB ANALİZİ (TREND ANALİZİ İLE):\n"
+        "STRICT JSON ŞEMASI - LAB SINGLE (YENİ FORMAT):\n"
         "{\n"
-        '  "analysis": {\n'
-        '    "summary": "Test sonucunun kısa yorumu (örn: Normal, Düşük, Yüksek, Kritik)",\n'
-        '    "interpretation": "Sonucun anlamı ve önemi (detaylı açıklama)",\n'
-        '    "reference_comparison": "Referans aralığı ile karşılaştırma (varsa sayısal analiz)",\n'
-        '    "clinical_significance": "Klinik önemi (sağlık açısından ne anlama geliyor)",\n'
-        '    "category_insights": "Test kategorisine özel yorumlar",\n'
-        '    "trend_analysis": "Geçmiş sonuçlarla trend analizi (varsa)",\n'
-        '    "follow_up_suggestions": "Takip önerileri (genel tıbbi öneri, supplement değil!)"\n'
-        "  }\n"
+        '  "title": "Test Sonucu Yorumu",\n'
+        '  "test_name": "Test Adı Sonucu Değerlendirmesi",\n'
+        '  "last_result": "Son Test Sonucunuz: X değer Durum",\n'
+        '  "reference_range": "Referans Aralığı: X-Y birim",\n'
+        '  "test_analysis": "Test analizi ve trend analizi (geçmiş sonuçlarla birlikte kapsamlı analiz)",\n'
+        '  "disclaimer": "Bu yorum sadece bilgilendirme amaçlıdır. Kesin tanı ve tedavi için mutlaka doktorunuza başvurunuz."\n'
         "}\n\n"
+        "ÖNEMLİ: 1) Başlık, 2) Test adı, 3) Sonuç, 4) Referans, 5) Test analizi (trend dahil), 6) Uyarı! "
         "SADECE ANALİZ YAP, SUPPLEMENT ÖNERİSİ VERME! JSON formatında yanıt ver!"
     )
     
     system_prompt = (
         SYSTEM_HEALTH + " Sen bir laboratuvar sonuçları analiz uzmanısın. "
         "SADECE ANALİZ yap, supplement ya da ilaç önerisi verme. "
-        "Sonuçları yorumla, klinik anlamını açıkla, genel tıbbi takip önerileri ver. "
         "Test sonucunu referans aralığı ile karşılaştır ve net bir yorum yap. "
         "GEÇMİŞ SONUÇLARLA TREND ANALİZİ YAP (varsa). "
-        "Eksik veriler varsa bunları belirt ve gerekli ek testleri öner. "
-        "Kullanıcının diline uygun yanıt ver. "
+        "Test analizi kısmında hem mevcut sonucu hem de geçmiş sonuçları birlikte değerlendir. "
         "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
-        "KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme! "
         "DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
     )
     
