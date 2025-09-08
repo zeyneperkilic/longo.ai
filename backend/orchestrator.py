@@ -718,12 +718,15 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
             test_groups[category] = 0
         test_groups[category] += 1
         
-        # Status field'ı yoksa normal say
+        # Status field'ı yoksa referans aralığı ile karşılaştır
         status = test.get('status')
         if status and status.lower() in ['normal', 'normal aralıkta']:
             normal_count += 1
-        else:
+        elif status and status.lower() in ['anormal', 'yüksek', 'düşük', 'dikkat']:
             attention_count += 1
+        else:
+            # Status yoksa normal say (varsayılan)
+            normal_count += 1
     
     groups_summary = "Test Grupları:\n"
     for group, count in test_groups.items():
@@ -775,7 +778,7 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         '}'
     )
     
-    user_prompt = f"Laboratuvar seans bilgileri:\n{session_info}{tests_info}\n\n{instructions}"
+    user_prompt = f"Laboratuvar seans bilgileri:\n{session_info}{tests_info}\n\n{groups_summary}\n{summary_stats}\n\n{instructions}"
     
     return [
         {"role": "system", "content": system_prompt},
