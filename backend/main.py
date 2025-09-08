@@ -1716,10 +1716,10 @@ def debug_database(current_user: str = Depends(get_current_user),
                    x_user_id: str | None = Header(default=None)):
     """Debug endpoint to check database contents"""
     try:
-        from backend.db import get_or_create_user, get_lab_test_history, get_user_ai_interactions
+        from backend.db import get_or_create_user_by_external_id, get_lab_test_history, get_user_ai_interactions
         
         # User bilgilerini al
-        user = get_or_create_user(db, x_user_id, "free")
+        user = get_or_create_user_by_external_id(db, x_user_id, "free")
         
         # Lab test history
         lab_history = get_lab_test_history(db, user.id, limit=10)
