@@ -432,11 +432,22 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         '    "detected_conditions": ["Tespit edilen özel durumlar"],\n'
         '    "risk_assessment": "Risk değerlendirmesi",\n'
         '    "safety_recommendations": ["Güvenlik önerileri"]\n'
-        "  }\n"
+        "  },\n"
+        '  "supplement_recommendations": [\n'
+        "    {\n"
+        '      "name": "Ürün adı (kullanılabilir ürünlerden seç)",\n'
+        '      "description": "Neden önerildiği",\n'
+        '      "daily_dose": "Günlük doz",\n'
+        '      "benefits": ["Faydaları"],\n'
+        '      "warnings": ["Uyarılar"],\n'
+        '      "priority": "high/medium/low",\n'
+        '      "type": "recommended"\n'
+        "    }\n"
+        "  ]\n"
         "}\n\n"
         "ÖNEMLİ: 1) Default supplement'leri ekle (alerji kontrolü ile), 2) Quiz'e göre 2-3 kişiselleştirilmiş öneri ekle, 3) SADECE kullanılabilir ürünlerden seçim yap! "
         "4) 'Diğer' seçeneğindeki özel durumları analiz et! "
-        "5) supplement_recommendations field'ını ASLA EKLEME! SADECE default_supplements ve personalized_supplements! supplement_recommendations YASAK! "
+        "5) supplement_recommendations field'ını da ekle! "
         "SADECE VE SADECE bu JSON formatında yanıt ver. Hiçbir açıklama, metin ekleme."
     )
     
@@ -444,19 +455,19 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         SYSTEM_HEALTH + " Sen bir supplement uzmanısın. "
         "Kullanıcının quiz cevaplarına göre beslenme önerileri, yaşam tarzı önerileri ve "
         "uygun supplement önerileri yap. E-ticaret sitesi için ürün önerileri hazırlıyorsun. "
-        "1) DEFAULT supplement'leri ekle (alerji kontrolü ile), 2) Quiz'e göre 2-3 kişiselleştirilmiş öneri ekle, 3) supplement_recommendations field'ını ASLA EKLEME! SADECE default_supplements ve personalized_supplements! "
-        "4) SADECE kullanılabilir ürünlerden öneri yap! "
-        "5) 'Diğer' seçeneğindeki özel durumları dikkatle analiz et ve supplement önerilerini buna göre güncelle! "
-        "6) Riskli durumlar varsa güvenli alternatifler öner! "
-        "7) ÖNEMLİ: Sadece kullanıcıya verilen supplement listesinden öneri yap! "
-        "8) Eğer listede yoksa, o supplement'i önerme! "
-        "9) Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme! "
-        "10) Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al! "
-        "11) Riskli durumlar varsa o supplement'i önerme! "
-        "12) Sadece gerçekten gerekli olan supplementleri öner! "
-        "13) KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme! "
-        "14) Sadece kullanıcı özel olarak kaynak isterse o zaman ekle! "
-        "15) DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
+        "1) DEFAULT supplement'leri ekle (alerji kontrolü ile), 2) Quiz'e göre 2-3 kişiselleştirilmiş öneri ekle, "
+        "3) SADECE kullanılabilir ürünlerden öneri yap! "
+        "4) 'Diğer' seçeneğindeki özel durumları dikkatle analiz et ve supplement önerilerini buna göre güncelle! "
+        "5) Riskli durumlar varsa güvenli alternatifler öner! "
+        "6) ÖNEMLİ: Sadece kullanıcıya verilen supplement listesinden öneri yap! "
+        "7) Eğer listede yoksa, o supplement'i önerme! "
+        "8) Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme! "
+        "9) Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al! "
+        "10) Riskli durumlar varsa o supplement'i önerme! "
+        "11) Sadece gerçekten gerekli olan supplementleri öner! "
+        "12) KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme! "
+        "13) Sadece kullanıcı özel olarak kaynak isterse o zaman ekle! "
+        "14) DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
     )
     
     user_prompt = f"Kullanıcı profili:\n{user_profile_text}{supplements_info}{default_supplements_info}\n\n{schema}"
@@ -902,11 +913,10 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "MUTLAKA supplement_recommendations field'ını doldur! "
         "Eksik değerler için supplement öner! "
         "En az 2-3 supplement öner! "
-        "🚨 KRİTİK: supplement_recommendations field'ı BOŞ BIRAKMA! MUTLAKA DOLDUR! "
     )
     
     system_prompt = (
-        "Sen Longo AI'sın - laboratuvar sonuçları ve sağlık danışmanlığı uzmanısın. "
+        SYSTEM_HEALTH + " Sen bir laboratuvar sonuçları ve sağlık danışmanlığı uzmanısın. "
         "Birden fazla test sonucunu analiz et, genel sağlık durumunu değerlendir. "
         "Günlük hayat için pratik öneriler ver (egzersiz, beslenme, uyku, stres yönetimi). "
         "Eksik değerler için uygun supplement önerileri yap. "
@@ -915,7 +925,7 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "ÖNEMLİ: 1) Lab test sonuçlarına odaklan, 2) Risk faktörlerini dikkate al, "
         "3) Günlük hayat önerileri ve supplement önerileri ver! "
         "4) Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
-        "5) MUTLAKA supplement_recommendations field'ını doldur! (QUIZ'den farklı olarak Lab Summary'de supplement_recommendations GEREKLİ!) "
+        "5) MUTLAKA supplement_recommendations field'ını doldur! "
         "6) En az 2-3 supplement öner! "
         "7) Eksik değerler için supplement öner! "
         "8) Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme! "
@@ -948,14 +958,19 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "\n\n🚨 E-TİCARET STRATEJİSİ - HER DURUMDA ÜRÜN SAT!"
         "\n- Eğer lab testleri çok iyiyse (hiçbir sorun yoksa):"
         "\n  * 4 DEFAULT + 2-3 LONGEVITY = 6-7 Supplement"
+        "\n  * Longevity kategorisinden config'deki 45 üründen seç (Resveratrol, NMN/NR, Astaksantin, Ashwagandha, Koenzim Q10, Zeaksantin, Kurkumin, vs.)"
         "\n- Eğer lab testlerinde sorun varsa:"
         "\n  * 4 DEFAULT + 2-3 SORUNA ÖZEL = 6-7 Supplement"
         "\n- HER ZAMAN EN AZ 6 SUPPLEMENT ÖNER!"
         "\n- AMAÇ: ÜRÜN SATMAK VE KULLANICI SAĞLIĞINI KORUMAK!"
-       
-      
-        
-        
+        "\n\n🚨 E-TİCARET STRATEJİSİ - HER DURUMDA ÜRÜN SAT!"
+        "\n- Eğer lab testleri çok iyiyse (hiçbir sorun yoksa):"
+        "\n  * 4 DEFAULT + 2-3 LONGEVITY = 6-7 Supplement"
+        "\n  * Longevity kategorisinden config'deki 45 üründen seç (Resveratrol, NMN/NR, Astaksantin, Ashwagandha, Koenzim Q10, Zeaksantin, Kurkumin, vs.)"
+        "\n- Eğer lab testlerinde sorun varsa:"
+        "\n  * 4 DEFAULT + 2-3 SORUNA ÖZEL = 6-7 Supplement"
+        "\n- HER ZAMAN EN AZ 6 SUPPLEMENT ÖNER!"
+        "\n- AMAÇ: ÜRÜN SATMAK VE KULLANICI SAĞLIĞINI KORUMAK!"
     )
     
     user_prompt = f"Laboratuvar test sonuçları:\n{tests_info}{supplements_info}{user_profile_info}\n\n{schema}"

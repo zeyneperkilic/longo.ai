@@ -26,7 +26,7 @@ x-user-plan: free|premium|premium_plus  # Alternatif plan belirleme (şu an bu f
 
 ### **POST** `/ai/quiz`
 
-Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır. **4 default + 2-3 personalized** supplement önerisi verir. Alerji ve riskli durum kontrolü yapar.
+Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
 
 #### Request Body
 ```json
@@ -62,19 +62,21 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır. **4 d
   "lifestyle_advice": {
     "title": "Yaşam Tarzı Önerileri",
     "recommendations": [
-      "7-8 saat kaliteli uyku al, uyku düzenine sadık kal.",
-      "Günlük kısa süreli egzersizlerle (yürüyüş, ağırlık antrenmanı) enerji seviyeni yükselt.",
-      "Gün içinde yeterli su iç, kafeini ölçülü kullan."
+      "Düzenli uyku alışkanlığı oluştur (7-8 saat uyku)",
+      "Haftada en az 3 gün orta düzey egzersiz yap"
     ]
   },
-  "general_warnings": {
-    "title": "Genel Uyarılar",
-    "warnings": [
-      "Takviyeleri doktor onayı olmadan yüksek dozda kullanma.",
-      "Enerji artırıcı ürünleri akşam geç saatte alma, uykunu bozabilir.",
-      "Mevcut sağlık şikayetlerinde mutlaka hekime danış."
-    ]
-  },
+  "supplement_recommendations": [
+    {
+      "name": "Omega-3 Yağ Asitleri (Balık Yağı)",
+      "description": "Kalp, beyin ve bağışıklık desteği için",
+      "daily_dose": "1000 mg EPA+DHA",
+      "benefits": ["Bağışıklığı destekler", "Enflamasyonu azaltır"],
+      "warnings": ["Kan sulandırıcı ile dikkat edilmeli"],
+      "priority": "high",
+      "type": "recommended"
+    }
+  ],
   "default_supplements": [
     {
       "name": "D Vitamini",
@@ -88,34 +90,21 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır. **4 d
   ],
   "personalized_supplements": [
     {
-      "name": "Koenzim Q10 (CoQ10)",
-      "description": "Hücresel enerji üretimini artırmak için",
-      "daily_dose": "100-200 mg",
-      "benefits": ["Mitokondri fonksiyonlarını destekler", "Yorgunluğu azaltır", "Kalp sağlığını güçlendirir"],
-      "warnings": ["Kan basıncını azaltabilir, tansiyon ilacı kullananlar dikkat etmeli"],
+      "name": "Bağışıklık Destek Karışımı",
+      "description": "Bağışıklık fonksiyonunu güçlendirmek için",
+      "daily_dose": "Ürün etiketine göre",
+      "benefits": ["Enfeksiyonlara karşı koruma", "Enerji seviyesini artırır"],
+      "warnings": ["Bağışıklık sistemi aşırı uyarımı riskli olabilir"],
       "priority": "high",
-      "type": "personalized"
-    },
-    {
-      "name": "Ginseng",
-      "description": "Doğal enerji artırıcı ve odak destekleyici",
-      "daily_dose": "200-400 mg",
-      "benefits": ["Enerji artışı sağlar", "Zihinsel odaklanmayı artırır", "Stresi azaltabilir"],
-      "warnings": ["Yüksek dozda çarpıntı ve uykusuzluk yapabilir"],
-      "priority": "medium",
       "type": "personalized"
     }
   ],
-  "excluded_due_to_allergy": ["Omega-3 (Balık Yağı)"],
-  "allergy_alternatives": ["Alfa Lipoik Asit", "Koenzim Q10", "Berberin"],
+  "excluded_due_to_allergy": [],
+  "allergy_alternatives": [],
   "special_conditions_analysis": {
-    "detected_conditions": ["Diyabet", "Böbrek problemi"],
-    "risk_assessment": "Kan şekeri regülasyonu ve böbrek sağlığına dikkat edilmeli. Balık alerjisi ve aspirin kullanımı nedeniyle bazı takviyeler riskli.",
-    "safety_recommendations": [
-      "Omega-3 yerine CoQ10 veya Alfa Lipoik Asit tercih edilebilir",
-      "Mineraller böbrek yükünü artırabileceğinden düşük dozlarda ve doktor gözetiminde alınmalı",
-      "Kan sulandırıcı etkili takviyelerden uzak durulmalı"
-    ]
+    "detected_conditions": [],
+    "risk_assessment": "Ciddi risk yok, alerji veya ilaç kullanımı bulunmuyor",
+    "safety_recommendations": ["Takviyeleri doktoruna danışarak kullan", "Dengeli beslenmeye devam et"]
   },
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
 }
@@ -470,20 +459,15 @@ Mevcut supplement listesini XML formatında getirir.
 
 2. **User Management**: `x-user-id` ve `x-user-level` header'ları kullanıcı yönetimi için kullanılır.
 
-3. **Supplement Önerileri**: 
-   - `/ai/quiz`: 4 default + 2-3 personalized supplement önerisi verir
-   - `/ai/lab/summary`: Lab sonuçlarına göre supplement önerisi verir
-   - `/ai/lab/session` ve `/ai/lab/single`: Sadece analiz yapar, supplement önerisi vermez
+3. **Supplement Önerileri**: Sadece `/ai/quiz` ve `/ai/lab/summary` endpoint'leri supplement önerisi verir.
 
-4. **Alerji ve Risk Kontrolü**: Quiz endpoint'i alerji, ilaç kullanımı ve sağlık durumlarını kontrol eder, güvenli alternatifler önerir.
+4. **Lab Analizi**: `/ai/lab/session` ve `/ai/lab/single` endpoint'leri sadece analiz yapar, supplement önerisi vermez.
 
 5. **Rate Limiting**: Production'da rate limiting uygulanmıştır.
 
 6. **CORS**: Tüm origin'lerden gelen isteklere izin verilir.
 
 7. **Response Format**: Tüm yanıtlar JSON formatındadır, HTML döndürülmez.
-
-8. **Quiz Response**: `supplement_recommendations` alanı kaldırıldı, sadece `default_supplements` ve `personalized_supplements` kullanılır.
 
 ---
 
