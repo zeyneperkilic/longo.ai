@@ -687,25 +687,25 @@ def build_single_lab_prompt(test_data: Dict[str, Any], historical_results: List[
 def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_date: str, laboratory: str) -> List[Dict[str, str]]:
     """Build prompt for single lab session analysis - Tek seans analizi"""
     
+    # Seans bilgileri
+    session_info = f"Test Seansı Bilgileri:\n"
+    session_info += f"Laboratuvar: {laboratory}\n"
+    session_info += f"Test Tarihi: {session_date}\n"
+    session_info += f"Toplam Test Sayısı: {len(session_tests)}\n\n"
+    
     # Test sonuçları
     tests_info = "Test Sonuçları:\n"
-    normal_count = 0
-    abnormal_count = 0
-    
     for i, test in enumerate(session_tests, 1):
         tests_info += f"{i}. {test.get('name', 'Test')}: {test.get('value', 'Yok')} {test.get('unit', '')}"
         if test.get('reference_range'):
             tests_info += f" (Referans: {test['reference_range']})"
         if test.get('status'):
             tests_info += f" - {test['status']}"
-            if 'normal' in test.get('status', '').lower():
-                normal_count += 1
-            else:
-                abnormal_count += 1
         tests_info += "\n"
     
     # Test grupları analizi
     test_groups = {}
+    normal_count = 0
     attention_count = 0
     
     for test in session_tests:
@@ -720,7 +720,9 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         
         # Status field'ı yoksa normal say
         status = test.get('status')
-        if status and status.lower() not in ['normal', 'normal aralıkta']:
+        if status and status.lower() in ['normal', 'normal aralıkta']:
+            normal_count += 1
+        else:
             attention_count += 1
     
     groups_summary = "Test Grupları:\n"
@@ -732,29 +734,8 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
     summary_stats += f"{normal_count} Normal Değer\n"
     summary_stats += f"{attention_count} Dikkat Gereken\n"
     
-    # Yeni format için schema
-    schema = (
-        "STRICT JSON ŞEMASI - LAB SESSION (YENİ FORMAT):\n"
-        "{\n"
-        '  "title": "Test Seansı Yorumu",\n'
-        '  "test_seansi_bilgileri": {\n'
-        '    "laboratuvar": "Laboratuvar adı",\n'
-        '    "test_tarihi": "Test tarihi"\n'
-        '  },\n'
-        '  "genel_test_yorumu": "Genel test yorumu",\n'
-        '  "klinik_anlami": "Klinik anlamı",\n'
-        '  "test_sonuclari_ozeti": {\n'
-        '    "toplam_test": "X Toplam Test",\n'
-        '    "normal_deger": "Y Normal Değer",\n'
-        '    "dikkat_gereken": "Z Dikkat Gereken"\n'
-        '  },\n'
-        '  "test_gruplari": ["Kategori 1", "Kategori 2"],\n'
-        '  "genel_oneriler": ["Genel yaşamsal öneriler"]\n'
-        "}\n\n"
-        "ÖNEMLİ: 1) Başlık, 2) Test seansı bilgileri, 3) Genel test yorumu, 4) Klinik anlamı, "
-        "5) Test sonuçları özeti, 6) Test grupları, 7) Genel öneriler! "
-        "SADECE ANALİZ YAP, SUPPLEMENT ÖNERİSİ VERME! JSON formatında yanıt ver!"
-    )
+    # Basit talimat
+    instructions = "ÖNEMLİ: Tek seans analizi yap, supplement önerisi verme, sadece genel sağlık yorumu ve önerileri ver! SADECE ANALİZ YAP!"
     
     system_prompt = (
         SYSTEM_HEALTH + " Sen bir laboratuvar seans analiz uzmanısın. "
@@ -763,20 +744,27 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "Genel sağlık önerileri ver ama supplement önerisi verme. "
         "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "Sadece bilgilendirme amaçlı yorum yap, tıbbi tanı koyma. "
-        "ÖNEMLİ: 1) Başlık, 2) Test seansı bilgileri, 3) Genel test yorumu, 4) Klinik anlamı, "
-        "5) Test sonuçları özeti, 6) Test grupları, 7) Genel öneriler! "
-        "DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
-        f"\n\n{schema}"
+        "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"
+        "\n- SADECE TÜRKÇE KULLAN!"
+        "\n- İngilizce kelime, terim, cümle KULLANMA!"
+        "\n- Test adlarını Türkçe yaz: 'D Vitamini' (Vitamin D değil)"
+        "\n- Kategori adlarını Türkçe yaz: 'Vitaminler' (Vitamins değil)"
+        "\n- Tüm açıklamaları Türkçe yap!"
+        "\n- İngilizce referans, kaynak, terim EKLEME!"
+        "\n- Annotations'da bile İngilizce kullanma!"
+        "\n- Sadece Türkçe kelimeler ve terimler kullan!"
+        "\n\nÖNEMLİ: Yanıtını SADECE JSON formatında ver! Aşağıdaki yapıyı kullan:"
+        '\n{\n'
+        '  "genel_saglik_yorumu": "Genel sağlık yorumu buraya",\n'
+        '  "sonuc": "Sonuç özeti buraya",\n'
+        '  "test_sonuclari": {"Test Kategorisi": [{"test_adi": "Test Adı", "sonuc": "Sonuç", "referans_araligi": "Referans", "durum": "Normal/Anormal"}]},\n'
+        '  "istatistik": {"normal": 0, "anormal": 1},\n'
+        '  "toplam_test_sayisi": 1,\n'
+        '  "oneriler": {"yasam_tarzi": ["Öneri 1"], "laboratuvar_takibi": ["Öneri 2"], "doktor_kontrolu": "Öneri 3"}\n'
+        '}'
     )
     
-    # Test seansı bilgileri
-    session_info = f"Test Seansı Bilgileri:\n"
-    session_info += f"Laboratuvar: {laboratory}\n"
-    session_info += f"Test Tarihi: {session_date}\n\n"
-    
-    instructions = "ÖNEMLİ: Tek seans analizi yap, supplement önerisi verme, sadece genel sağlık yorumu ve önerileri ver! SADECE ANALİZ YAP!"
-    
-    user_prompt = f"{session_info}{tests_info}\n\n{summary_stats}\n\n{groups_summary}\n\n{instructions}"
+    user_prompt = f"Laboratuvar seans bilgileri:\n{session_info}{tests_info}\n\n{instructions}"
     
     return [
         {"role": "system", "content": system_prompt},
