@@ -749,7 +749,7 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "Genel sağlık önerileri ver ama supplement önerisi verme. "
         "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "Sadece bilgilendirme amaçlı yorum yap, tıbbi tanı koyma. "
-        "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"
+        "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"  # Lab Session için
         "\n- SADECE TÜRKÇE KULLAN!"
         "\n- İngilizce kelime, terim, cümle KULLANMA!"
         "\n- Test adlarını Türkçe yaz: 'D Vitamini' (Vitamin D değil)"
