@@ -749,7 +749,7 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "Genel sağlık önerileri ver ama supplement önerisi verme. "
         "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "Sadece bilgilendirme amaçlı yorum yap, tıbbi tanı koyma. "
-        "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"  # Lab Session için
+        "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"
         "\n- SADECE TÜRKÇE KULLAN!"
         "\n- İngilizce kelime, terim, cümle KULLANMA!"
         "\n- Test adlarını Türkçe yaz: 'D Vitamini' (Vitamin D değil)"
@@ -760,22 +760,12 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "\n- Sadece Türkçe kelimeler ve terimler kullan!"
         "\n\nÖNEMLİ: Yanıtını SADECE JSON formatında ver! Aşağıdaki yapıyı kullan:"
         '\n{\n'
-        '  "title": "Test Seansı Yorumu",\n'
-        '  "test_seansi_bilgileri": {\n'
-        '    "laboratuvar": "Laboratuvar adı",\n'
-        '    "test_tarihi": "Test tarihi"\n'
-        '  },\n'
-        '  "genel_test_yorumu": {\n'
-        '    "degerlendirme": "Bu test seansında yapılan testlerinizin genel değerlendirmesi",\n'
-        '    "klinik_anlami": "Test sonuçlarınızın klinik anlamı"\n'
-        '  },\n'
-        '  "test_sonuclari_ozeti": {\n'
-        '    "toplam_test": "Toplam test sayısı",\n'
-        '    "normal_deger": "Normal değer sayısı",\n'
-        '    "dikkat_gereken": "Dikkat gereken sayısı"\n'
-        '  },\n'
-        '  "test_gruplari": ["Test grubu 1", "Test grubu 2"],\n'
-        '  "genel_oneriler": ["Öneri 1", "Öneri 2", "Öneri 3"]\n'
+        '  "genel_saglik_yorumu": "Genel sağlık yorumu buraya",\n'
+        '  "sonuc": "Sonuç özeti buraya",\n'
+        '  "test_sonuclari": {"Test Kategorisi": [{"test_adi": "Test Adı", "sonuc": "Sonuç", "referans_araligi": "Referans", "durum": "Normal/Anormal"}]},\n'
+        '  "istatistik": {"normal": 0, "anormal": 1},\n'
+        '  "toplam_test_sayisi": 1,\n'
+        '  "oneriler": {"yasam_tarzi": ["Öneri 1"], "laboratuvar_takibi": ["Öneri 2"], "doktor_kontrolu": "Öneri 3"}\n'
         '}'
     )
     

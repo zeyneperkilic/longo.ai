@@ -246,7 +246,7 @@ Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
 ```
 
 #### Strateji
-- **4 DEFAULT + 1 PERSONALIZED = 5 supplement**
+- **4 supplement** (lab sonuçlarına göre)
 - **DEFAULT**: D3 Vitamini, Omega-3, Magnezyum, B12
 - **PERSONALIZED**: Lab sonuçlarına göre (D vitamini düşükse K2 eklenir)
 - **Detaylı lab analizi** ve genel değerlendirme
@@ -436,7 +436,7 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 | Endpoint | Supplement Önerisi | Analiz | Kullanıcı Seviyesi |
 |----------|-------------------|--------|-------------------|
 | **Quiz** | ✅ 4 default + 3 personalized | ✅ | Tüm seviyeler |
-| **Lab Summary** | ✅ 4 default + 1 personalized | ✅ | Premium+ |
+| **Lab Summary** | ✅ 4 supplement (lab-based) | ✅ | Premium+ |
 | **Lab Session** | ❌ | ✅ | Premium+ |
 | **Lab Single** | ❌ | ✅ | Premium+ |
 | **Chat** | ❌ | ❌ | Tüm seviyeler |
@@ -506,7 +506,7 @@ curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
 
 - Tüm endpoint'ler Türkçe yanıt verir
 - **Quiz**: 4 default + 3 personalized supplement önerisi
-- **Lab Summary**: 4 default + 1 personalized supplement önerisi (lab sonuçlarına göre)
+- **Lab Summary**: 4 supplement önerisi (lab sonuçlarına göre)
 - **Lab Session ve Lab Single**: Sadece analiz yapar, supplement önerisi yok
 - User level kontrolü tüm endpoint'lerde uygulanır
 - CORS desteği mevcuttur

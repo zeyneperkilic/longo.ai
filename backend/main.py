@@ -1134,7 +1134,6 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # Veritabanından eski lab testlerini çek
     from backend.db import get_lab_test_history
     old_lab_tests = get_lab_test_history(db, user.id, limit=20)  # Son 20 seans
-    print(f"🔍 DEBUG: Kullanıcı ID: {user.id}, Eski lab test sayısı: {len(old_lab_tests)}")
     
     # Eski testleri ekle
     for old_test in old_lab_tests:
@@ -1262,7 +1261,6 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
         
         # Database'e lab test kaydı yaz (SADECE YENİ TESTLER)
         try:
-            print(f"🔍 DEBUG: Lab test kaydı oluşturuluyor - User ID: {user.id}, Test sayısı: {len(new_tests_dict)}")
             create_lab_test_record(
                 db=db,
                 user_id=user.id,
@@ -1270,7 +1268,6 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
                 analysis_result=data,
                 test_type="multiple"
             )
-            print(f"✅ DEBUG: Lab test kaydı başarıyla oluşturuldu!")
             
             # AI interaction kaydı da ekle
             create_ai_interaction(
@@ -1284,9 +1281,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             )
         except Exception as e:
             # Database yazma hatası olsa bile global context güncellendi
-            print(f"❌ DEBUG: Lab test database kaydı hatası: {e}")
-            import traceback
-            print(f"❌ DEBUG: Hata detayı: {traceback.format_exc()}")
+            print(f"Lab test database kaydı hatası: {e}")
     
     # Database kaydı tamamlandı - Artık read-through sistemi çalışacak
     
