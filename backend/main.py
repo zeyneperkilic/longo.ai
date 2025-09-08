@@ -1259,12 +1259,12 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             
             update_user_global_context(db, user.id, updated_context)
         
-        # Database'e lab test kaydı yaz (read-through sistemi için)
+        # Database'e lab test kaydı yaz (SADECE YENİ TESTLER)
         try:
             create_lab_test_record(
                 db=db,
                 user_id=user.id,
-                test_results=tests_dict,
+                test_results=new_tests_dict,  # Sadece yeni testler
                 analysis_result=data,
                 test_type="multiple"
             )
@@ -1274,7 +1274,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
                 db=db,
                 user_id=user.id,
                 interaction_type="lab_multiple",
-                user_input=str(tests_dict),
+                user_input=str(new_tests_dict),  # Sadece yeni testler
                 ai_response=str(data),
                 model_used="parallel_multiple_lab_analyze",
                 interaction_metadata={"test_count": total_sessions}
