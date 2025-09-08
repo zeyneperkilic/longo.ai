@@ -158,7 +158,11 @@ class QuizResponse(BaseModel):
     nutrition_advice: Optional[Dict[str, Any]] = Field(default_factory=dict)
     lifestyle_advice: Optional[Dict[str, Any]] = Field(default_factory=dict)
     general_warnings: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    supplement_recommendations: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    default_supplements: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    personalized_supplements: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    excluded_due_to_allergy: Optional[List[str]] = Field(default_factory=list)
+    allergy_alternatives: Optional[List[str]] = Field(default_factory=list)
+    special_conditions_analysis: Optional[Dict[str, Any]] = Field(default_factory=dict)
     disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
     
     class Config:
