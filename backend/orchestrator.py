@@ -663,8 +663,7 @@ def build_single_lab_prompt(test_data: Dict[str, Any], historical_results: List[
         '    "clinical_significance": "Klinik önemi (sağlık açısından ne anlama geliyor)",\n'
         '    "category_insights": "Test kategorisine özel yorumlar",\n'
         '    "trend_analysis": "Geçmiş sonuçlarla trend analizi (varsa)",\n'
-        '    "follow_up_suggestions": "Takip önerileri (genel tıbbi öneri, supplement değil!)",\n'
-        '    "data_quality": "Test verilerinin kalitesi ve eksiklikleri"\n'
+        '    "follow_up_suggestions": "Takip önerileri (genel tıbbi öneri, supplement değil!)"\n'
         "  }\n"
         "}\n\n"
         "SADECE ANALİZ YAP, SUPPLEMENT ÖNERİSİ VERME! JSON formatında yanıt ver!"
