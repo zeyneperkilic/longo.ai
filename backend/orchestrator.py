@@ -718,15 +718,12 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
             test_groups[category] = 0
         test_groups[category] += 1
         
-        # Status field'ı yoksa referans aralığı ile karşılaştır
+        # Status field'ı yoksa normal say
         status = test.get('status')
         if status and status.lower() in ['normal', 'normal aralıkta']:
             normal_count += 1
-        elif status and status.lower() in ['anormal', 'yüksek', 'düşük', 'dikkat']:
-            attention_count += 1
         else:
-            # Status yoksa normal say (varsayılan)
-            normal_count += 1
+            attention_count += 1
     
     groups_summary = "Test Grupları:\n"
     for group, count in test_groups.items():
@@ -758,27 +755,16 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "\n- Sadece Türkçe kelimeler ve terimler kullan!"
         "\n\nÖNEMLİ: Yanıtını SADECE JSON formatında ver! Aşağıdaki yapıyı kullan:"
         '\n{\n'
-        '  "title": "Test Seansı Yorumu",\n'
-        '  "session_info": {\n'
-        '    "laboratory": "Laboratuvar Adı",\n'
-        '    "test_date": "Test Tarihi"\n'
-        '  },\n'
-        '  "general_comment": "Bu test seansında yapılan testlerinizin genel değerlendirmesi: Klinik Anlamı: Test sonuçlarınız bir bütün olarak değerlendirildiğinde, genel sağlık durumunuzla ilgili önemli bilgiler sağlar.",\n'
-        '  "test_summary": {\n'
-        '    "total_tests": "X TOPLAM TEST",\n'
-        '    "normal_values": "Y NORMAL DEĞER",\n'
-        '    "attention_required": "Z DİKKAT GEREKEN"\n'
-        '  },\n'
-        '  "test_groups": {\n'
-        '    "HEMATOLOJİ": "4 test",\n'
-        '    "HEPATİT BELİRTEÇLERİ": "1 test",\n'
-        '    "İMMUNOLOJİ": "2 test"\n'
-        '  },\n'
-        '  "general_recommendations": ["Test sonuçlarınızı düzenli olarak takip edin", "Referans dışı değerler durumunda doktorunuza danışın"]\n'
+        '  "genel_saglik_yorumu": "Genel sağlık yorumu buraya",\n'
+        '  "sonuc": "Sonuç özeti buraya",\n'
+        '  "test_sonuclari": {"Test Kategorisi": [{"test_adi": "Test Adı", "sonuc": "Sonuç", "referans_araligi": "Referans", "durum": "Normal/Anormal"}]},\n'
+        '  "istatistik": {"normal": 0, "anormal": 1},\n'
+        '  "toplam_test_sayisi": 1,\n'
+        '  "oneriler": {"yasam_tarzi": ["Öneri 1"], "laboratuvar_takibi": ["Öneri 2"], "doktor_kontrolu": "Öneri 3"}\n'
         '}'
     )
     
-    user_prompt = f"Laboratuvar seans bilgileri:\n{session_info}{tests_info}\n\n{groups_summary}\n{summary_stats}\n\n{instructions}"
+    user_prompt = f"Laboratuvar seans bilgileri:\n{session_info}{tests_info}\n\n{instructions}"
     
     return [
         {"role": "system", "content": system_prompt},
