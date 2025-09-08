@@ -906,7 +906,7 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
     )
     
     system_prompt = (
-        SYSTEM_HEALTH + " Sen bir laboratuvar sonuçları ve sağlık danışmanlığı uzmanısın. "
+        "Sen Longo AI'sın - laboratuvar sonuçları ve sağlık danışmanlığı uzmanısın. "
         "Birden fazla test sonucunu analiz et, genel sağlık durumunu değerlendir. "
         "Günlük hayat için pratik öneriler ver (egzersiz, beslenme, uyku, stres yönetimi). "
         "Eksik değerler için uygun supplement önerileri yap. "
