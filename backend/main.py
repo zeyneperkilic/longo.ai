@@ -959,8 +959,36 @@ def analyze_single_lab(body: SingleLabRequest,
     # Convert test to dict for processing
     test_dict = body.test.model_dump()
     
-    # Geçmiş sonuçları zaten dict formatında
-    historical_dict = body.historical_results
+    # ESKİ TESTLERİ DE ÇEK - Aynı test adına sahip eski sonuçları bul
+    from backend.db import get_lab_test_history
+    old_lab_tests = get_lab_test_history(db, user.id, limit=20)  # Son 20 seans
+    
+    # Aynı test adına sahip eski sonuçları filtrele
+    historical_results = []
+    current_test_name = test_dict.get('name', '')
+    
+    for old_test in old_lab_tests:
+        if old_test.test_results and isinstance(old_test.test_results, dict):
+            if 'tests' in old_test.test_results:
+                for test in old_test.test_results['tests']:
+                    if test.get('name', '').lower() == current_test_name.lower():
+                        # Test tarihi bilgisini ekle
+                        historical_result = test.copy()
+                        historical_result['date'] = old_test.test_date.isoformat() if old_test.test_date else None
+                        historical_result['lab'] = old_test.test_results.get('lab_name', 'Bilinmeyen Lab')
+                        historical_results.append(historical_result)
+            elif isinstance(old_test.test_results, list):
+                for test in old_test.test_results:
+                    if test.get('name', '').lower() == current_test_name.lower():
+                        historical_result = test.copy()
+                        historical_result['date'] = old_test.test_date.isoformat() if old_test.test_date else None
+                        historical_results.append(historical_result)
+    
+    # Body'den gelen geçmiş sonuçları da ekle
+    if body.historical_results:
+        historical_results.extend(body.historical_results)
+    
+    historical_dict = historical_results
     
     # Health Guard kaldırıldı - Lab analizi zaten kontrollü içerik üretiyor
 
