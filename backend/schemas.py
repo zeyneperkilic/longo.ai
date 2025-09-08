@@ -177,11 +177,11 @@ class LabAnalysisResponse(BaseModel):
         extra = "allow"
 
 class SingleSessionResponse(BaseModel):
-    title: str = "Test Seansı Analizi"
+    title: str = "Test Seansı Yorumu"
     session_info: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    general_assessment: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    test_groups: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    general_comment: Optional[str] = Field(default="Bu test seansında yapılan testlerinizin genel değerlendirmesi")
     test_summary: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    test_groups: Optional[Dict[str, Any]] = Field(default_factory=dict)
     general_recommendations: Optional[List[str]] = Field(default_factory=list)
     disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
     
