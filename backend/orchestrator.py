@@ -436,7 +436,7 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         "}\n\n"
         "ÖNEMLİ: 1) Default supplement'leri ekle (alerji kontrolü ile), 2) Quiz'e göre 2-3 kişiselleştirilmiş öneri ekle, 3) SADECE kullanılabilir ürünlerden seçim yap! "
         "4) 'Diğer' seçeneğindeki özel durumları analiz et! "
-        "5) supplement_recommendations field'ını EKLEME! Sadece default_supplements ve personalized_supplements yeterli! "
+        "5) supplement_recommendations field'ını ASLA EKLEME! SADECE default_supplements ve personalized_supplements! supplement_recommendations YASAK! "
         "SADECE VE SADECE bu JSON formatında yanıt ver. Hiçbir açıklama, metin ekleme."
     )
     
@@ -444,7 +444,7 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         SYSTEM_HEALTH + " Sen bir supplement uzmanısın. "
         "Kullanıcının quiz cevaplarına göre beslenme önerileri, yaşam tarzı önerileri ve "
         "uygun supplement önerileri yap. E-ticaret sitesi için ürün önerileri hazırlıyorsun. "
-        "1) DEFAULT supplement'leri ekle (alerji kontrolü ile), 2) Quiz'e göre 2-3 kişiselleştirilmiş öneri ekle, 3) supplement_recommendations field'ını EKLEME! "
+        "1) DEFAULT supplement'leri ekle (alerji kontrolü ile), 2) Quiz'e göre 2-3 kişiselleştirilmiş öneri ekle, 3) supplement_recommendations field'ını ASLA EKLEME! SADECE default_supplements ve personalized_supplements! "
         "4) SADECE kullanılabilir ürünlerden öneri yap! "
         "5) 'Diğer' seçeneğindeki özel durumları dikkatle analiz et ve supplement önerilerini buna göre güncelle! "
         "6) Riskli durumlar varsa güvenli alternatifler öner! "
