@@ -902,6 +902,7 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "MUTLAKA supplement_recommendations field'ını doldur! "
         "Eksik değerler için supplement öner! "
         "En az 2-3 supplement öner! "
+        "🚨 KRİTİK: supplement_recommendations field'ı BOŞ BIRAKMA! MUTLAKA DOLDUR! "
     )
     
     system_prompt = (
@@ -914,7 +915,7 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "ÖNEMLİ: 1) Lab test sonuçlarına odaklan, 2) Risk faktörlerini dikkate al, "
         "3) Günlük hayat önerileri ve supplement önerileri ver! "
         "4) Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
-        "5) MUTLAKA supplement_recommendations field'ını doldur! "
+        "5) MUTLAKA supplement_recommendations field'ını doldur! (QUIZ'den farklı olarak Lab Summary'de supplement_recommendations GEREKLİ!) "
         "6) En az 2-3 supplement öner! "
         "7) Eksik değerler için supplement öner! "
         "8) Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme! "
@@ -947,19 +948,14 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "\n\n🚨 E-TİCARET STRATEJİSİ - HER DURUMDA ÜRÜN SAT!"
         "\n- Eğer lab testleri çok iyiyse (hiçbir sorun yoksa):"
         "\n  * 4 DEFAULT + 2-3 LONGEVITY = 6-7 Supplement"
-        "\n  * Longevity kategorisinden config'deki 45 üründen seç (Resveratrol, NMN/NR, Astaksantin, Ashwagandha, Koenzim Q10, Zeaksantin, Kurkumin, vs.)"
         "\n- Eğer lab testlerinde sorun varsa:"
         "\n  * 4 DEFAULT + 2-3 SORUNA ÖZEL = 6-7 Supplement"
         "\n- HER ZAMAN EN AZ 6 SUPPLEMENT ÖNER!"
         "\n- AMAÇ: ÜRÜN SATMAK VE KULLANICI SAĞLIĞINI KORUMAK!"
-        "\n\n🚨 E-TİCARET STRATEJİSİ - HER DURUMDA ÜRÜN SAT!"
-        "\n- Eğer lab testleri çok iyiyse (hiçbir sorun yoksa):"
-        "\n  * 4 DEFAULT + 2-3 LONGEVITY = 6-7 Supplement"
-        "\n  * Longevity kategorisinden config'deki 45 üründen seç (Resveratrol, NMN/NR, Astaksantin, Ashwagandha, Koenzim Q10, Zeaksantin, Kurkumin, vs.)"
-        "\n- Eğer lab testlerinde sorun varsa:"
-        "\n  * 4 DEFAULT + 2-3 SORUNA ÖZEL = 6-7 Supplement"
-        "\n- HER ZAMAN EN AZ 6 SUPPLEMENT ÖNER!"
-        "\n- AMAÇ: ÜRÜN SATMAK VE KULLANICI SAĞLIĞINI KORUMAK!"
+       
+      
+        
+        
     )
     
     user_prompt = f"Laboratuvar test sonuçları:\n{tests_info}{supplements_info}{user_profile_info}\n\n{schema}"
