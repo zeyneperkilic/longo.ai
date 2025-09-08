@@ -841,8 +841,15 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
             user_profile_info += "\n\nBu risk faktörleri lab test yorumunda dikkate alınmalıdır."
     
     schema = (
-        "STRICT JSON ŞEMASI - KAPSAMLI LAB ANALİZİ:\n"
+        "STRICT JSON ŞEMASI - KAPSAMLI LAB ANALİZİ (SIRALI):\n"
         "{\n"
+        '  "test_details": {\n'
+        '    "test_name": {\n'
+        '    "interpretation": "Test yorumu",\n'
+        '    "significance": "Önemi",\n'
+        '    "suggestions": "Öneriler"\n'
+        '    }\n'
+        "  },\n"
         '  "general_assessment": {\n'
         '    "overall_summary": "Tüm test sonuçlarının genel yorumu",\n'
         '    "patterns_identified": "Tespit edilen paternler ve eğilimler",\n'
@@ -862,26 +869,18 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         '    {\n'
         '    "name": "Ürün adı (kullanılabilir ürünlerden seç)",\n'
         '    "description": "Neden önerildiği",\n'
- '    "daily_dose": "Günlük doz",\n'
+        '    "daily_dose": "Günlük doz",\n'
         '    "benefits": ["Faydaları"],\n'
         '    "warnings": ["Uyarılar"],\n'
         '    "priority": "high/medium/low",\n'
         '    "type": "lab_analysis"\n'
         '    }\n'
-        "  ],\n"
-        '  "test_details": {\n'
-        '    "test_name": {\n'
-        '    "interpretation": "Test yorumu",\n'
-        '    "significance": "Önemi",\n'
-        '    "suggestions": "Öneriler"\n'
-        '    }\n'
-        "  }\n"
+        "  ]\n"
         "}\n\n"
-        "ÖNEMLİ: Lab sonuçlarına göre günlük hayat önerileri ve supplement önerileri ver! "
+        "ÖNEMLİ SIRALAMA: 1) Önce test detayları, 2) Genel değerlendirme, 3) Yaşam tarzı önerileri, 4) EN SON supplement önerileri! "
         "Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
         "MUTLAKA supplement_recommendations field'ını doldur! "
-        "Eksik değerler için supplement öner! "
-        "En az 2-3 supplement öner! "
+        "4-6 supplement öner! "
     )
     
     system_prompt = (
