@@ -1078,7 +1078,7 @@ def parallel_multiple_lab_analyze(tests_data: List[Dict[str, Any]], session_coun
         responses = []
         with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
             future_to_model = {
-                executor.submit(call_chat_model, model, messages, 0.3, 1500): model 
+                executor.submit(call_chat_model, model, messages, 0.3, 2000): model 
                 for model in PARALLEL_MODELS
             }
             
