@@ -785,7 +785,8 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
             sessions[session_key] = []
         sessions[session_key].append(test)
     
-    tests_info = f"Toplam Test Seansı: {len(sessions)}\n\n"
+    tests_info = f"Toplam Test Seansı: {len(sessions)}\n"
+    tests_info += f"ÖNEMLİ: Bu analizde {len(sessions)} farklı test seansı bulunmaktadır!\n\n"
     tests_info += "Test Sonuçları (Seans Bazında):\n"
     
     for session_key, session_tests in sessions.items():
@@ -867,7 +868,8 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         '    }\n'
         "  ]\n"
         "}\n\n"
-        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı, 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
+        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı (kaç farklı seans olduğunu doğru yaz!), 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
+        "TEST SAYISI: 'Test Sayısı: X farklı test seansı' formatında yaz, X'i doğru sayı ile değiştir! "
         "Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
         "MUTLAKA urun_onerileri field'ını doldur! "
         "4-6 supplement öner! "
@@ -878,7 +880,8 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "Lab test sonuçlarını analiz et, genel sağlık durumunu değerlendir. "
         "Eksik değerler için uygun supplement önerileri yap. "
         "Tıbbi tanı koyma, sadece bilgilendirme amaçlı öneriler ver. "
-        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı, 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
+        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı (kaç farklı seans olduğunu doğru yaz!), 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
+        "TEST SAYISI: 'Test Sayısı: X farklı test seansı' formatında yaz, X'i doğru sayı ile değiştir! "
         "ÖNERİLER KISMI: Sadece genel yaşamsal öneriler ver  "
         "Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
         "MUTLAKA urun_onerileri field'ını doldur! "
