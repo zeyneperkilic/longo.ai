@@ -17,7 +17,6 @@ password: 123456
 ```http
 x-user-id: unique_user_id        # Kullanıcı ID'si
 x-user-level: 0|1|2|3           # Kullanıcı seviyesi (0=free, 1=free, 2=premium, 3=premium_plus)
-x-user-plan: free|premium|premium_plus  # Alternatif plan belirleme (şu an bu fallback)
 ```
 
 ---
@@ -34,15 +33,7 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
   "quiz_answers": {
     "age": 30,
     "gender": "male",
-    "health_goals": ["energy", "immunity", "sleep"],
-    "activity_level": "moderate",
-    "height": 175,
-    "weight": 70,
-    "allergies": ["gluten"],
-    "medications": ["aspirin"],
-    "health_conditions": ["diabetes"],
-    "dietary_preferences": ["balanced", "vegetarian"],
-    "supplement_experience": "beginner"
+    "health_goals": ["energy"]
   }
 }
 ```
@@ -55,68 +46,108 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
   "nutrition_advice": {
     "title": "Beslenme Önerileri",
     "recommendations": [
-      "Protein açısından dengeli beslen, her öğünde kaliteli protein kaynağı ekle",
-      "Bağışıklık desteği için C vitamini ve çinko içeren gıdaları artır"
+      "Günlük protein alımını artır, özellikle kahvaltıda kaliteli protein tüket.",
+      "Enerji seviyeni korumak için rafine karbonhidratları sınırlayıp kompleks karbonhidratlara (yulaf, tam tahıl, bakliyat) ağırlık ver.",
+      "Yeterli su tüket ve dehidrasyonu önlemek için gün içinde düzenli sıvı al."
     ]
   },
   "lifestyle_advice": {
     "title": "Yaşam Tarzı Önerileri",
     "recommendations": [
-      "Düzenli uyku alışkanlığı oluştur (7-8 saat uyku)",
-      "Haftada en az 3 gün orta düzey egzersiz yap"
+      "Düzenli uyku rutini oluştur (günde 7-8 saat uyku).",
+      "Gün içine kısa egzersiz molaları ekleyerek enerjini yükselt.",
+      "Stres yönetimi için nefes egzersizi veya meditasyonu günlük rutine kat."
+    ]
+  },
+  "general_warnings": {
+    "title": "Genel Uyarılar",
+    "warnings": [
+      "Takviyeleri doktor kontrolü olmadan yüksek dozlarda kullanma.",
+      "Sürekli yorgunluk ve enerji düşüklüğü yaşıyorsan altta yatan tıbbi bir durum olabilir, hekime danış.",
+      "Kafeinli ürünleri aşırıya kaçmadan kullan, gece uykunu bozabilir."
     ]
   },
   "supplement_recommendations": [
     {
-      "name": "Omega-3 Yağ Asitleri (Balık Yağı)",
-      "description": "Kalp, beyin ve bağışıklık desteği için",
-      "daily_dose": "1000 mg EPA+DHA",
-      "benefits": ["Bağışıklığı destekler", "Enflamasyonu azaltır"],
-      "warnings": ["Kan sulandırıcı ile dikkat edilmeli"],
-      "priority": "high",
-      "type": "recommended"
-    }
-  ],
-  "default_supplements": [
-    {
-      "name": "D Vitamini",
-      "description": "Kemik sağlığı ve bağışıklık için önemli",
-      "daily_dose": "600-800 IU (doktorunuza danışın)",
-      "benefits": ["Kalsiyum emilimini artırır", "Bağışıklık güçlendirir"],
-      "warnings": ["Yüksek dozlarda toksik olabilir"],
+      "name": "D Vitamini (ID: 164)",
+      "description": "Kemik sağlığı, bağışıklık desteği ve enerji regülasyonu için temel.",
+      "daily_dose": "1000-2000 IU",
+      "benefits": ["Bağışıklık sistemini destekler", "Enerji seviyesini iyileştirir", "Kemik sağlığını korur"],
+      "warnings": ["Yüksek dozlarda toksisite riski olabilir."],
       "priority": "high",
       "type": "default"
-    }
-  ],
-  "personalized_supplements": [
+    },
     {
-      "name": "Bağışıklık Destek Karışımı",
-      "description": "Bağışıklık fonksiyonunu güçlendirmek için",
-      "daily_dose": "Ürün etiketine göre",
-      "benefits": ["Enfeksiyonlara karşı koruma", "Enerji seviyesini artırır"],
-      "warnings": ["Bağışıklık sistemi aşırı uyarımı riskli olabilir"],
+      "name": "Omega-3 Yağ Asitleri (Balık Yağı) (ID: 179)",
+      "description": "Beyin fonksiyonları ve enerji metabolizması için gerekli.",
+      "daily_dose": "1000 mg",
+      "benefits": ["Beyin sağlığını destekler", "Kalp sağlığını korur", "Enflamasyonu azaltır"],
+      "warnings": ["Kan sulandırıcı ilaçlarla etkileşebilir."],
       "priority": "high",
+      "type": "default"
+    },
+    {
+      "name": "Magnezyum (ID: 176)",
+      "description": "Kas, sinir sistemi ve enerji üretimi için hayati.",
+      "daily_dose": "200-400 mg",
+      "benefits": ["Kas fonksiyonlarını destekler", "Yorgunluğu azaltır", "Uyku kalitesini artırır"],
+      "warnings": ["Yüksek dozda ishal yapabilir."],
+      "priority": "high",
+      "type": "default"
+    },
+    {
+      "name": "B12 Vitamini (ID: 154)",
+      "description": "Enerji metabolizması ve kırmızı kan hücresi oluşumu için kritik.",
+      "daily_dose": "500-1000 mcg",
+      "benefits": ["Enerji artışı sağlar", "Sinir sistemini korur", "Kan hücrelerini destekler"],
+      "warnings": ["B12 eksikliği uzun vadede ciddi sorunlara yol açabilir."],
+      "priority": "high",
+      "type": "default"
+    },
+    {
+      "name": "Koenzim Q10 (ID: 221)",
+      "description": "Enerji üretiminde görev alır, hücresel enerji seviyesini destekler.",
+      "daily_dose": "100-200 mg",
+      "benefits": ["Enerji artışı sağlar", "Kalp sağlığını destekler", "Mitokondri fonksiyonlarını güçlendirir"],
+      "warnings": ["Kan basıncı ilaçları ile etkileşebilir."],
+      "priority": "medium",
+      "type": "personalized"
+    },
+    {
+      "name": "Ginseng (ID: 214)",
+      "description": "Fiziksel ve zihinsel enerjiyi artırır, yorgunlukla mücadele eder.",
+      "daily_dose": "200-400 mg",
+      "benefits": ["Enerjiyi artırır", "Odaklanmayı destekler", "Yorgunluk hissini azaltır"],
+      "warnings": ["Fazla kullanımda uykusuzluk yapabilir."],
+      "priority": "medium",
+      "type": "personalized"
+    },
+    {
+      "name": "Enerji ve Odaklanma Formülü (ID: 263)",
+      "description": "Enerjiyi ve mental performansı artırmak için özel kombine formül.",
+      "daily_dose": "1 kapsül",
+      "benefits": ["Dayanıklılığı artırır", "Odaklanmayı güçlendirir", "Enerji metabolizmasını destekler"],
+      "warnings": ["Kafein içerebilir, gece kullanımı uyku sorununa yol açabilir."],
+      "priority": "medium",
       "type": "personalized"
     }
   ],
-  "excluded_due_to_allergy": [],
-  "allergy_alternatives": [],
-  "special_conditions_analysis": {
-    "detected_conditions": [],
-    "risk_assessment": "Ciddi risk yok, alerji veya ilaç kullanımı bulunmuyor",
-    "safety_recommendations": ["Takviyeleri doktoruna danışarak kullan", "Dengeli beslenmeye devam et"]
-  },
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
 }
 ```
 
+#### Strateji
+- **4 DEFAULT + 3 PERSONALIZED = 7 supplement**
+- **DEFAULT**: D Vitamini, Omega-3, Magnezyum, B12
+- **PERSONALIZED**: Quiz cevaplarına göre (energy hedefi için Koenzim Q10, Ginseng, Enerji Formülü)
+
 ---
 
-## 🔬 Lab Analysis Endpoints
+## 🧬 Lab Summary Endpoint
 
-### **POST** `/ai/lab/summary` - Lab Summary (Supplement Önerisi İLE)
+### **POST** `/ai/lab/summary`
 
-Birden fazla lab test sonucunu analiz eder ve supplement önerileri verir.
+Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
 
 #### Request Body
 ```json
@@ -127,12 +158,6 @@ Birden fazla lab test sonucunu analiz eder ve supplement önerileri verir.
       "value": "15",
       "unit": "ng/mL",
       "reference_range": "30-100"
-    },
-    {
-      "name": "B12 Vitamini",
-      "value": "450",
-      "unit": "pg/mL",
-      "reference_range": "200-900"
     }
   ]
 }
@@ -143,54 +168,97 @@ Birden fazla lab test sonucunu analiz eder ve supplement önerileri verir.
 {
   "title": "Tüm Testlerin Genel Yorumu",
   "general_assessment": {
-    "overall_summary": "Laboratuvar sonuçlarında D vitamini seviyesinin 15 ng/mL ile belirgin şekilde düşük olduğu görülüyor.",
-    "patterns_identified": "Vitamin D düşüklüğü dikkat çekici bir bulgu.",
-    "areas_of_concern": "D vitamini eksikliği uzun dönemde kemik sağlığını olumsuz etkileyebilir.",
-    "positive_aspects": "B12 vitaminin normal düzeyde olması sinir sistemi açısından olumlu bir bulgudur."
+    "overall_summary": "Mevcut laboratuvar sonucunda yalnızca D vitamini testi yapılmış. Sonuç 15 ng/mL çıkmış, bu da referans aralığına (30-100 ng/mL) göre belirgin şekilde düşük. Bu durum D vitamini eksikliğini gösteriyor.",
+    "patterns_identified": "Tek belirgin patern D vitamini eksikliği.",
+    "areas_of_concern": "D vitamini düşüklüğü kemik sağlığı, bağışıklık sistemi, kas fonksiyonları ve ruh hali üzerinde olumsuz etkiler yapabilir.",
+    "positive_aspects": "Test yapılarak farkındalık oluşmuş. Erken dönemde tedbir alınabilir.",
+    "metabolic_status": "Eksik D vitamini metabolizmayı, enerji seviyelerini ve bağışıklığı olumsuz etkileyebilir.",
+    "nutritional_status": "Güneşten yeterince faydalanmama veya D vitamini içeren besinlerin az alımı söz konusu olabilir."
   },
   "test_details": {
     "D Vitamini": {
-      "interpretation": "15 ng/mL ile normalin belirgin altında.",
-      "significance": "Kemik sağlığı, bağışıklık ve enerji için çok önemli.",
-      "suggestions": "Takviye başlanmalı, güneş ışığından daha fazla faydalanılmalı."
+      "interpretation": "Sonuç 15 ng/mL ile düşük. Bu düzey klinik olarak D vitamini eksikliğiyle uyumlu.",
+      "significance": "D vitamini kalsiyum emilimi, kemik sağlığı, kas ve bağışıklık fonksiyonları için kritik. Eksiklik kronik yorgunluk, kemik ağrıları, sık enfeksiyonlar yapabilir.",
+      "suggestions": "D3 vitamini takviyesi başlanmalı, magnezyum ve K2 vitamini ile desteklenmeli. 8-12 hafta sonra tekrar test ile düzey kontrol edilmeli."
     }
   },
   "supplement_recommendations": [
     {
-      "name": "D Vitamini (ID: 165)",
-      "description": "Düşük seviyeyi yükseltmek için temel takviye.",
-      "daily_dose": "1000-2000 IU/gün (doktor kontrolünde daha yüksek olabilir)",
-      "benefits": ["Kemik sağlığı", "Bağışıklık sistemi güçlendirme", "Enerji desteği"],
-      "warnings": ["Kan düzeyleri kontrol edilmeden yüksek doz alınmamalıdır."],
+      "name": "D3 Vitamini (ID: 165)",
+      "description": "D vitamini seviyen belirgin şekilde düşük (15 ng/mL). Kemik sağlığı, bağışıklık sistemi ve enerji dengesi için kritik.",
+      "daily_dose": "2000-4000 IU/gün (doktor kontrolüyle kademeli artırılabilir)",
+      "benefits": ["Bağışıklık sistemini güçlendirir", "Kemik ve kas sağlığını destekler", "Ruh halini dengeler"],
+      "warnings": ["Aşırı doz hiperkalsemiye neden olabilir, düzenli kan tahlili ile takip edilmeli"],
+      "priority": "high",
+      "type": "lab_analysis"
+    },
+    {
+      "name": "Omega-3 Yağ Asitleri (Balık Yağı) (ID: 179)",
+      "description": "Omega-3, D vitamini ile sinerjik çalışır. Anti-enflamatuar etkisi sayesinde bağışıklık ve kalp sağlığına destek olur.",
+      "daily_dose": "1000 mg/gün (EPA + DHA toplamı)",
+      "benefits": ["Kalp-damar sağlığını korur", "Beyin ve ruh halini destekler", "Enflamasyonu azaltır"],
+      "warnings": ["Kan sulandırıcı ilaç kullananlar doktora danışmalı"],
+      "priority": "medium",
+      "type": "lab_analysis"
+    },
+    {
+      "name": "Magnezyum (ID: 176)",
+      "description": "D vitamini, magnezyum olmadan etkili çalışamaz. Kas gevşemesi, uyku kalitesi ve sinir sistemi sağlığı için destek.",
+      "daily_dose": "200-400 mg/gün",
+      "benefits": ["Uyku kalitesini artırır", "Kas kramplarını önler", "Sinir sistemini destekler"],
+      "warnings": ["Böbrek yetmezliği olanlarda dikkat edilmeli"],
+      "priority": "medium",
+      "type": "lab_analysis"
+    },
+    {
+      "name": "K2 Vitamini (ID: 171)",
+      "description": "D vitamini ile birlikte alındığında kalsiyumun doğru yerlere (kemik/diş) yönlendirilmesine yardımcı olur.",
+      "daily_dose": "90-120 mcg/gün",
+      "benefits": ["Kemik mineralizasyonunu destekler", "D vitamininin etkinliğini artırır"],
+      "warnings": ["Kan sulandırıcı ilaç kullananlarda dikkat edilmeli"],
       "priority": "high",
       "type": "lab_analysis"
     }
   ],
+  "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun.",
+  "overall_status": "dikkat_edilmeli",
   "lifestyle_recommendations": {
     "exercise": [
-      "Haftada en az 3-4 gün 30-40 dakika yürüyüş veya hafif egzersiz yap.",
-      "Güneş ışığından faydalanarak açık havada egzersiz yapmaya çalış."
+      "Haftada en az 3 gün, 30-45 dakika tempolu yürüyüş veya hafif koşu.",
+      "Ağırlık veya direnç egzersizleriyle kemik ve kas sağlığını güçlendirme."
     ],
     "nutrition": [
-      "Yağlı balıklar (somon, sardalya), yumurta sarısı ve mantar gibi D vitamini kaynaklarını diyetine ekle."
+      "Somon, sardalya, uskumru gibi yağlı balıklara haftada 2 kez yer ver.",
+      "Yumurta sarısı ve D vitamini ile zenginleştirilmiş süt ürünleri tüket.",
+      "Güneş ışığından (özellikle kollar ve bacaklar açık şekilde) günde 15-20 dakika faydalan."
     ],
     "sleep": [
-      "Her gün aynı saatte uyuyup uyanmaya çalış.",
-      "Uyumadan önce mavi ışığı (telefon, bilgisayar) sınırlamaya çalış."
+      "Günde 7-8 saat kaliteli uyku hedefle.",
+      "Uyumadan önce ekran kullanımını azalt."
     ],
     "stress_management": [
-      "Günlük 10-15 dk nefes egzersizleri veya meditasyon yap."
+      "Günlük nefes egzersizleri veya 10 dakikalık meditasyon yap.",
+      "Stresli günlerde kısa yürüyüşler yaparak zihni rahatlat."
     ]
   },
-  "overall_status": "dikkat_edilmeli",
-  "test_count": 1,
-  "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
+  "test_count": 1
 }
 ```
 
-### **POST** `/ai/lab/session` - Lab Session (Sadece Analiz)
+#### Strateji
+- **4 DEFAULT + 1 PERSONALIZED = 5 supplement**
+- **DEFAULT**: D3 Vitamini, Omega-3, Magnezyum, B12
+- **PERSONALIZED**: Lab sonuçlarına göre (D vitamini düşükse K2 eklenir)
+- **Detaylı lab analizi** ve genel değerlendirme
+- **Yaşam tarzı önerileri** dahil
 
-Tek seans lab test sonuçlarını analiz eder, supplement önerisi vermez.
+---
+
+## 🔬 Lab Session Endpoint
+
+### **POST** `/ai/lab/session`
+
+Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
 
 #### Request Body
 ```json
@@ -201,12 +269,6 @@ Tek seans lab test sonuçlarını analiz eder, supplement önerisi vermez.
       "value": "15",
       "unit": "ng/mL",
       "reference_range": "30-100"
-    },
-    {
-      "name": "B12 Vitamini",
-      "value": "450",
-      "unit": "pg/mL",
-      "reference_range": "200-900"
     }
   ]
 }
@@ -219,45 +281,50 @@ Tek seans lab test sonuçlarını analiz eder, supplement önerisi vermez.
   "session_info": {
     "laboratory": "Laboratuvar",
     "session_date": "2024-01-15",
-    "total_tests": 2
+    "total_tests": 1
   },
   "general_assessment": {
-    "clinical_meaning": "Bu seanstaki iki testten biri normal, diğeri düşük. D Vitamini seviyen referans aralığının altında.",
-    "overall_health_status": "1 anormal değer (D Vitamini düşük), 1 normal değer (B12 Vitamini normal)."
+    "clinical_meaning": "Bu testte sadece D Vitamini düzeyin ölçülmüş ve düşük bulunmuş. D Vitamini, kemik sağlığı, bağışıklık fonksiyonları, kas gücü ve genel metabolizma için kritik bir vitamindir.",
+    "overall_health_status": "D Vitamini düşüklüğü mevcut. Genel sağlık açısından destekleyici önlemler alınmalı ve doktor kontrolü önerilir."
   },
   "test_groups": {
     "Vitaminler": [
       {
         "test_adi": "D Vitamini",
         "sonuc": "15 ng/mL",
-        "referans_araligi": "30-100",
+        "referans_araligi": "30-100 ng/mL",
         "durum": "Anormal"
-      },
-      {
-        "test_adi": "B12 Vitamini",
-        "sonuc": "450 pg/mL",
-        "referans_araligi": "200-900",
-        "durum": "Normal"
       }
     ]
   },
   "test_summary": {
-    "total_tests": 2,
-    "normal_count": 1,
+    "total_tests": 1,
+    "normal_count": 0,
     "attention_count": 1
   },
   "general_recommendations": [
-    "Güneş ışığından daha fazla yararlanmayı düşün, özellikle sabah ve öğle saatlerinde kısa süreli maruziyet faydalı olabilir.",
-    "Dengeli beslenmeye özen göster, özellikle balık, yumurta, süt ürünleri gibi doğal D vitamini kaynaklarını beslenmene ekleyebilirsin.",
-    "D Vitamini seviyeni 3-6 ay içinde tekrar kontrol ettirmen faydalı olur."
+    "Güneş ışığından daha fazla faydalanmaya çalış (özellikle sabah saatlerinde kısa süreli güneşlenme).",
+    "D Vitamini açısından zengin gıdaları (yağlı balık, yumurta, süt ürünleri gibi) düzenli tüketmeye dikkat et.",
+    "3-6 ay içerisinde D Vitamini düzeyi tekrar ölçülmeli.",
+    "Kalsiyum, Fosfor ve Parathormon testleri gerekiyorsa destekleyici olarak kontrol edilebilir.",
+    "D Vitamini değerlerinin düşüklüğü konusunda hekimle görüşüp sana özel bir tedavi veya yaşam tarzı planı belirlenmesi faydalı olur."
   ],
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
 }
 ```
 
-### **POST** `/ai/lab/single` - Lab Single (Sadece Analiz)
+#### Özellik
+- **Sadece analiz, supplement önerisi YOK**
+- **Test grupları** ve kategoriler
+- **Genel öneriler** dahil
 
-Tek bir lab test sonucunu analiz eder, supplement önerisi vermez.
+---
+
+## 🧪 Lab Single Endpoint
+
+### **POST** `/ai/lab/single`
+
+Tek bir test sonucunun detaylı analizi (supplement önerisi YOK).
 
 #### Request Body
 ```json
@@ -267,16 +334,7 @@ Tek bir lab test sonucunu analiz eder, supplement önerisi vermez.
     "value": "15",
     "unit": "ng/mL",
     "reference_range": "30-100"
-  },
-  "historical_results": [
-    {
-      "date": "2023-06-15",
-      "value": "18",
-      "status": "düşük",
-      "lab": "Lab A",
-      "notes": "Önceki test"
-    }
-  ]
+  }
 }
 ```
 
@@ -285,64 +343,69 @@ Tek bir lab test sonucunu analiz eder, supplement önerisi vermez.
 {
   "analysis": {
     "summary": "Düşük",
-    "interpretation": "D Vitamini sonucu 15 ng/mL olup referans aralığı olan 30-100 ng/mL'nin oldukça altında. Bu değer ciddi bir D vitamini eksikliğine işaret eder.",
-    "reference_comparison": "Sonuç: 15 ng/mL. Referans aralığı: 30-100 ng/mL. Değer, alt sınırın %50'sinden bile düşük seviyede.",
-    "clinical_significance": "D vitamini eksikliği kemik mineralizasyonunu bozabilir, osteopeni/osteoporoz, kas güçsüzlüğü, düşme riskinde artış ve bağışıklık sistemi fonksiyonlarında zayıflamaya yol açabilir.",
-    "category_insights": "Bu test, 'Vitamin ve Mineral Profili' kategorisine girer. Vitamin D (25-hidroksi D) genellikle vücutta depolanan formu yansıtır.",
-    "trend_analysis": "Geçmiş sonuçlara göre D vitamini seviyesi düşüş trendinde. 2023-06-15'te 18 ng/mL iken şu an 15 ng/mL'ye düşmüş.",
-    "follow_up_suggestions": "Sonucun düşük olması nedeniyle, klinik semptomlar ile birlikte değerlendirilmesi gerekir. Hekim tarafından tekrar test yapılması, kalsiyum, fosfor ve parathormon seviyelerinin kontrol edilmesi faydalı olabilir.",
-    "data_quality": "Test adı, sonucunu ve referans aralığını doğru bir şekilde içeriyor. Geçmiş sonuçlar da mevcut ve trend analizi yapılabildi."
+    "interpretation": "D vitamini düzeyi 15 ng/mL, referans aralığı olan 30-100 ng/mL'nin oldukça altında. Bu durum D vitamini yetersizliği ile uyumlu.",
+    "reference_comparison": "Sonuç: 15 ng/mL | Referans: 30-100 ng/mL → Normal aralığın altında.",
+    "clinical_significance": "D vitamini; kemik sağlığı, kalsiyum metabolizması ve bağışıklık sistemi için kritik öneme sahiptir. Bu düzeyde (15 ng/mL) özellikle kemik mineral yoğunluğunda azalma, kas güçsüzlüğü, kırık riskinde artış ve bağışıklık fonksiyonlarında zayıflama görülebilir.",
+    "category_insights": "Bu test endokrinoloji ve metabolizma alanında değerlendirilir. Özellikle kemik sağlığı (osteoporoz riski), kalsiyum dengesi ve genel bağışıklık fonksiyonları üzerine önemli ipuçları verir.",
+    "trend_analysis": "Geçmiş sonuç paylaşılmadığı için trend analizi yapılamıyor. Tek noktada düşük değer mevcut.",
+    "follow_up_suggestions": "Sonucun düşük çıkması nedeniyle hekim ile görüşüp D vitamini eksikliğine yönelik ayrıntılı değerlendirme yapılması uygun olur. Ayrıca kalsiyum ve parathormon düzeylerinin de kontrol edilmesi faydalı olabilir.",
+    "data_quality": "Tek bir ölçüm sonucu mevcut. Ölçümün hangi laboratuvarda, hangi yöntemle yapıldığı belirtilmemiş. Geçmiş değerler olmadığından trend analizi sınırlı."
   },
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
 }
 ```
 
+#### Özellik
+- **Sadece analiz, supplement önerisi YOK**
+- **Detaylı yorum** ve klinik anlam
+- **Kategori analizi** ve takip önerileri
+
 ---
 
-## 💬 Chat Endpoints
+## 💬 Chat Endpoint
 
-### **POST** `/ai/chat/start` - Chat Başlat
+### **POST** `/ai/chat/start`
 
-Yeni bir chat konuşması başlatır.
+Chat oturumu başlatır.
+
+#### Request Body
+```json
+{}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Chat oturumu başlatıldı",
+  "session_id": "unique_session_id"
+}
+```
+
+### **POST** `/ai/chat`
+
+Chat mesajı gönderir.
 
 #### Request Body
 ```json
 {
-  "message": "Merhaba, sağlık konusunda yardım istiyorum"
+  "message": "Merhaba, nasılsın?",
+  "session_id": "unique_session_id"
 }
 ```
 
 #### Response
 ```json
 {
-  "conversation_id": 1
-}
-```
-
-### **POST** `/ai/chat` - Chat Mesajı
-
-Chat konuşmasına mesaj gönderir.
-
-#### Request Body
-```json
-{
-  "conversation_id": 1,
-  "message": "D vitamini eksikliğim var, ne önerirsin?"
-}
-```
-
-#### Response
-```json
-{
-  "conversation_id": 1,
-  "reply": "D vitamini eksikliği için öncelikle güneş ışığından daha fazla yararlanmanı öneririm. Ayrıca yağlı balıklar, yumurta sarısı ve D vitamini ile zenginleştirilmiş süt ürünlerini beslenmene ekleyebilirsin. Doktorunla görüşerek uygun D vitamini takviyesi alabilirsin.",
-  "latency_ms": 1250
+  "success": true,
+  "response": "Merhaba! Ben Longo AI'yım. Sağlık ve beslenme konularında sana yardımcı olabilirim. Nasıl yardımcı olabilirim?",
+  "session_id": "unique_session_id"
 }
 ```
 
 ---
 
-## 🏥 Premium Plus Endpoint
+## 🏆 Premium Plus Endpoint
 
 ### **POST** `/ai/premium-plus/lifestyle-recommendations`
 
@@ -350,133 +413,43 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 
 #### Request Body
 ```json
-{
-  "user_context": {
-    "age": 30,
-    "gender": "male",
-    "health_goals": ["energy", "immunity"],
-    "activity_level": "moderate"
-  }
-}
+{}
 ```
 
 #### Response
 ```json
 {
-  "title": "Premium Plus Yaşam Tarzı Önerileri",
-  "personalized_nutrition": {
-    "daily_meal_plan": "Kişiselleştirilmiş beslenme planı...",
-    "supplement_timing": "Takviye alma zamanları...",
-    "hydration_plan": "Su tüketim planı..."
-  },
-  "exercise_recommendations": {
-    "weekly_schedule": "Haftalık egzersiz programı...",
-    "intensity_levels": "Yoğunluk seviyeleri...",
-    "recovery_plan": "Toparlanma planı..."
-  },
-  "lifestyle_optimization": {
-    "sleep_schedule": "Uyku düzeni...",
-    "stress_management": "Stres yönetimi...",
-    "work_life_balance": "İş-yaşam dengesi..."
+  "success": true,
+  "message": "Premium Plus lifestyle önerileri hazırlandı",
+  "recommendations": {
+    "nutrition": ["Beslenme önerileri"],
+    "exercise": ["Egzersiz önerileri"],
+    "lifestyle": ["Yaşam tarzı önerileri"]
   }
 }
 ```
 
 ---
 
-## 📊 User Management Endpoints
+## 📊 Endpoint Özeti
 
-### **GET** `/users/{user_id}/global-context`
-
-Kullanıcının global context bilgilerini getirir.
-
-#### Response
-```json
-{
-  "user_id": "test123",
-  "global_context": {
-    "yas": 30,
-    "cinsiyet": "male",
-    "hedef": ["energy", "immunity"],
-    "aktivite": "moderate",
-    "boy": 175,
-    "kilo": 70
-  }
-}
-```
-
-### **GET** `/users/{external_user_id}/info`
-
-Kullanıcı bilgilerini getirir.
-
-#### Response
-```json
-{
-  "user_id": "test123",
-  "plan": "premium",
-  "created_at": "2024-01-15T10:30:00Z",
-  "last_active": "2024-01-15T14:20:00Z"
-}
-```
+| Endpoint | Supplement Önerisi | Analiz | Kullanıcı Seviyesi |
+|----------|-------------------|--------|-------------------|
+| **Quiz** | ✅ 4 default + 3 personalized | ✅ | Tüm seviyeler |
+| **Lab Summary** | ✅ 4 default + 1 personalized | ✅ | Premium+ |
+| **Lab Session** | ❌ | ✅ | Premium+ |
+| **Lab Single** | ❌ | ✅ | Premium+ |
+| **Chat** | ❌ | ❌ | Tüm seviyeler |
+| **Premium Plus** | ❌ | ✅ | Premium Plus |
 
 ---
 
-## 🔧 Utility Endpoints
+## 🔧 Frontend Integration
 
-### **GET** `/health`
-
-Sistem sağlık durumunu kontrol eder.
-
-#### Response
-```json
-{
-  "status": "ok",
-  "service": "longopass-ai"
-}
-```
-
-### **GET** `/api/supplements.xml`
-
-Mevcut supplement listesini XML formatında getirir.
-
-#### Response
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<supplements>
-  <supplement id="165">
-    <name>D3 Vitamini</name>
-    <category>Günlük Takviyeler</category>
-    <description>Kemik sağlığı ve bağışıklık için</description>
-  </supplement>
-</supplements>
-```
-
-
-
-## 📝 Önemli Notlar
-
-1. **Authentication**: Tüm endpoint'ler için `username` ve `password` header'ları zorunludur.
-
-2. **User Management**: `x-user-id` ve `x-user-level` header'ları kullanıcı yönetimi için kullanılır.
-
-3. **Supplement Önerileri**: Sadece `/ai/quiz` ve `/ai/lab/summary` endpoint'leri supplement önerisi verir.
-
-4. **Lab Analizi**: `/ai/lab/session` ve `/ai/lab/single` endpoint'leri sadece analiz yapar, supplement önerisi vermez.
-
-5. **Rate Limiting**: Production'da rate limiting uygulanmıştır.
-
-6. **CORS**: Tüm origin'lerden gelen isteklere izin verilir.
-
-7. **Response Format**: Tüm yanıtlar JSON formatındadır, HTML döndürülmez.
-
----
-
-## 🚀 Frontend Entegrasyonu
-
-### JavaScript Örneği
+### JavaScript Example
 ```javascript
-// Quiz analizi
-const quizResponse = await fetch('https://longo-ai.onrender.com/ai/quiz', {
+// Quiz endpoint
+const response = await fetch('https://longo-ai.onrender.com/ai/quiz', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -489,32 +462,51 @@ const quizResponse = await fetch('https://longo-ai.onrender.com/ai/quiz', {
     quiz_answers: {
       age: 30,
       gender: 'male',
-      health_goals: ['energy', 'immunity']
+      health_goals: ['energy']
     }
   })
 });
 
-const quizData = await quizResponse.json();
-console.log(quizData.supplement_recommendations);
+const data = await response.json();
+console.log(data.supplement_recommendations);
 ```
 
-### cURL Örneği
+### cURL Example
 ```bash
 curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
   -H "username: longopass" \
   -H "password: 123456" \
-  -H "x-user-id: user123" \
+  -H "x-user-id: test123" \
   -H "x-user-level: 2" \
   -H "Content-Type: application/json" \
   -d '{
     "quiz_answers": {
       "age": 30,
       "gender": "male",
-      "health_goals": ["energy", "immunity"]
+      "health_goals": ["energy"]
     }
   }'
 ```
 
 ---
 
+## ⚠️ Error Codes
 
+| Code | Açıklama |
+|------|----------|
+| 400 | Bad Request - Geçersiz istek |
+| 401 | Unauthorized - Kimlik doğrulama hatası |
+| 403 | Forbidden - Yetkisiz erişim |
+| 404 | Not Found - Endpoint bulunamadı |
+| 500 | Internal Server Error - Sunucu hatası |
+
+---
+
+## 📝 Notlar
+
+- Tüm endpoint'ler Türkçe yanıt verir
+- **Quiz**: 4 default + 3 personalized supplement önerisi
+- **Lab Summary**: 4 default + 1 personalized supplement önerisi (lab sonuçlarına göre)
+- **Lab Session ve Lab Single**: Sadece analiz yapar, supplement önerisi yok
+- User level kontrolü tüm endpoint'lerde uygulanır
+- CORS desteği mevcuttur
