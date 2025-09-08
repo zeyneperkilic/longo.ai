@@ -840,66 +840,41 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
             user_profile_info += "\n\nBu risk faktörleri lab test yorumunda dikkate alınmalıdır."
     
     schema = (
-        "STRICT JSON ŞEMASI - KAPSAMLI LAB ANALİZİ (SIRALI):\n"
+        "STRICT JSON ŞEMASI - LAB SUMMARY (YENİ FORMAT):\n"
         "{\n"
-        '  "test_details": {\n'
-        '    "test_name": {\n'
-        '    "interpretation": "Test yorumu",\n'
-        '    "significance": "Önemi",\n'
-        '    "suggestions": "Öneriler"\n'
-        '    }\n'
-        "  },\n"
-        '  "general_assessment": {\n'
-        '    "overall_summary": "Tüm test sonuçlarının genel yorumu",\n'
-        '    "patterns_identified": "Tespit edilen paternler ve eğilimler",\n'
-        '    "areas_of_concern": "Dikkat edilmesi gereken alanlar",\n'
-        '    "positive_aspects": "Olumlu sonuçlar",\n'
-        '    "metabolic_status": "Metabolik durum değerlendirmesi",\n'
-        '    "nutritional_status": "Beslenme durumu"\n'
-        "  },\n"
-        '  "overall_status": "normal/dikkat_edilmeli/kritik",\n'
-        '  "lifestyle_recommendations": {\n'
-        '    "exercise": ["Egzersiz önerileri"],\n'
-        '    "nutrition": ["Beslenme önerileri"],\n'
-        '    "sleep": ["Uyku önerileri"],\n'
-        '    "stress_management": ["Stres yönetimi önerileri"]\n'
-        "  },\n"
-        '  "supplement_recommendations": [\n'
+        '  "title": "Tüm Testlerin Genel Yorumu",\n'
+        '  "genel_saglik_durumu": "Genel Sağlık Durumu Değerlendirmesi",\n'
+        '  "test_sayisi": "Test Sayısı: X farklı test seansı",\n'
+        '  "genel_durum": "Testlerin genel kapsamlı analizi varsa eski sonuçlarla karşılaştırma.",\n'
+        '  "oneriler": ["Genel öneriler"],\n'
+        '  "urun_onerileri": [\n'
         '    {\n'
         '    "name": "Ürün adı (kullanılabilir ürünlerden seç)",\n'
         '    "description": "Neden önerildiği",\n'
         '    "daily_dose": "Günlük doz",\n'
         '    "benefits": ["Faydaları"],\n'
         '    "warnings": ["Uyarılar"],\n'
-        '    "priority": "high/medium/low",\n'
-        '    "type": "lab_analysis"\n'
+        '    "priority": "high/medium/low"\n'
         '    }\n'
         "  ]\n"
         "}\n\n"
-        "ÖNEMLİ SIRALAMA: 1) Önce test detayları, 2) Genel değerlendirme, 3) Yaşam tarzı önerileri, 4) EN SON supplement önerileri! "
+        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı, 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
         "Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
-        "MUTLAKA supplement_recommendations field'ını doldur! "
+        "MUTLAKA urun_onerileri field'ını doldur! "
         "4-6 supplement öner! "
     )
     
     system_prompt = (
         SYSTEM_HEALTH + " Sen bir laboratuvar sonuçları ve sağlık danışmanlığı uzmanısın. "
         "Lab test sonuçlarını analiz et, genel sağlık durumunu değerlendir. "
-        "Günlük hayat için pratik öneriler ver (egzersiz, beslenme, uyku, stres yönetimi). "
         "Eksik değerler için uygun supplement önerileri yap. "
         "Tıbbi tanı koyma, sadece bilgilendirme amaçlı öneriler ver. "
-        "ÖNEMLİ: 1) Lab test sonuçlarına odaklan, 2) Risk faktörlerini dikkate al, "
-        "3) Günlük hayat önerileri ve supplement önerileri ver! "
-        "4) Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
-        "5) MUTLAKA supplement_recommendations field'ını doldur! "
-        "6) 4 DEFAULT + 2-3 PERSONALIZED = 6-7 supplement öner! "
-        "7) DEFAULT: D Vitamini, Omega-3, Magnezyum, B12 (lab sonuçlarına göre değiştir) "
-        "8) PERSONALIZED: Lab sonuçlarına göre eksik değerler için "
-        "9) Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme! "
-        "10) Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al! "
-        "11) Riskli durumlar varsa o supplement'i önerme! "
-        "12) Sadece gerçekten gerekli olan supplementleri öner! "
-        "13) DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
+        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı, 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
+        "Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
+        "MUTLAKA urun_onerileri field'ını doldur! "
+        "4-6 supplement öner! "
+        "Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme! "
+        "DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
     )
     
     user_prompt = f"Laboratuvar test sonuçları:\n{tests_info}{supplements_info}{user_profile_info}\n\n{schema}"
