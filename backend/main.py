@@ -1709,3 +1709,46 @@ def validate_input_data(data: dict, required_fields: list = None) -> dict:
     # Her türlü input'u kabul et (string, int, float, dict, list)
     # Pydantic schema'lar zaten extra = "allow" ile esnek
     return data
+
+@app.get("/debug/database")
+def debug_database(current_user: str = Depends(get_current_user),
+                   db: Session = Depends(get_db),
+                   x_user_id: str | None = Header(default=None)):
+    """Debug endpoint to check database contents"""
+    try:
+        from backend.db import get_or_create_user, get_lab_test_history, get_user_ai_interactions
+        
+        # User bilgilerini al
+        user = get_or_create_user(db, x_user_id, "free")
+        
+        # Lab test history
+        lab_history = get_lab_test_history(db, user.id, limit=10)
+        
+        # AI interactions
+        ai_interactions = get_user_ai_interactions(db, user.id, limit=10)
+        
+        return {
+            "user_id": user.id,
+            "external_user_id": user.external_user_id,
+            "plan": user.plan,
+            "lab_tests_count": len(lab_history),
+            "lab_tests": [
+                {
+                    "id": test.id,
+                    "test_date": test.test_date.isoformat() if test.test_date else None,
+                    "test_type": test.test_type,
+                    "test_results": test.test_results
+                } for test in lab_history
+            ],
+            "ai_interactions_count": len(ai_interactions),
+            "ai_interactions": [
+                {
+                    "id": interaction.id,
+                    "interaction_type": interaction.interaction_type,
+                    "created_at": interaction.created_at.isoformat() if interaction.created_at else None,
+                    "model_used": interaction.model_used
+                } for interaction in ai_interactions
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
