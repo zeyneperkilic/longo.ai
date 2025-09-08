@@ -173,7 +173,7 @@ class LabAnalysisResponse(BaseModel):
         extra = "allow"
 
 class SingleSessionResponse(BaseModel):
-    title: str = "Test Seansı Yorumu"
+    title: str = "Test Seansı Yorumu"  # Frontend formatı
     test_seansi_bilgileri: Optional[Dict[str, str]] = Field(default_factory=dict)
     genel_test_yorumu: Optional[Dict[str, str]] = Field(default_factory=dict)
     test_sonuclari_ozeti: Optional[Dict[str, str]] = Field(default_factory=dict)
