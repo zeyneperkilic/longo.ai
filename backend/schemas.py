@@ -219,10 +219,4 @@ class RecommendationItem(BaseModel):
         extra = "allow"
 
 class AnalyzeResponse(BaseModel):
-    recommendations: List[RecommendationItem] = Field(default_factory=list)
-    analysis: Dict[str, Any] = Field(default_factory=dict)
-    disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
-    
-    class Config:
-        extra = "allow"
-
+    recommendations: List[RecommendationItem] = Field(defau
