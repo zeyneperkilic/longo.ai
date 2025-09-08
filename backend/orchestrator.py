@@ -779,13 +779,27 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
 def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: int, available_supplements: List[Dict[str, Any]] = None, user_profile: Dict[str, Any] = None) -> List[Dict[str, str]]:
     """Build prompt for multiple lab tests general summary - ÜRÜN KATALOĞU ENTEGRASYONU"""
     
-    tests_info = f"Toplam Test Seansı: {session_count}\n\n"
-    tests_info += "Test Sonuçları:\n"
-    for i, test in enumerate(tests_data, 1):
-        tests_info += f"{i}. {test.get('name', 'Test')}: {test.get('value', 'Yok')} {test.get('unit', '')}"
-        if test.get('reference_range'):
-            tests_info += f" (Referans: {test['reference_range']})"
-        tests_info += "\n"
+    # Test seanslarını grupla
+    sessions = {}
+    for test in tests_data:
+        test_date = test.get('test_date', 'Bilinmeyen Tarih')
+        lab_name = test.get('lab_name', 'Bilinmeyen Lab')
+        session_key = f"{test_date} - {lab_name}"
+        
+        if session_key not in sessions:
+            sessions[session_key] = []
+        sessions[session_key].append(test)
+    
+    tests_info = f"Toplam Test Seansı: {len(sessions)}\n\n"
+    tests_info += "Test Sonuçları (Seans Bazında):\n"
+    
+    for session_key, session_tests in sessions.items():
+        tests_info += f"\n📅 SEANS: {session_key}\n"
+        for i, test in enumerate(session_tests, 1):
+            tests_info += f"  {i}. {test.get('name', 'Test')}: {test.get('value', 'Yok')} {test.get('unit', '')}"
+            if test.get('reference_range'):
+                tests_info += f" (Referans: {test['reference_range']})"
+            tests_info += "\n"
     
     # Ürün kataloğu bilgisi - TÜM ÜRÜNLERİ LİSTELE
     supplements_info = ""

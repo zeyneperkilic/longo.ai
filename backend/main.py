@@ -1116,28 +1116,63 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     user = get_or_create_user(db, x_user_id, user_plan)
     
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
-    tests_dict = []
+    new_tests_dict = []
     
     # 1. Önce body.tests'i dene
     if body.tests:
-        tests_dict = [test.model_dump() for test in body.tests]
+        new_tests_dict = [test.model_dump() for test in body.tests]
     # 2. Yoksa body.lab_results'i dene
     elif body.lab_results:
-        tests_dict = body.lab_results
+        new_tests_dict = body.lab_results
     # 3. Hiçbiri yoksa boş liste
     else:
-        tests_dict = []
+        new_tests_dict = []
     
-    # 4. Eğer tests_dict boşsa, default test oluştur
-    if not tests_dict:
-        tests_dict = [
+    # ESKİ SEANSLARI DA DAHİL ET - Lab Summary için tüm geçmiş testler
+    all_tests_dict = []
+    
+    # Veritabanından eski lab testlerini çek
+    from backend.db import get_lab_test_history
+    old_lab_tests = get_lab_test_history(db, user.id, limit=20)  # Son 20 seans
+    
+    # Eski testleri ekle
+    for old_test in old_lab_tests:
+        if old_test.test_results and isinstance(old_test.test_results, dict):
+            # Eski test sonuçlarını ekle
+            if 'tests' in old_test.test_results:
+                for test in old_test.test_results['tests']:
+                    # Test tarihi bilgisini ekle
+                    test_with_date = test.copy()
+                    test_with_date['test_date'] = old_test.test_date.isoformat() if old_test.test_date else None
+                    test_with_date['lab_name'] = old_test.test_results.get('lab_name', 'Bilinmeyen Lab')
+                    all_tests_dict.append(test_with_date)
+            elif isinstance(old_test.test_results, list):
+                for test in old_test.test_results:
+                    test_with_date = test.copy()
+                    test_with_date['test_date'] = old_test.test_date.isoformat() if old_test.test_date else None
+                    all_tests_dict.append(test_with_date)
+    
+    # Yeni testleri ekle
+    for test in new_tests_dict:
+        test_with_date = test.copy()
+        test_with_date['test_date'] = 'Yeni Seans'
+        test_with_date['lab_name'] = 'Yeni Lab'
+        all_tests_dict.append(test_with_date)
+    
+    # Eğer hiç test yoksa, default test oluştur
+    if not all_tests_dict:
+        all_tests_dict = [
             {
                 "name": "Test Sonucu",
                 "value": "Veri bulunamadı",
                 "unit": "N/A",
-                "reference_range": "N/A"
+                "reference_range": "N/A",
+                "test_date": "Yeni Seans",
+                "lab_name": "Yeni Lab"
             }
         ]
+    
+    tests_dict = all_tests_dict
     
     # XML'den supplement listesini al (eğer body'de yoksa)
     supplements_dict = body.available_supplements
