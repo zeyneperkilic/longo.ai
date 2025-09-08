@@ -191,7 +191,6 @@ class SingleSessionResponse(BaseModel):
 class GeneralLabSummaryResponse(BaseModel):
     title: str = "Tüm Testlerin Genel Yorumu"
     genel_saglik_durumu: Optional[str] = Field(default="Genel Sağlık Durumu Değerlendirmesi")
-    test_sayisi: Optional[str] = Field(default="Test Sayısı: X farklı test seansı")
     genel_durum: Optional[str] = Field(default="Testlerin genel kapsamlı analizi varsa eski sonuçlarla karşılaştırma.")
     oneriler: Optional[List[str]] = Field(default_factory=list)
     urun_onerileri: Optional[List[Dict[str, Any]]] = Field(default_factory=list)

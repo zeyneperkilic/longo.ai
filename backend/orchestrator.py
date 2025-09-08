@@ -854,7 +854,6 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "{\n"
         '  "title": "Tüm Testlerin Genel Yorumu",\n'
         '  "genel_saglik_durumu": "Genel Sağlık Durumu Değerlendirmesi",\n'
-        '  "test_sayisi": "Test Sayısı: X farklı test seansı",\n'
         '  "genel_durum": "Testlerin genel kapsamlı analizi varsa eski sonuçlarla karşılaştırma.",\n'
         '  "oneriler": ["Genel yaşamsal öneriler"],\n'
         '  "urun_onerileri": [\n'
@@ -868,8 +867,7 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         '    }\n'
         "  ]\n"
         "}\n\n"
-        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı, 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
-        "TEST SAYISI: Frontend'den gelen seans sayısını kullan! "
+        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Genel durum, 4) Öneriler, 5) EN SON ürün önerileri! "
         "Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
         "MUTLAKA urun_onerileri field'ını doldur! "
         "4-6 supplement öner! "
@@ -880,8 +878,7 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "Lab test sonuçlarını analiz et, genel sağlık durumunu değerlendir. "
         "Eksik değerler için uygun supplement önerileri yap. "
         "Tıbbi tanı koyma, sadece bilgilendirme amaçlı öneriler ver. "
-        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Test sayısı, 4) Genel durum, 5) Öneriler, 6) EN SON ürün önerileri! "
-        "TEST SAYISI: Frontend'den gelen seans sayısını kullan! "
+        "ÖNEMLİ: 1) Başlık, 2) Genel sağlık durumu, 3) Genel durum, 4) Öneriler, 5) EN SON ürün önerileri! "
         "ÖNERİLER KISMI: Sadece genel yaşamsal öneriler ver  "
         "Supplement önerilerinde SADECE kullanılabilir ürünlerden seçim yap! "
         "MUTLAKA urun_onerileri field'ını doldur! "
