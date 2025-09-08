@@ -167,86 +167,65 @@ Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
 ```json
 {
   "title": "Tüm Testlerin Genel Yorumu",
-  "general_assessment": {
-    "overall_summary": "Mevcut laboratuvar sonucunda yalnızca D vitamini testi yapılmış. Sonuç 15 ng/mL çıkmış, bu da referans aralığına (30-100 ng/mL) göre belirgin şekilde düşük. Bu durum D vitamini eksikliğini gösteriyor.",
-    "patterns_identified": "Tek belirgin patern D vitamini eksikliği.",
-    "areas_of_concern": "D vitamini düşüklüğü kemik sağlığı, bağışıklık sistemi, kas fonksiyonları ve ruh hali üzerinde olumsuz etkiler yapabilir.",
-    "positive_aspects": "Test yapılarak farkındalık oluşmuş. Erken dönemde tedbir alınabilir.",
-    "metabolic_status": "Eksik D vitamini metabolizmayı, enerji seviyelerini ve bağışıklığı olumsuz etkileyebilir.",
-    "nutritional_status": "Güneşten yeterince faydalanmama veya D vitamini içeren besinlerin az alımı söz konusu olabilir."
-  },
-  "test_details": {
-    "D Vitamini": {
-      "interpretation": "Sonuç 15 ng/mL ile düşük. Bu düzey klinik olarak D vitamini eksikliğiyle uyumlu.",
-      "significance": "D vitamini kalsiyum emilimi, kemik sağlığı, kas ve bağışıklık fonksiyonları için kritik. Eksiklik kronik yorgunluk, kemik ağrıları, sık enfeksiyonlar yapabilir.",
-      "suggestions": "D3 vitamini takviyesi başlanmalı, magnezyum ve K2 vitamini ile desteklenmeli. 8-12 hafta sonra tekrar test ile düzey kontrol edilmeli."
-    }
-  },
-  "supplement_recommendations": [
+  "genel_saglik_durumu": "Genel olarak kan değerlerin normal referans aralıklarında. Hemoglobin seviyen sağlıklı, bu da kansızlık bulgusu olmadığını gösteriyor. Glukoz düzeyin ise normal sınırlar içinde, yani diyabet riski açısından pozitif bir işaret.",
+  "genel_durum": "İki seans sonuçlarını kıyasladığımda hemoglobin değerlerin (13.8 – 14.2 g/dL) stabil seyretmiş. Glukozun normal aralıkta (95 – 98 mg/dL) sabit. Ancak total kolesterol, önceki testlerde normal mi değil mi bilgimiz yok, ama şu anki 220 mg/dL yüksek çıkmış ve takibi önemli.",
+  "oneriler": [
+    "Doymuş yağlardan ve trans yağlardan uzak dur, daha çok zeytinyağı, avokado ve ceviz gibi sağlıklı yağlara yönel.",
+    "Her gün en az 30 dakika tempolu yürüyüş veya benzeri aerobik egzersiz yap.",
+    "Bol sebze, tam tahıl ve lif tüket; kırmızı et ve işlenmiş gıdaları azalt.",
+    "Balık (özellikle somon, sardalya) en az haftada 2 kez tüketmeye çalış.",
+    "Kan lipitlerini kontrol ettirmek için düzenli aralıklarla tekrar test yaptır."
+  ],
+  "urun_onerileri": [
     {
-      "name": "D3 Vitamini (ID: 165)",
-      "description": "D vitamini seviyen belirgin şekilde düşük (15 ng/mL). Kemik sağlığı, bağışıklık sistemi ve enerji dengesi için kritik.",
-      "daily_dose": "2000-4000 IU/gün (doktor kontrolüyle kademeli artırılabilir)",
-      "benefits": ["Bağışıklık sistemini güçlendirir", "Kemik ve kas sağlığını destekler", "Ruh halini dengeler"],
-      "warnings": ["Aşırı doz hiperkalsemiye neden olabilir, düzenli kan tahlili ile takip edilmeli"],
-      "priority": "high",
-      "type": "lab_analysis"
+      "name": "Omega-3 Yağ Asitleri (Balık Yağı)",
+      "description": "Kolesterolü dengelemeye, kalp ve damar sağlığını desteklemeye yardımcı olur.",
+      "daily_dose": "1000-2000 mg EPA+DHA",
+      "benefits": ["Triglisitleri ve kötü kolesterolü (LDL) düşürmeye destek olabilir", "Kalp sağlığını korur", "Beyin fonksiyonlarını destekler"],
+      "warnings": ["Kan sulandırıcı ilaç kullanıyorsan doktora danışmalı"],
+      "priority": "high"
     },
     {
-      "name": "Omega-3 Yağ Asitleri (Balık Yağı) (ID: 179)",
-      "description": "Omega-3, D vitamini ile sinerjik çalışır. Anti-enflamatuar etkisi sayesinde bağışıklık ve kalp sağlığına destek olur.",
-      "daily_dose": "1000 mg/gün (EPA + DHA toplamı)",
-      "benefits": ["Kalp-damar sağlığını korur", "Beyin ve ruh halini destekler", "Enflamasyonu azaltır"],
-      "warnings": ["Kan sulandırıcı ilaç kullananlar doktora danışmalı"],
-      "priority": "medium",
-      "type": "lab_analysis"
+      "name": "Koenzim Q10 (CoQ10)",
+      "description": "Kalp-damar sağlığı ve hücresel enerji üretimi için faydalıdır.",
+      "daily_dose": "100-200 mg",
+      "benefits": ["Kalp kası sağlığını destekler", "Kolesterol ilaçlarının yan etkilerini azaltabilir", "Enerji seviyelerini artırır"],
+      "warnings": ["Kan basıncı ilaçlarıyla etkileşebilir"],
+      "priority": "high"
     },
     {
-      "name": "Magnezyum (ID: 176)",
-      "description": "D vitamini, magnezyum olmadan etkili çalışamaz. Kas gevşemesi, uyku kalitesi ve sinir sistemi sağlığı için destek.",
-      "daily_dose": "200-400 mg/gün",
-      "benefits": ["Uyku kalitesini artırır", "Kas kramplarını önler", "Sinir sistemini destekler"],
-      "warnings": ["Böbrek yetmezliği olanlarda dikkat edilmeli"],
-      "priority": "medium",
-      "type": "lab_analysis"
+      "name": "Kurkumin (Zerdeçaldan)",
+      "description": "Anti-inflamatuar etkisiyle damar sağlığını ve kolesterol metabolizmasını destekler.",
+      "daily_dose": "500-1000 mg",
+      "benefits": ["Kolesterol dengesine katkıda bulunabilir", "Antioksidan ve antiinflamatuar etki sağlar", "Karaciğer sağlığını destekler"],
+      "warnings": ["Safra kesesi taşı olanlar dikkat etmeli"],
+      "priority": "medium"
     },
     {
-      "name": "K2 Vitamini (ID: 171)",
-      "description": "D vitamini ile birlikte alındığında kalsiyumun doğru yerlere (kemik/diş) yönlendirilmesine yardımcı olur.",
-      "daily_dose": "90-120 mcg/gün",
-      "benefits": ["Kemik mineralizasyonunu destekler", "D vitamininin etkinliğini artırır"],
-      "warnings": ["Kan sulandırıcı ilaç kullananlarda dikkat edilmeli"],
-      "priority": "high",
-      "type": "lab_analysis"
+      "name": "Probiyotik",
+      "description": "Bağırsak mikrobiyotasını düzenleyerek kolesterol seviyelerine dolaylı katkı sağlar.",
+      "daily_dose": "CFA sayısı: 1-10 milyar",
+      "benefits": ["Sindirim sağlığını iyileştirir", "Bağırsakta kolesterol metabolizmasını destekler", "Bağışıklığı güçlendirir"],
+      "warnings": ["Bağışıklık yetmezliği olanlarda doktor kontrolü gerekir"],
+      "priority": "medium"
+    },
+    {
+      "name": "Selenyum",
+      "description": "Antioksidan savunmayı güçlendirir ve kalp-damar sağlığına destek olur.",
+      "daily_dose": "50-100 mcg",
+      "benefits": ["Oksidatif stresi azaltır", "Tiroid fonksiyonlarını destekler", "Bağışıklığı güçlendirir"],
+      "warnings": ["Yüksek dozda toksik etki gösterebilir"],
+      "priority": "low"
     }
   ],
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun.",
-  "overall_status": "dikkat_edilmeli",
-  "lifestyle_recommendations": {
-    "exercise": [
-      "Haftada en az 3 gün, 30-45 dakika tempolu yürüyüş veya hafif koşu.",
-      "Ağırlık veya direnç egzersizleriyle kemik ve kas sağlığını güçlendirme."
-    ],
-    "nutrition": [
-      "Somon, sardalya, uskumru gibi yağlı balıklara haftada 2 kez yer ver.",
-      "Yumurta sarısı ve D vitamini ile zenginleştirilmiş süt ürünleri tüket.",
-      "Güneş ışığından (özellikle kollar ve bacaklar açık şekilde) günde 15-20 dakika faydalan."
-    ],
-    "sleep": [
-      "Günde 7-8 saat kaliteli uyku hedefle.",
-      "Uyumadan önce ekran kullanımını azalt."
-    ],
-    "stress_management": [
-      "Günlük nefes egzersizleri veya 10 dakikalık meditasyon yap.",
-      "Stresli günlerde kısa yürüyüşler yaparak zihni rahatlat."
-    ]
-  },
-  "test_count": 1
+  "test_count": 2,
+  "overall_status": "analiz_tamamlandı"
 }
 ```
 
 #### Strateji
-- **4 supplement** (lab sonuçlarına göre)
+- **5 supplement** (lab sonuçlarına göre)
 - **DEFAULT**: D3 Vitamini, Omega-3, Magnezyum, B12
 - **PERSONALIZED**: Lab sonuçlarına göre (D vitamini düşükse K2 eklenir)
 - **Detaylı lab analizi** ve genel değerlendirme
@@ -279,13 +258,13 @@ Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
 {
   "title": "Test Seansı Analizi",
   "session_info": {
-    "laboratory": "Laboratuvar",
+    "laboratory": "Acıbadem Lab",
     "session_date": "2024-01-15",
     "total_tests": 1
   },
   "general_assessment": {
-    "clinical_meaning": "Bu testte sadece D Vitamini düzeyin ölçülmüş ve düşük bulunmuş. D Vitamini, kemik sağlığı, bağışıklık fonksiyonları, kas gücü ve genel metabolizma için kritik bir vitamindir.",
-    "overall_health_status": "D Vitamini düşüklüğü mevcut. Genel sağlık açısından destekleyici önlemler alınmalı ve doktor kontrolü önerilir."
+    "clinical_meaning": "Bu laboratuvar seansında yalnızca D Vitamini testi yapılmış. Ölçülen değer 15 ng/mL olup, referans aralığı olan 30-100 ng/mL'nin altında. Bu sonuç D vitamini eksikliğini düşündürmektedir. D vitamini; kemik sağlığı, kas fonksiyonları, bağışıklık sistemi ve metabolik süreçler için oldukça önemlidir. Eksikliği uzun vadede kemik erimesi, kas güçsüzlüğü ve bağışıklık sorunlarına yol açabilir.",
+    "overall_health_status": "D Vitamini seviyesi düşük bulunmuştur (eksiklik)."
   },
   "test_groups": {
     "Vitaminler": [
@@ -304,10 +283,11 @@ Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
   },
   "general_recommendations": [
     "Güneş ışığından daha fazla faydalanmaya çalış (özellikle sabah saatlerinde kısa süreli güneşlenme).",
-    "D Vitamini açısından zengin gıdaları (yağlı balık, yumurta, süt ürünleri gibi) düzenli tüketmeye dikkat et.",
-    "3-6 ay içerisinde D Vitamini düzeyi tekrar ölçülmeli.",
-    "Kalsiyum, Fosfor ve Parathormon testleri gerekiyorsa destekleyici olarak kontrol edilebilir.",
-    "D Vitamini değerlerinin düşüklüğü konusunda hekimle görüşüp sana özel bir tedavi veya yaşam tarzı planı belirlenmesi faydalı olur."
+    "Kalsiyum ve D vitamini içeren doğal besinleri (yağlı balıklar, yumurta sarısı, süt ürünleri) beslenmene ekle.",
+    "Kapalı mekanlarda uzun süre kalmaktan kaçın, mümkün olduğunda açık havada aktif ol.",
+    "D vitamini seviyesinin birkaç ay içinde yeniden ölçülmesi faydalı olacaktır.",
+    "Düşük değerlerin kemik sağlığını etkileyip etkilemediğini görmek için kalsiyum ve fosfor gibi ek testler yapılabilir.",
+    "D vitamini eksikliğinin nedeni ve tedavi yaklaşımı için bir hekim ile görüşmen gerekir."
   ],
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
 }
@@ -341,17 +321,12 @@ Tek bir test sonucunun detaylı analizi (supplement önerisi YOK).
 #### Response
 ```json
 {
-  "analysis": {
-    "summary": "Düşük",
-    "interpretation": "D vitamini düzeyi 15 ng/mL, referans aralığı olan 30-100 ng/mL'nin oldukça altında. Bu durum D vitamini yetersizliği ile uyumlu.",
-    "reference_comparison": "Sonuç: 15 ng/mL | Referans: 30-100 ng/mL → Normal aralığın altında.",
-    "clinical_significance": "D vitamini; kemik sağlığı, kalsiyum metabolizması ve bağışıklık sistemi için kritik öneme sahiptir. Bu düzeyde (15 ng/mL) özellikle kemik mineral yoğunluğunda azalma, kas güçsüzlüğü, kırık riskinde artış ve bağışıklık fonksiyonlarında zayıflama görülebilir.",
-    "category_insights": "Bu test endokrinoloji ve metabolizma alanında değerlendirilir. Özellikle kemik sağlığı (osteoporoz riski), kalsiyum dengesi ve genel bağışıklık fonksiyonları üzerine önemli ipuçları verir.",
-    "trend_analysis": "Geçmiş sonuç paylaşılmadığı için trend analizi yapılamıyor. Tek noktada düşük değer mevcut.",
-    "follow_up_suggestions": "Sonucun düşük çıkması nedeniyle hekim ile görüşüp D vitamini eksikliğine yönelik ayrıntılı değerlendirme yapılması uygun olur. Ayrıca kalsiyum ve parathormon düzeylerinin de kontrol edilmesi faydalı olabilir.",
-    "data_quality": "Tek bir ölçüm sonucu mevcut. Ölçümün hangi laboratuvarda, hangi yöntemle yapıldığı belirtilmemiş. Geçmiş değerler olmadığından trend analizi sınırlı."
-  },
-  "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
+  "title": "Test Sonucu Yorumu",
+  "test_name": "D Vitamini (25-OH) Sonucu Değerlendirmesi",
+  "last_result": "Son Test Sonucunuz: 15 ng/mL (Düşük)",
+  "reference_range": "Referans Aralığı: 30-100 ng/mL",
+  "test_analysis": "D vitamini düzeyin 15 ng/mL çıkmış ve bu değer referans aralığının (30-100 ng/mL) oldukça altında. 20 ng/mL altındaki sonuçlar genellikle 'eksiklik' düzeyi olarak kabul edilir. Bu durumda kemik sağlığın üzerinde olumsuz etkiler (örneğin osteomalazi riski, kemik yoğunluğunda azalma) oluşturabilir. Ayrıca bağışıklık ve metabolik fonksiyonlarda da rol oynadığı için düşük seviyeler genel sağlık açısından önemli olabilir. Bu test kategorisi vitamin ve mineral düzeylerini gösteren biyokimyasal parametreler arasında yer alır. Elimizde sadece 2024-01-15 tarihli tek bir ölçüm var, bu nedenle trend analizi yapılamıyor. Gelecek ölçümlerde bu değerin yükselip yükselmediği veya daha da düşüp düşmediği izlenmeli. Düzenli aralıklarla aynı laboratuvarda yapılacak tekrar testleri, gidişatı görmek açısından faydalı olur.",
+  "disclaimer": "Bu yorum sadece bilgilendirme amaçlıdır. Kesin tanı ve tedavi için mutlaka doktorunuza başvurunuz."
 }
 ```
 
@@ -429,20 +404,6 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 }
 ```
 
----
-
-## 📊 Endpoint Özeti
-
-| Endpoint | Supplement Önerisi | Analiz | Kullanıcı Seviyesi |
-|----------|-------------------|--------|-------------------|
-| **Quiz** | ✅ 4 default + 3 personalized | ✅ | Tüm seviyeler |
-| **Lab Summary** | ✅ 4 supplement (lab-based) | ✅ | Premium+ |
-| **Lab Session** | ❌ | ✅ | Premium+ |
-| **Lab Single** | ❌ | ✅ | Premium+ |
-| **Chat** | ❌ | ❌ | Tüm seviyeler |
-| **Premium Plus** | ❌ | ✅ | Premium Plus |
-
----
 
 ## 🔧 Frontend Integration
 
@@ -488,25 +449,5 @@ curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
   }'
 ```
 
----
 
-## ⚠️ Error Codes
 
-| Code | Açıklama |
-|------|----------|
-| 400 | Bad Request - Geçersiz istek |
-| 401 | Unauthorized - Kimlik doğrulama hatası |
-| 403 | Forbidden - Yetkisiz erişim |
-| 404 | Not Found - Endpoint bulunamadı |
-| 500 | Internal Server Error - Sunucu hatası |
-
----
-
-## 📝 Notlar
-
-- Tüm endpoint'ler Türkçe yanıt verir
-- **Quiz**: 4 default + 3 personalized supplement önerisi
-- **Lab Summary**: 4 supplement önerisi (lab sonuçlarına göre)
-- **Lab Session ve Lab Single**: Sadece analiz yapar, supplement önerisi yok
-- User level kontrolü tüm endpoint'lerde uygulanır
-- CORS desteği mevcuttur
