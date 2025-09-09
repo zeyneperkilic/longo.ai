@@ -214,18 +214,4 @@ class LabBatchPayload(BaseModel):
 
 class RecommendationItem(BaseModel):
     id: Optional[str] = None
-    name: str
-    reason: str
-    source: Literal["consensus", "assistant"] = "consensus"
-    
-    class Config:
-        extra = "allow"
-
-class AnalyzeResponse(BaseModel):
-    recommendations: List[RecommendationItem] = Field(default_factory=list)
-    analysis: Dict[str, Any] = Field(default_factory=dict)
-    disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
-    
-    class Config:
-        extra = "allow"
-
+    name: st

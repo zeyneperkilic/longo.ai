@@ -1320,23 +1320,4 @@
             loadingMessage.style.opacity = '0';
             loadingMessage.style.transform = 'translateY(-20px)';
             setTimeout(() => {
-                if (loadingMessage.parentNode) {
-                    loadingMessage.remove();
-                }
-            }, 300);
-        }
-    }
-    
-    // Widget'ı başlat
-    createWidget();
-    }
-    
-    // DOM hazır olunca widget'ı başlat
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initWidget);
-    } else {
-        // DOM zaten hazır
-        initWidget();
-    }
-    
-})();
+         
