@@ -47,16 +47,6 @@ def get_current_user(username: str = Header(None), password: str = Header(None))
     
     return username
 
-def get_conversation_by_user_based_id(db: Session, user_id: int, user_based_conv_id: int) -> Conversation:
-    """User-based conversation ID ile gerçek conversation'ı bul"""
-    # Kullanıcının conversation'larını tarihe göre sırala (eskiden yeniye)
-    conversations = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.started_at.asc()).all()
-    
-    # user_based_conv_id (1, 2,3...) ile indexle
-    if user_based_conv_id <= 0 or user_based_conv_id > len(conversations):
-        return None
-    
-    return conversations[user_based_conv_id - 1]  # 1-based to 0-based
 
 def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
     """Chat için user ID validasyonu (Free: Session ID, Premium: Real ID)"""
@@ -360,17 +350,14 @@ def chat_start(body: ChatStartRequest = None,
         # Free kullanıcılar için session-based conversation ID
         return ChatStartResponse(conversation_id=1)  # Her zaman 1, session'da takip edilir
     
-    # Premium kullanıcılar için database-based conversation
+    # Premium kullanıcılar için basit conversation ID
     user = get_or_create_user(db, x_user_id, user_plan)
     
-    # Bu kullanıcının kaç conversation'ı var? +1 yaparak user-based ID oluştur
-    user_conv_count = db.query(Conversation).filter(Conversation.user_id == user.id).count()
-    user_based_conv_id = user_conv_count + 1
+    # Basit conversation ID oluştur (ai_messages'tan conversation sayısını al)
+    chat_messages = get_user_ai_messages(db, x_user_id, message_type="chat", limit=1000)
+    conversation_count = len(set(msg.request_payload.get("conversation_id", 1) for msg in chat_messages if msg.request_payload))
+    user_based_conv_id = conversation_count + 1
     
-    conv = Conversation(user_id=user.id, status="active")
-    db.add(conv); db.commit(); db.refresh(conv)
-    
-    # User-based conversation ID döndür (kullanıcı deneyimi için)
     return ChatStartResponse(conversation_id=user_based_conv_id)
 
 @app.get("/ai/chat/{conversation_id}/history")
@@ -394,10 +381,7 @@ def chat_history(conversation_id: int,
     # Premium kullanıcılar için database-based history
     user = get_or_create_user(db, x_user_id, user_plan)
     
-    # User-based conversation ID'yi real DB ID'ye çevir
-    conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
-    if not conv:
-        raise HTTPException(404, "Konuşma bulunamadı")
+    # Conversation ID artık sadece referans için kullanılıyor
     
     # Chat history'yi ai_messages'tan al
     chat_messages = get_user_ai_messages(db, x_user_id, message_type="chat", limit=CHAT_HISTORY_MAX)
@@ -462,10 +446,7 @@ async def chat_message(req: ChatMessageRequest,
     if not conversation_id:
         raise HTTPException(400, "Conversation ID gerekli")
     
-    # User-based conversation ID'yi real DB ID'ye çevir
-    conv = get_conversation_by_user_based_id(db, user.id, conversation_id)
-    if not conv:
-        raise HTTPException(404, "Konuşma bulunamadı")
+    # Conversation ID artık sadece referans için kullanılıyor
 
     # Global context'i önce al (hafıza sorusu için gerekli)
     global_context = get_user_global_context(db, user.id)
