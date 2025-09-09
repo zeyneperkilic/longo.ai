@@ -123,8 +123,7 @@ def get_or_create_user_by_external_id(db: Session, external_user_id: str, plan: 
         # Yeni kullanıcı oluştur
         user = User(
             external_user_id=external_user_id,
-            plan=plan,
-            global_context={}
+            plan=plan
         )
         db.add(user)
         db.commit()

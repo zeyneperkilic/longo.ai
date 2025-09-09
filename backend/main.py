@@ -1547,9 +1547,6 @@ async def premium_plus_lifestyle_recommendations(
     # Kullanıcıyı bul/oluştur
     user = get_or_create_user(db, x_user_id, user_plan)
     
-    # Global context'i al (quiz + lab verileri)
-    global_context = get_user_global_context(db, user.id)
-    
     # Quiz geçmişini al (basit implementasyon - quiz tablosu yok)
     quiz_history = []  # TODO: Quiz geçmişi için ayrı tablo gerekli
     
@@ -1558,15 +1555,6 @@ async def premium_plus_lifestyle_recommendations(
     
     # AI'ya gönderilecek context'i hazırla
     user_context = {}
-    if global_context:
-        # Key'leri normalize et
-        normalized_global = {}
-        for key, value in global_context.items():
-            if key and value:
-                normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
-                if normalized_key and normalized_key not in normalized_global:
-                    normalized_global[normalized_key] = value
-        user_context.update(normalized_global)
     
     # System prompt - Premium Plus özel
     system_prompt = """Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
