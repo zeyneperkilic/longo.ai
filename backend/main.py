@@ -622,6 +622,13 @@ async def chat_message(req: ChatMessageRequest,
         for analysis in user_analyses:
             if analysis.message_type in ["quiz", "lab_single", "lab_session", "lab_summary"]:
                 system_prompt += f"- {analysis.message_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
+                # Analiz içeriğini de ekle
+                if analysis.response_payload:
+                    if analysis.message_type == "quiz" and "supplement_recommendations" in analysis.response_payload:
+                        supplements = [s["name"] for s in analysis.response_payload["supplement_recommendations"][:3]]
+                        system_prompt += f"  Önerilen supplementler: {', '.join(supplements)}\n"
+                    elif analysis.message_type == "lab_single" and "test_name" in analysis.response_payload:
+                        system_prompt += f"  Test: {analysis.response_payload['test_name']}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
 
     # XML'den supplement listesini ekle - AI'ya ürün önerileri için
