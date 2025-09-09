@@ -350,15 +350,14 @@ def chat_start(body: ChatStartRequest = None,
         # Free kullanıcılar için session-based conversation ID
         return ChatStartResponse(conversation_id=1)  # Her zaman 1, session'da takip edilir
     
-    # Premium kullanıcılar için basit conversation ID
+    # Premium kullanıcılar için yeni conversation ID oluştur
     user = get_or_create_user(db, x_user_id, user_plan)
     
-    # Basit conversation ID oluştur (ai_messages'tan conversation sayısını al)
-    chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=1000)
-    conversation_count = len(set(msg.request_payload.get("conversation_id", 1) for msg in chat_messages if msg.request_payload))
-    user_based_conv_id = conversation_count + 1
+    # Yeni conversation ID oluştur (timestamp-based)
+    import time
+    new_conversation_id = int(time.time() * 1000)  # Millisecond timestamp
     
-    return ChatStartResponse(conversation_id=user_based_conv_id)
+    return ChatStartResponse(conversation_id=new_conversation_id)
 
 @app.get("/ai/chat/{conversation_id}/history")
 def chat_history(conversation_id: int,
@@ -381,15 +380,13 @@ def chat_history(conversation_id: int,
     # Premium kullanıcılar için database-based history
     user = get_or_create_user(db, x_user_id, user_plan)
     
-    # Conversation ID artık sadece referans için kullanılıyor
-    
-    # Chat history'yi ai_messages'tan al
+    # Sadece bu conversation'a ait chat mesajlarını al
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_MAX)
     
     # ai_messages formatını chat history formatına çevir
     history = []
     for msg in chat_messages:
-        if msg.request_payload and "message" in msg.request_payload:
+        if msg.request_payload and "message" in msg.request_payload and msg.request_payload.get("conversation_id") == conversation_id:
             # User message
             history.append({
                 "role": "user", 
