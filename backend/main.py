@@ -620,8 +620,8 @@ async def chat_message(req: ChatMessageRequest,
     if user_analyses:
         system_prompt += "\n\nKULLANICI GEÇMİŞİ:\n"
         for analysis in user_analyses:
-            if analysis.interaction_type in ["quiz", "lab_single", "lab_multiple"]:
-                system_prompt += f"- {analysis.interaction_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
+            if analysis.message_type in ["quiz", "lab_single", "lab_session", "lab_summary"]:
+                system_prompt += f"- {analysis.message_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
 
     # XML'den supplement listesini ekle - AI'ya ürün önerileri için
