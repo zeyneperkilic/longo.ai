@@ -1055,35 +1055,78 @@ def analyze_single_lab(body: SingleLabRequest,
         if field not in test_dict or not test_dict[field]:
             raise HTTPException(400, f"Test verisinde '{field}' field'ı gerekli ve boş olamaz.")
     
-    # ESKİ TESTLERİ DE ÇEK - Aynı test adına sahip eski sonuçları bul
-    from backend.db import get_lab_test_history
-    old_lab_tests = get_lab_test_history(db, user.id, limit=20)  # Son 20 seans
-    
-    # Aynı test adına sahip eski sonuçları filtrele
+    # YENİ: Geçmiş sonuçları ai_messages tablosundan topla (yalnızca ham test değerleri)
+    from backend.db import get_ai_messages
     historical_results = []
-    current_test_name = test_dict.get('name', '')
-    
-    for old_test in old_lab_tests:
-        if old_test.test_results and isinstance(old_test.test_results, dict):
-            if 'tests' in old_test.test_results:
-                for test in old_test.test_results['tests']:
-                    if test.get('name', '').lower() == current_test_name.lower():
-                        # Test tarihi bilgisini ekle
-                        historical_result = test.copy()
-                        historical_result['date'] = old_test.test_date.isoformat() if old_test.test_date else None
-                        historical_result['lab'] = old_test.test_results.get('lab_name', 'Bilinmeyen Lab')
-                        historical_results.append(historical_result)
-            elif isinstance(old_test.test_results, list):
-                for test in old_test.test_results:
-                    if test.get('name', '').lower() == current_test_name.lower():
-                        historical_result = test.copy()
-                        historical_result['date'] = old_test.test_date.isoformat() if old_test.test_date else None
-                        historical_results.append(historical_result)
-    
-    # Body'den gelen geçmiş sonuçları da ekle
+    current_test_name = (test_dict.get('name') or '').lower().strip()
+
+    try:
+        # Son 50 ai_messages kaydını al ve gez
+        prior_msgs = get_ai_messages(db, external_user_id=x_user_id, limit=50)
+        for msg in prior_msgs:
+            if not msg or not msg.request_payload:
+                continue
+            payload = msg.request_payload
+            msg_date = msg.created_at.isoformat() if getattr(msg, 'created_at', None) else None
+
+            # lab_single: payload.test
+            if msg.message_type == 'lab_single' and isinstance(payload.get('test'), dict):
+                pt = payload['test']
+                if (pt.get('name') or '').lower().strip() == current_test_name:
+                    item = {
+                        'name': pt.get('name'),
+                        'value': pt.get('value'),
+                        'unit': pt.get('unit'),
+                        'reference_range': pt.get('reference_range'),
+                        'status': pt.get('status'),
+                        'date': msg_date,
+                    }
+                    historical_results.append(item)
+
+            # lab_session: payload.session_tests veya payload.tests
+            elif msg.message_type == 'lab_session':
+                tests_list = []
+                if isinstance(payload.get('session_tests'), list):
+                    tests_list = payload['session_tests']
+                elif isinstance(payload.get('tests'), list):
+                    tests_list = payload['tests']
+                for pt in tests_list:
+                    if isinstance(pt, dict) and (pt.get('name') or '').lower().strip() == current_test_name:
+                        item = {
+                            'name': pt.get('name'),
+                            'value': pt.get('value'),
+                            'unit': pt.get('unit'),
+                            'reference_range': pt.get('reference_range'),
+                            'status': pt.get('status'),
+                            'date': msg_date,
+                        }
+                        historical_results.append(item)
+
+            # lab_summary: payload.tests veya payload.lab_results
+            elif msg.message_type == 'lab_summary':
+                tests_list = []
+                if isinstance(payload.get('tests'), list):
+                    tests_list = payload['tests']
+                elif isinstance(payload.get('lab_results'), list):
+                    tests_list = payload['lab_results']
+                for pt in tests_list:
+                    if isinstance(pt, dict) and (pt.get('name') or '').lower().strip() == current_test_name:
+                        item = {
+                            'name': pt.get('name'),
+                            'value': pt.get('value'),
+                            'unit': pt.get('unit'),
+                            'reference_range': pt.get('reference_range'),
+                            'status': pt.get('status'),
+                            'date': msg_date,
+                        }
+                        historical_results.append(item)
+    except Exception as e:
+        print(f"🔍 DEBUG: ai_messages'tan geçmiş lab sonuçlarını çekerken hata: {e}")
+
+    # Body'den gelen geçmiş sonuçları da ekle (varsa)
     if body.historical_results:
         historical_results.extend(body.historical_results)
-    
+
     historical_dict = historical_results
     
     # Health Guard kaldırıldı - Lab analizi zaten kontrollü içerik üretiyor
@@ -1287,30 +1330,50 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     if not new_tests_dict:
         raise HTTPException(400, "Test verisi boş olamaz.")
     
-    # ESKİ SEANSLARI DA DAHİL ET - Lab Summary için tüm geçmiş testler
+    # YENİ: Geçmiş testleri ai_messages'tan derle + yeni testleri ekle
     all_tests_dict = []
-    
-    # Veritabanından eski lab testlerini çek
-    from backend.db import get_lab_test_history
-    old_lab_tests = get_lab_test_history(db, user.id, limit=20)  # Son 20 seans
-    
-    # Eski testleri ekle
-    for old_test in old_lab_tests:
-        if old_test.test_results and isinstance(old_test.test_results, dict):
-            # Eski test sonuçlarını ekle
-            if 'tests' in old_test.test_results:
-                for test in old_test.test_results['tests']:
-                    # Test tarihi bilgisini ekle
-                    test_with_date = test.copy()
-                    test_with_date['test_date'] = old_test.test_date.isoformat() if old_test.test_date else None
-                    test_with_date['lab_name'] = old_test.test_results.get('lab_name', 'Bilinmeyen Lab')
-                    all_tests_dict.append(test_with_date)
-            elif isinstance(old_test.test_results, list):
-                for test in old_test.test_results:
-                    test_with_date = test.copy()
-                    test_with_date['test_date'] = old_test.test_date.isoformat() if old_test.test_date else None
-                    all_tests_dict.append(test_with_date)
-    
+
+    from backend.db import get_ai_messages
+    try:
+        prior_msgs = get_ai_messages(db, external_user_id=x_user_id, limit=100)
+        for msg in prior_msgs:
+            if not msg or not msg.request_payload:
+                continue
+            payload = msg.request_payload
+            msg_date = msg.created_at.isoformat() if getattr(msg, 'created_at', None) else None
+
+            if msg.message_type == 'lab_single' and isinstance(payload.get('test'), dict):
+                pt = payload['test']
+                test_with_date = {**pt}
+                test_with_date['test_date'] = msg_date or 'Geçmiş'
+                all_tests_dict.append(test_with_date)
+
+            elif msg.message_type == 'lab_session':
+                tests_list = []
+                if isinstance(payload.get('session_tests'), list):
+                    tests_list = payload['session_tests']
+                elif isinstance(payload.get('tests'), list):
+                    tests_list = payload['tests']
+                for pt in tests_list:
+                    if isinstance(pt, dict):
+                        test_with_date = {**pt}
+                        test_with_date['test_date'] = msg_date or 'Geçmiş'
+                        all_tests_dict.append(test_with_date)
+
+            elif msg.message_type == 'lab_summary':
+                tests_list = []
+                if isinstance(payload.get('tests'), list):
+                    tests_list = payload['tests']
+                elif isinstance(payload.get('lab_results'), list):
+                    tests_list = payload['lab_results']
+                for pt in tests_list:
+                    if isinstance(pt, dict):
+                        test_with_date = {**pt}
+                        test_with_date['test_date'] = msg_date or 'Geçmiş'
+                        all_tests_dict.append(test_with_date)
+    except Exception as e:
+        print(f"🔍 DEBUG: ai_messages'tan geçmiş lab testlerini çekerken hata: {e}")
+
     # Yeni testleri ekle
     for test in new_tests_dict:
         test_with_date = test.copy()
