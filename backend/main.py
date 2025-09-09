@@ -13,7 +13,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
-from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context, create_ai_message
+from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type
 from backend.auth import get_db, get_or_create_user
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
 from backend.health_guard import guard_or_message
@@ -497,8 +497,7 @@ async def chat_message(req: ChatMessageRequest,
     rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
     
     # Get user's previous analyses for context (CACHE THIS!)
-    from backend.db import get_user_ai_interactions
-    user_analyses = get_user_ai_interactions(db, user.id, limit=5)
+    user_analyses = get_user_ai_messages(db, x_user_id, limit=5)
     
     # Build enhanced system prompt with user context
     system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver,Sadece sağlık konusuna odaklan!"
@@ -755,26 +754,7 @@ async def chat_message(req: ChatMessageRequest,
     )
     db.add(m); db.commit(); db.refresh(m)
     
-    # AI interaction kaydı ekle (progress tracking için)
-    try:
-        from backend.db import create_ai_interaction
-        create_ai_interaction(
-            db=db,
-            user_id=user.id,
-            interaction_type="chat",
-            user_input=message_text,
-            ai_response=final,
-            model_used=used_model,
-            interaction_metadata={
-                "conversation_id": conv.id,
-                "response_id": response_id,
-                "latency_ms": latency_ms,
-                "context_keys": list(user_context.keys()) if user_context else []
-            }
-        )
-    except Exception as e:
-        # Database yazma hatası olsa bile chat mesajı kaydedildi
-        print(f"Chat AI interaction kaydı hatası: {e}")
+    # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
     # Global context'i güncelle (yeni bilgiler varsa) - OPTIMIZED
     if new_context and context_changed:
@@ -902,7 +882,7 @@ async def analyze_quiz(body: QuizRequest,
     
     # Quiz sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
     if data and "supplement_recommendations" in data:
-        from backend.db import get_user_global_context, update_user_global_context, create_ai_interaction
+        from backend.db import get_user_global_context, update_user_global_context
         
         # Mevcut global context'i al
         current_context = get_user_global_context(db, user.id) or {}
@@ -939,20 +919,7 @@ async def analyze_quiz(body: QuizRequest,
             updated_context = {**current_context, **quiz_context}
             update_user_global_context(db, user.id, updated_context)
         
-        # AI interaction kaydı ekle (progress tracking için)
-        try:
-            create_ai_interaction(
-                db=db,
-                user_id=user.id,
-                interaction_type="quiz",
-                user_input=str(quiz_dict),
-                ai_response=str(data),
-                model_used="parallel_quiz_analyze",
-                interaction_metadata={"supplement_count": len(data.get("supplement_recommendations", []))}
-            )
-        except Exception as e:
-            # Database yazma hatası olsa bile global context güncellendi
-            print(f"Quiz database kaydı hatası: {e}")
+        # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
     # Log to ai_messages
     try:
@@ -1048,7 +1015,7 @@ def analyze_single_lab(body: SingleLabRequest,
     
     # Lab sonuçlarını global context'e ekle (QUIZ GİBİ)
     if data and "analysis" in data:
-        from backend.db import get_user_global_context, update_user_global_context, create_ai_interaction
+        from backend.db import get_user_global_context, update_user_global_context
         
         print(f"🔍 DEBUG: Lab endpoint'inde user context güncelleme başladı")
         print(f"🔍 DEBUG: User ID: {user.id}")
@@ -1101,20 +1068,7 @@ def analyze_single_lab(body: SingleLabRequest,
         else:
             print(f"🔍 DEBUG: Lab context boş, güncelleme yapılmadı!")
         
-        # AI interaction kaydı ekle
-        try:
-            create_ai_interaction(
-                db=db,
-                user_id=user.id,
-                interaction_type="lab_single",
-                user_input=str(test_dict),
-                ai_response=str(data),
-                model_used="parallel_single_lab_analyze",
-                interaction_metadata={"test_name": test_dict.get("name", "unknown")}
-            )
-            print(f"🔍 DEBUG: AI interaction kaydı eklendi!")
-        except Exception as e:
-            print(f"🔍 DEBUG: Lab single database kaydı hatası: {e}")
+        # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     else:
         print(f"🔍 DEBUG: Lab endpoint'inde data veya analysis yok!")
         print(f"🔍 DEBUG: Data: {data}")
@@ -1322,7 +1276,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     
     # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
     if data and "test_details" in data:
-        from backend.db import get_user_global_context, update_user_global_context, create_lab_test_record, create_ai_interaction
+        from backend.db import get_user_global_context, update_user_global_context, create_lab_test_record
         
         # Mevcut global context'i al
         current_context = get_user_global_context(db, user.id) or {}
@@ -1394,16 +1348,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
                 test_type="multiple"
             )
             
-            # AI interaction kaydı da ekle
-            create_ai_interaction(
-                db=db,
-                user_id=user.id,
-                interaction_type="lab_multiple",
-                user_input=str(new_tests_dict),  # Sadece yeni testler
-                ai_response=str(data),
-                model_used="parallel_multiple_lab_analyze",
-                interaction_metadata={"test_count": total_sessions}
-            )
+            # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
         except Exception as e:
             # Database yazma hatası olsa bile global context güncellendi
             print(f"Lab test database kaydı hatası: {e}")
@@ -1582,326 +1527,4 @@ def get_supplements_xml():
 # @app.get("/cache/clear")
 # def clear_all_cache():
 #     """Tüm cache'i temizle"""
-#     from backend.cache_utils import cache
-#     cache.clear()
-#     return {"message": "Cache temizlendi", "status": "success"}
-
-# @app.get("/cache/cleanup")
-# def cleanup_expired_cache():
-#     """Expired cache item'ları temizle"""
-#     from backend.cache_utils import cleanup_cache
-#     removed_count = cleanup_cache()
-#     return {"message": f"{removed_count} expired item temizlendi", "status": "success"}
-
-@app.post("/ai/chat/clear-session")
-def clear_free_user_session(x_user_id: str | None = Header(default=None)):
-    """Free kullanıcının session'ını temizle"""
-    if x_user_id and x_user_id in free_user_conversations:
-        del free_user_conversations[x_user_id]
-        return {"message": "Session temizlendi", "user_id": x_user_id}
-    return {"message": "Session bulunamadı", "user_id": x_user_id}
-
-@app.get("/users/{external_user_id}/info")
-def get_user_info(external_user_id: str, db: Session = Depends(get_db)):
-    """Kullanıcı bilgilerini getir (production için test)"""
-    from backend.db import get_user_by_external_id
-    
-    user = get_user_by_external_id(db, external_user_id)
-    if not user:
-        raise HTTPException(404, "Kullanıcı bulunamadı")
-    
-    return {
-        "user_id": user.id,
-        "external_user_id": user.external_user_id,
-        "plan": user.plan,
-        "conversation_count": len(user.conversations),
-        "created_at": user.created_at.isoformat(),
-        "global_context_keys": list(user.global_context.keys()) if user.global_context else []
-    }
-
-# Global error handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Global error handler for production"""
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal server error",
-            "message": "Bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
-            "type": str(type(exc).__name__)
-        }
-    )
-
-# ---------- PREMIUM PLUS BESLENME/SPOR/EGZERSİZ ÖNERİLERİ ----------
-
-@app.post("/ai/premium-plus/lifestyle-recommendations")
-async def premium_plus_lifestyle_recommendations(
-    current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    x_user_id: str | None = Header(default=None),
-    x_user_plan: str | None = Header(default=None),
-    x_user_level: int | None = Header(default=None)
-):
-    """Premium Plus kullanıcıları için beslenme, spor ve egzersiz önerileri"""
-    
-    # Plan kontrolü - Yeni sistem: userLevel bazlı
-    if x_user_level is not None:
-        if x_user_level == 3:
-            user_plan = "premium_plus"
-        else:
-            user_plan = "free"  # Premium Plus değilse free
-    else:
-        # Eski sistem fallback
-        user_plan = x_user_plan or "free"
-    
-    if user_plan != "premium_plus":
-        raise HTTPException(
-            status_code=403, 
-            detail="Bu özellik sadece Premium Plus kullanıcıları için mevcuttur"
-        )
-    
-    # User ID validasyonu
-    if not x_user_id:
-        raise HTTPException(status_code=400, detail="User ID gerekli")
-    
-    # Kullanıcıyı bul/oluştur
-    user = get_or_create_user(db, x_user_id, user_plan)
-    
-    # Global context'i al (quiz + lab verileri)
-    global_context = get_user_global_context(db, user.id)
-    
-    # Quiz geçmişini al (basit implementasyon - quiz tablosu yok)
-    quiz_history = []  # TODO: Quiz geçmişi için ayrı tablo gerekli
-    
-    # Lab analizlerini al
-    from backend.db import get_user_ai_interactions
-    lab_analyses = get_user_ai_interactions(db, user.id, limit=3)
-    
-    # AI'ya gönderilecek context'i hazırla
-    user_context = {}
-    if global_context:
-        # Key'leri normalize et
-        normalized_global = {}
-        for key, value in global_context.items():
-            if key and value:
-                normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
-                if normalized_key and normalized_key not in normalized_global:
-                    normalized_global[normalized_key] = value
-        user_context.update(normalized_global)
-    
-    # System prompt - Premium Plus özel
-    system_prompt = """Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
-
-🎯 GÖREVİN: Kullanıcının quiz sonuçları ve lab verilerine göre kişiselleştirilmiş beslenme, spor ve egzersiz önerileri ver.
-
-📊 VERİ ANALİZİ:
-- Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi
-- Lab sonuçlarından vitamin/mineral eksiklikleri, sağlık durumu
-- Bu verileri birleştirerek holistik yaklaşım
-
-🏃‍♂️ SPOR/EGZERSİZ ÖNERİLERİ:
-- Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
-- Haftalık program önerisi (kaç gün, ne kadar süre)
-- Kardiyovasküler, güç antrenmanı, esneklik dengesi
-- Başlangıç seviyesi için güvenli ve sürdürülebilir
-
-🥗 BESLENME ÖNERİLERİ:
-- Lab sonuçlarına göre eksik vitamin/mineraller için besin önerileri
-- Quiz'deki hedeflere uygun makro besin dağılımı
-- Öğün planlama ve porsiyon önerileri
-- Supplement ile beslenme dengesi
-
-⚡ ENERJİ VE PERFORMANS:
-- Egzersiz öncesi/sonrası beslenme
-- Hidrasyon stratejileri
-- Uyku ve recovery önerileri
-
-🚫 KISITLAMALAR:
-- Sadece genel öneriler, tıbbi tavsiye değil
-- Kişisel antrenör veya diyetisyen yerine geçmez
-- Güvenlik öncelikli yaklaşım
-
-💡 YANIT FORMATI:
-1. 📊 MEVCUT DURUM ANALİZİ
-2. 🏃‍♂️ SPOR/EGZERSİZ PROGRAMI
-3. 🥗 BESLENME ÖNERİLERİ
-4. ⚡ PERFORMANS İPUÇLARI
-5. 📅 HAFTALIK PLAN ÖNERİSİ
-
-DİL: SADECE TÜRKÇE YANIT VER!"""
-
-    # User message'ı hazırla
-    user_message = f"""Kullanıcının mevcut durumu:
-
-📊 KULLANICI BİLGİLERİ:
-"""
-    
-    # Quiz verilerini ekle
-    if user_context:
-        user_message += f"\n📋 QUIZ VERİLERİ:\n"
-        for key, value in user_context.items():
-            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
-                user_message += f"- {key.upper()}: {value}\n"
-    
-    # Quiz geçmişini ekle
-    if quiz_history:
-        user_message += f"\n📋 SON QUIZ SONUÇLARI:\n"
-        for quiz in quiz_history[-1:]:  # En son quiz
-            if quiz.get('summary'):
-                user_message += f"- {quiz['summary']}\n"
-    
-    # Lab analizlerini ekle
-    if lab_analyses:
-        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
-        for analysis in lab_analyses[-1:]:  # En son analiz
-            if hasattr(analysis, 'summary') and analysis.summary:
-                user_message += f"- {analysis.summary}\n"
-            elif isinstance(analysis, dict) and analysis.get('summary'):
-                user_message += f"- {analysis['summary']}\n"
-    
-    # Global context'ten tüm verileri ekle
-    if user_context:
-        # Quiz verilerini ekle
-        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
-        quiz_data_found = False
-        for key in quiz_keys:
-            if key in user_context and user_context[key]:
-                if not quiz_data_found:
-                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
-                    quiz_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
-        
-        # Lab verilerini ekle
-        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
-        lab_data_found = False
-        for key in lab_keys:
-            if key in user_context and user_context[key]:
-                if not lab_data_found:
-                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
-                    lab_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
-    
-    user_message += f"""
-
-Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
-Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
-
-    # AI'ya gönder
-    try:
-        from backend.openrouter_client import get_ai_response
-        
-        reply = await get_ai_response(system_prompt, user_message)
-        
-        return {
-            "status": "success",
-            "recommendations": reply,
-            "user_context": user_context,
-            "quiz_count": len(quiz_history),
-            "lab_count": len(lab_analyses)
-        }
-        
-    except Exception as e:
-        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
-        raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
-
-# Input validation helper
-def validate_input_data(data: dict, required_fields: list = None) -> dict:
-    """Input data validation for production - TAMAMEN ESNEK"""
-    if not data:
-        data = {}
-    
-    # Required fields için default değer ata (ama strict validation yapma)
-    if required_fields:
-        for field in required_fields:
-            if field not in data:
-                data[field] = None
-    
-    # Her türlü input'u kabul et (string, int, float, dict, list)
-    # Pydantic schema'lar zaten extra = "allow" ile esnek
-    return data
-
-@app.get("/debug/database")
-def debug_database(current_user: str = Depends(get_current_user),
-                   db: Session = Depends(get_db),
-                   x_user_id: str | None = Header(default=None)):
-    """Debug endpoint to check database contents"""
-    try:
-        from backend.db import get_or_create_user_by_external_id, get_lab_test_history, get_user_ai_interactions, get_ai_messages
-        
-        # User bilgilerini al
-        user = get_or_create_user_by_external_id(db, x_user_id, "free")
-        
-        # Lab test history
-        lab_history = get_lab_test_history(db, user.id, limit=10)
-        
-        # AI interactions
-        ai_interactions = get_user_ai_interactions(db, user.id, limit=10)
-        
-        # AI messages
-        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=10)
-        
-        return {
-            "user_id": user.id,
-            "external_user_id": user.external_user_id,
-            "plan": user.plan,
-            "lab_tests_count": len(lab_history),
-            "lab_tests": [
-                {
-                    "id": test.id,
-                    "test_date": test.test_date.isoformat() if test.test_date else None,
-                    "test_type": test.test_type,
-                    "test_results": test.test_results
-                } for test in lab_history
-            ],
-            "ai_interactions_count": len(ai_interactions),
-            "ai_interactions": [
-                {
-                    "id": interaction.id,
-                    "interaction_type": interaction.interaction_type,
-                    "created_at": interaction.created_at.isoformat() if interaction.created_at else None,
-                    "model_used": interaction.model_used
-                } for interaction in ai_interactions
-            ],
-            "ai_messages_count": len(ai_messages),
-            "ai_messages": [
-                {
-                    "id": msg.id,
-                    "message_type": msg.message_type,
-                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
-                    "model_used": msg.model_used
-                } for msg in ai_messages
-            ]
-        }
-    except Exception as e:
-        return {"error": str(e), "type": type(e).__name__}
-
-@app.get("/ai/messages")
-def get_ai_messages_endpoint(
-    current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    x_user_id: str | None = Header(default=None),
-    message_type: str | None = None,
-    limit: int = 50
-):
-    """Get AI messages for debugging"""
-    try:
-        from backend.db import get_ai_messages
-        messages = get_ai_messages(db, external_user_id=x_user_id, message_type=message_type, limit=limit)
-        
-        return {
-            "success": True,
-            "count": len(messages),
-            "messages": [
-                {
-                    "id": msg.id,
-                    "external_user_id": msg.external_user_id,
-                    "message_type": msg.message_type,
-                    "model_used": msg.model_used,
-                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
-                    "request_payload": msg.request_payload,
-                    "response_payload": msg.response_payload
-                } for msg in messages
-            ]
-        }
-    except Exception as e:
-        return {"error": str(e), "type": type(e).__name__}
+#     from backend.cache_utils im

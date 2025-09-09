@@ -192,66 +192,12 @@ def get_ai_messages(
         query = query.filter(AIMessage.message_type == message_type)
     return query.order_by(AIMessage.created_at.desc()).limit(limit).all()
 
-def get_or_create_user_by_external_id(db: Session, external_user_id: str, plan: str = "free") -> User:
-    """External user ID ile kullanıcıyı bul veya oluştur"""
-    if not external_user_id:
-        raise ValueError("External user ID gerekli")
-    
-    # Önce external_user_id ile ara
-    user = db.query(User).filter(User.external_user_id == external_user_id).first()
-    
-    if not user:
-        # Yeni kullanıcı oluştur
-        user = User(
-            external_user_id=external_user_id,
-            plan=plan,
-            global_context={}
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    
-    return user
+def get_user_ai_messages_by_type(db: Session, external_user_id: str, message_type: str, limit: int = 10):
+    """Get user's AI messages by type (replacement for get_user_ai_interactions)"""
+    return get_ai_messages(db, external_user_id=external_user_id, message_type=message_type, limit=limit)
 
-def get_user_by_external_id(db: Session, external_user_id: str) -> User:
-    """External user ID ile kullanıcıyı bul"""
-    if not external_user_id:
-        return None
-    
-    return db.query(User).filter(User.external_user_id == external_user_id).first()
+def get_user_ai_messages(db: Session, external_user_id: str, limit: int = 10):
+    """Get all user's AI messages (replacement for get_user_ai_interactions)"""
+    return get_ai_messages(db, external_user_id=external_user_id, limit=limit)
 
-def get_user_global_context(db: Session, user_id: int) -> dict:
-    """Kullanıcının global context bilgilerini getir"""
-    user = db.query(User).filter(User.id == user_id).first()
-    return user.global_context if user and user.global_context else {}
-
-def update_user_global_context(db: Session, user_id: int, new_context: dict):
-    """Kullanıcının global context bilgilerini güncelle"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        if user.global_context is None:
-            user.global_context = {}
-        
-        # Mevcut context ile yeni context'i birleştir
-        updated_context = user.global_context.copy()
-        for key, value in new_context.items():
-            if key not in updated_context:
-                updated_context[key] = value
-            elif isinstance(value, list) and isinstance(updated_context[key], list):
-                # Listeleri birleştir (duplicate'ları kaldır)
-                # Sadece hashable elemanlar için set kullan
-                try:
-                    updated_context[key] = list(set(updated_context[key] + value))
-                except TypeError:
-                    # Hashable olmayan elemanlar varsa (dict gibi), sadece ekle
-                    updated_context[key] = updated_context[key] + value
-            else:
-                # String, dict veya diğer değerleri güncelle
-                updated_context[key] = value
-        
-        # SQLAlchemy JSON field'ı force update et
-        user.global_context = updated_context
-        db.commit()
-        db.refresh(user)
-        return user.global_context
-    return None
+def get_or_create_user_by_external_id(db
