@@ -585,11 +585,7 @@ async def chat_message(req: ChatMessageRequest,
                 break
         
         if context_changed:
-            # Mevcut global context'i al ve merge et (overwrite etme!)
-            current_global = get_user_global_context(db, user.id) or {}
-            updated_context = {**current_global, **new_context}
-            update_user_global_context(db, user.id, updated_context)
-            # Local context'i de güncelle
+            # Local context'i güncelle
             user_context.update(new_context)
     
     # 4. KULLANICI BİLGİLERİNİ AI'YA HATIRLAT (LAB VERİLERİ ÇIKARILDI)
@@ -825,18 +821,6 @@ async def chat_message(req: ChatMessageRequest,
     
     # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
-    # Global context'i güncelle (yeni bilgiler varsa) - OPTIMIZED
-    if new_context and context_changed:
-        current_global = get_user_global_context(db, user.id)
-        if current_global:
-            # Mevcut context ile birleştir
-            updated_context = {**current_global, **new_context}
-            # None değerleri temizle
-            updated_context = {k: v for k, v in updated_context.items() if v is not None}
-            update_user_global_context(db, user.id, updated_context)
-        else:
-            # Yeni global context oluştur
-            update_user_global_context(db, user.id, new_context)
     
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece chat yanıtını döndür
@@ -946,58 +930,18 @@ async def analyze_quiz(body: QuizRequest,
             "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
         }
     
-    # Quiz sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
-    if data and "supplement_recommendations" in data:
-        from backend.db import get_user_global_context, update_user_global_context
-        
-        # Mevcut global context'i al
-        current_context = get_user_global_context(db, user.id) or {}
-        
-        # Quiz sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
-        quiz_context = {}
-        
-        # Quiz cevaplarından temel bilgi çıkar
-        if "age" in quiz_dict:
-            quiz_context["yas"] = str(quiz_dict["age"])
-        if "gender" in quiz_dict:
-            quiz_context["cinsiyet"] = quiz_dict["gender"]
-        if "health_goals" in quiz_dict:
-            quiz_context["tercihler"] = quiz_dict["health_goals"]
-        
-        # Supplement önerilerinden SADECE İLK N TANESİNİ al
-        if "supplement_recommendations" in data:
-            all_supplements = [s["name"] for s in data["supplement_recommendations"]]
-            from backend.config import MAX_SUPPLEMENTS_IN_CONTEXT
-            quiz_context["quiz_supplements"] = all_supplements[:MAX_SUPPLEMENTS_IN_CONTEXT]
-        
-        # Priority supplement'lerden SADECE İLK N TANESİNİ al
-        if "supplement_recommendations" in data:
-            priority_supplements = [s["name"] for s in data["supplement_recommendations"] if s.get("priority") == "high"]
-            from backend.config import MAX_PRIORITY_SUPPLEMENTS
-            quiz_context["quiz_priority"] = priority_supplements[:MAX_PRIORITY_SUPPLEMENTS]
-        
-        # Quiz tarihini ekle
-        import time
-        quiz_context["quiz_tarih"] = time.strftime("%Y-%m-%d")
-        
-        # Global context'i güncelle
-        if quiz_context:
-            updated_context = {**current_context, **quiz_context}
-            update_user_global_context(db, user.id, updated_context)
-        
-        # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
     # Log to ai_messages
     try:
         create_ai_message(
-            db=db,
+                db=db,
             external_user_id=x_user_id,
             message_type="quiz",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
@@ -1124,65 +1068,6 @@ def analyze_single_lab(body: SingleLabRequest,
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
     
-    # Lab sonuçlarını global context'e ekle (QUIZ GİBİ)
-    if data and "analysis" in data:
-        from backend.db import get_user_global_context, update_user_global_context
-        
-        print(f"🔍 DEBUG: Lab endpoint'inde user context güncelleme başladı")
-        print(f"🔍 DEBUG: User ID: {user.id}")
-        
-        # Mevcut global context'i al
-        current_context = get_user_global_context(db, user.id) or {}
-        print(f"🔍 DEBUG: Mevcut context: {current_context}")
-        
-        # Lab sonuçlarından ÖZET BİLGİLERİ çıkar
-        lab_context = {}
-        
-        # Test adı
-        if "name" in test_dict:
-            lab_context["son_lab_test"] = test_dict["name"]
-            print(f"🔍 DEBUG: Test adı eklendi: {test_dict['name']}")
-        
-        # Test değeri ve durumu
-        if "value" in test_dict:
-            lab_context["son_lab_deger"] = str(test_dict["value"])
-            print(f"🔍 DEBUG: Test değeri eklendi: {test_dict['value']}")
-        
-        # Test birimi
-        if "unit" in test_dict:
-            lab_context["son_lab_birim"] = test_dict["unit"]
-            print(f"🔍 DEBUG: Test birimi eklendi: {test_dict['unit']}")
-        
-        # Referans aralığı
-        if "reference_range" in test_dict:
-            lab_context["son_lab_referans"] = test_dict["reference_range"]
-            print(f"🔍 DEBUG: Referans aralığı eklendi: {test_dict['reference_range']}")
-        
-        # AI analiz sonucu
-        if "analysis" in data and "summary" in data["analysis"]:
-            lab_context["son_lab_durum"] = data["analysis"]["summary"]
-            print(f"🔍 DEBUG: Lab durumu eklendi: {data['analysis']['summary']}")
-        
-        # Lab tarihi
-        import time
-        lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
-        print(f"🔍 DEBUG: Lab tarihi eklendi: {lab_context['lab_tarih']}")
-        
-        print(f"🔍 DEBUG: Oluşturulan lab_context: {lab_context}")
-        
-        # Global context'i güncelle
-        if lab_context:
-            updated_context = {**current_context, **lab_context}
-            print(f"🔍 DEBUG: Güncellenecek context: {updated_context}")
-            update_user_global_context(db, user.id, updated_context)
-            print(f"🔍 DEBUG: Context güncellendi!")
-        else:
-            print(f"🔍 DEBUG: Lab context boş, güncelleme yapılmadı!")
-        
-        # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
-    else:
-        print(f"🔍 DEBUG: Lab endpoint'inde data veya analysis yok!")
-        print(f"🔍 DEBUG: Data: {data}")
     
     # Log to ai_messages
     try:
@@ -1406,85 +1291,20 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     if "overall_status" not in data:
         data["overall_status"] = "analiz_tamamlandı"
     
-    # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
-    if data and "test_details" in data:
-        from backend.db import get_user_global_context, update_user_global_context
-        
-        # Mevcut global context'i al
-        current_context = get_user_global_context(db, user.id) or {}
-        
-        # Lab sonuçlarından SADECE ÖZET BİLGİLERİ çıkar
-        lab_context = {}
-        
-        # Test adları - SADECE İLK N TANESİ
-        if "test_details" in data:
-            test_adlari = list(data["test_details"].keys())
-            from backend.config import MAX_LAB_TESTS_IN_CONTEXT
-            lab_context["session_anormal_testler"] = test_adlari[:MAX_LAB_TESTS_IN_CONTEXT]
-        
-        # Genel lab durumu - AI response'a göre ayarla
-        if "overall_status" in data:
-            lab_context["lab_genel_durum"] = data["overall_status"]
-        elif "general_assessment" in data and "overall_health_status" in data["general_assessment"]:
-            lab_context["lab_genel_durum"] = data["general_assessment"]["overall_health_status"]
-        elif "general_assessment" in data and "overall_summary" in data["general_assessment"]:
-            lab_context["lab_genel_durum"] = data["general_assessment"]["overall_summary"]
-        elif "general_assessment" in data and "metabolic_status" in data["general_assessment"]:
-            lab_context["lab_genel_durum"] = data["general_assessment"]["metabolic_status"]
-        
-        # Lab tarihi
-        import time
-        lab_context["lab_tarih"] = time.strftime("%Y-%m-%d")
-        
-        # Global context'i güncelle - ESKİ ÖZET + YENİ TEST
-        if lab_context:
-            # Mevcut lab geçmişini al
-            lab_gecmisi = current_context.get("lab_gecmisi", [])
-            
-            # Eski test varsa özetle
-            if "son_lab_test" in current_context and current_context["son_lab_test"]:
-                eski_ozet = f"{current_context.get('son_lab_test', '')} - {current_context.get('son_lab_durum', '')} ({current_context.get('lab_tarih', '')})"
-                if eski_ozet not in [item.get("ozet", "") for item in lab_gecmisi]:
-                    lab_gecmisi.append({
-                        "ozet": eski_ozet,
-                        "tarih": current_context.get("lab_tarih", ""),
-                        "test": current_context.get("son_lab_test", ""),
-                        "durum": current_context.get("son_lab_durum", "")
-                    })
-            
-            # Yeni test bilgilerini ekle
-            yeni_test_ozet = f"{lab_context.get('son_lab_test', '')} - {lab_context.get('son_lab_durum', '')} ({lab_context.get('lab_tarih', '')})"
-            lab_gecmisi.append({
-                "ozet": yeni_test_ozet,
-                "tarih": lab_context.get("lab_tarih", ""),
-                "test": lab_context.get("son_lab_test", ""),
-                "durum": lab_context.get("son_lab_durum", "")
-            })
-            
-            # Son 20 testi tut (çok eski olanları sil)
-            lab_gecmisi = lab_gecmisi[-20:]
-            
-            # Güncellenmiş context
-            updated_context = {**current_context, **lab_context}
-            updated_context["lab_gecmisi"] = lab_gecmisi
-            
-            update_user_global_context(db, user.id, updated_context)
-        
-        # Lab test kaydı artık ai_messages'a yazılıyor - create_lab_test_record kaldırıldı
     
     # Database kaydı tamamlandı - Artık read-through sistemi çalışacak
     
     # Log to ai_messages
     try:
         create_ai_message(
-            db=db,
+                db=db,
             external_user_id=x_user_id,
             message_type="lab_summary",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
@@ -1492,25 +1312,6 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
 
 
 
-@app.get("/users/{user_id}/global-context")
-def get_user_global_context_endpoint(user_id: str, db: Session = Depends(get_db)):
-    """Get user's global context for debugging"""
-
-    from backend.db import get_user_by_external_id, get_user_global_context
-
-    # external_user_id ile kullanıcıyı bul
-    user = get_user_by_external_id(db, user_id)
-    if not user:
-        raise HTTPException(404, "Kullanıcı bulunamadı")
-
-    # Global context'i al
-    global_context = get_user_global_context(db, user.id) or {}
-
-    return {
-        "user_id": user_id,
-        "global_context": global_context,
-        "context_keys": list(global_context.keys()) if global_context else []
-    }
 
 @app.get("/ai/progress/{user_id}")
 def get_user_progress(user_id: str, db: Session = Depends(get_db)):
@@ -1694,7 +1495,6 @@ def get_user_info(external_user_id: str, db: Session = Depends(get_db)):
         "plan": user.plan,
         "conversation_count": len(user.conversations),
         "created_at": user.created_at.isoformat(),
-        "global_context_keys": list(user.global_context.keys()) if user.global_context else []
     }
 
 # Global error handler

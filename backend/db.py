@@ -48,7 +48,6 @@ class User(Base):
     external_user_id = Column(String, unique=True, index=True, nullable=True)  # Asıl site'den gelen unique ID
     email = Column(String, unique=True, index=True, nullable=True)
     plan = Column(String, default="free")  # 'free' or 'premium'
-    global_context = Column(JSON, nullable=True)  # Global user context (name, preferences, diseases)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
@@ -140,38 +139,3 @@ def get_user_by_external_id(db: Session, external_user_id: str) -> User:
     
     return db.query(User).filter(User.external_user_id == external_user_id).first()
 
-def get_user_global_context(db: Session, user_id: int) -> dict:
-    """Kullanıcının global context bilgilerini getir"""
-    user = db.query(User).filter(User.id == user_id).first()
-    return user.global_context if user and user.global_context else {}
-
-def update_user_global_context(db: Session, user_id: int, new_context: dict):
-    """Kullanıcının global context bilgilerini güncelle"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        if user.global_context is None:
-            user.global_context = {}
-        
-        # Mevcut context ile yeni context'i birleştir
-        updated_context = user.global_context.copy()
-        for key, value in new_context.items():
-            if key not in updated_context:
-                updated_context[key] = value
-            elif isinstance(value, list) and isinstance(updated_context[key], list):
-                # Listeleri birleştir (duplicate'ları kaldır)
-                # Sadece hashable elemanlar için set kullan
-                try:
-                    updated_context[key] = list(set(updated_context[key] + value))
-                except TypeError:
-                    # Hashable olmayan elemanlar varsa (dict gibi), sadece ekle
-                    updated_context[key] = updated_context[key] + value
-            else:
-                # String, dict veya diğer değerleri güncelle
-                updated_context[key] = value
-        
-        # SQLAlchemy JSON field'ı force update et
-        user.global_context = updated_context
-        db.commit()
-        db.refresh(user)
-        return user.global_context
-    return None
