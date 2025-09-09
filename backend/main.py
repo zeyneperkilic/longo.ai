@@ -1471,17 +1471,18 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # Log to ai_messages
     try:
         create_ai_message(
-                db=db,
+            db=db,
             external_user_id=x_user_id,
             message_type="lab_summary",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-            )
-        except Exception as e:
+        )
+    except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
+
 
 
 
