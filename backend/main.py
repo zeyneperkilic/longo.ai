@@ -13,7 +13,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
-from backend.db import Base, engine, SessionLocal, User, get_user_global_context, update_user_global_context, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
+from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
 from backend.auth import get_db, get_or_create_user
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
 from backend.health_guard import guard_or_message
@@ -445,8 +445,6 @@ async def chat_message(req: ChatMessageRequest,
     
     # Conversation ID artık sadece referans için kullanılıyor
 
-    # Global context'i önce al (hafıza sorusu için gerekli)
-    global_context = get_user_global_context(db, user.id)
     
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     message_text = req.text or req.message
@@ -494,18 +492,6 @@ async def chat_message(req: ChatMessageRequest,
     # Global + Local Context Sistemi - OPTIMIZED
     user_context = {}
     
-    # 1. Global context'i getir (zaten yukarıda alındı)
-    if global_context:
-        # Key'leri normalize et (büçük harf -> küçük harf + encoding temizle)
-        normalized_global = {}
-        for key, value in global_context.items():
-            if key and value:  # None/boş değerleri atla
-                # Encoding sorunlarını çöz: 'i̇si̇m' -> 'isim'
-                normalized_key = key.lower().replace('i̇', 'i').replace('ı', 'i').strip()
-                if normalized_key and normalized_key not in normalized_global:
-                    normalized_global[normalized_key] = value  # ✅ DOĞRU KEY!
-        user_context.update(normalized_global)
-        print(f"🔍 DEBUG: Chat endpoint - user_context: {user_context}")
     
     # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
     lab_info = ""
