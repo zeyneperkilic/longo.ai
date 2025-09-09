@@ -517,6 +517,8 @@ async def chat_message(req: ChatMessageRequest,
     
     # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
     lab_info = ""
+    
+    # Önce global context'ten dene
     if user_context and "son_lab_test" in user_context and user_context["son_lab_test"]:
         lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
         lab_info += f"SON LAB TEST: {user_context['son_lab_test']}\n"
@@ -531,7 +533,20 @@ async def chat_message(req: ChatMessageRequest,
             lab_info += f"LAB TARİH: {user_context['lab_tarih']}\n"
         
         lab_info += "\n"
-        print(f"🔍 DEBUG: Lab verileri user message'a da eklendi!")
+        print(f"🔍 DEBUG: Lab verileri global context'ten user message'a eklendi!")
+    
+    # Global context'te yoksa ai_messages'tan al
+    if not lab_info and user_analyses:
+        lab_analyses = [a for a in user_analyses if a.message_type == "lab_single"]
+        if lab_analyses:
+            latest_lab = lab_analyses[0]  # En son lab
+            if latest_lab.response_payload and "test_name" in latest_lab.response_payload:
+                lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
+                lab_info += f"SON LAB TEST: {latest_lab.response_payload['test_name']}\n"
+                if "last_result" in latest_lab.response_payload:
+                    lab_info += f"SON LAB DEĞER: {latest_lab.response_payload['last_result']}\n"
+                lab_info += "\n"
+                print(f"🔍 DEBUG: Lab verileri ai_messages'tan user message'a eklendi!")
     
     # Quiz verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
     quiz_info = ""
@@ -985,16 +1000,16 @@ async def analyze_quiz(body: QuizRequest,
         # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
     # Log to ai_messages
-    try:
+        try:
         create_ai_message(
-            db=db,
+                db=db,
             external_user_id=x_user_id,
             message_type="quiz",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
