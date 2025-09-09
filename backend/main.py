@@ -13,7 +13,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
-from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type
+from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
 from backend.auth import get_db, get_or_create_user
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
 from backend.health_guard import guard_or_message
@@ -440,7 +440,7 @@ async def chat_message(req: ChatMessageRequest,
         return await handle_free_user_chat(req, x_user_id)
     
     # Premium kullanıcılar için database-based chat
-    user = get_or_create_user(db, x_user_id, user_plan)
+    user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
 
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
