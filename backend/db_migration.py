@@ -8,7 +8,7 @@ import os
 import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from backend.db import Base, SessionLocal, User, Conversation, Message, LabTestHistory
+from backend.db import Base, SessionLocal, User, Conversation, Message
 
 def migrate_to_postgresql():
     """SQLite'dan PostgreSQL'e veri taşıma"""
@@ -52,9 +52,6 @@ def migrate_to_postgresql():
         messages = sqlite_session.query(Message).all()
         print(f"💭 {len(messages)} mesaj bulundu")
         
-        # Lab tests
-        lab_tests = sqlite_session.query(LabTestHistory).all()
-        print(f"🔬 {len(lab_tests)} lab test bulundu")
         
         
         # PostgreSQL'e veri yaz
@@ -102,18 +99,6 @@ def migrate_to_postgresql():
             )
             pg_session.add(pg_msg)
         
-        # Lab tests
-        for lab in lab_tests:
-            pg_lab = LabTestHistory(
-                id=lab.id,
-                user_id=lab.user_id,
-                test_date=lab.test_date,
-                test_results=lab.test_results,
-                analysis_result=lab.analysis_result,
-                test_type=lab.test_type,
-                created_at=lab.created_at
-            )
-            pg_session.add(pg_lab)
         
         
         # Commit

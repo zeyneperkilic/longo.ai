@@ -80,15 +80,6 @@ class Message(Base):
 
 
 
-class LabTestHistory(Base):
-    __tablename__ = "lab_test_history"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    test_date = Column(DateTime, default=datetime.datetime.utcnow)
-    test_results = Column(JSON)  # Lab test sonuçları
-    analysis_result = Column(JSON)  # AI analiz sonucu
-    test_type = Column(String, default="multiple")  # single/multiple
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
 # Simpler, single-table logging for all AI messages without user table dependency
@@ -102,26 +93,6 @@ class AIMessage(Base):
     model_used = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-def get_lab_test_history(db: Session, user_id: int, limit: int = 10):
-    """Kullanıcının lab test geçmişini getir"""
-    return db.query(LabTestHistory).filter(
-        LabTestHistory.user_id == user_id
-    ).order_by(
-        LabTestHistory.test_date.desc()
-    ).limit(limit).all()
-
-def create_lab_test_record(db: Session, user_id: int, test_results: dict, analysis_result: dict, test_type: str = "multiple"):
-    """Yeni lab test kaydı oluştur"""
-    lab_record = LabTestHistory(
-        user_id=user_id,
-        test_results=test_results,
-        analysis_result=analysis_result,
-        test_type=test_type
-    )
-    db.add(lab_record)
-    db.commit()
-    db.refresh(lab_record)
-    return lab_record
 
 
 def create_ai_message(

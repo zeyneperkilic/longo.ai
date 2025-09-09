@@ -1420,7 +1420,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     
     # Lab sonuçlarını global context'e ekle (SADECE ÖZET BİLGİLER)
     if data and "test_details" in data:
-        from backend.db import get_user_global_context, update_user_global_context, create_lab_test_record
+        from backend.db import get_user_global_context, update_user_global_context
         
         # Mevcut global context'i al
         current_context = get_user_global_context(db, user.id) or {}
@@ -1482,20 +1482,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             
             update_user_global_context(db, user.id, updated_context)
         
-        # Database'e lab test kaydı yaz (SADECE YENİ TESTLER)
-        try:
-            create_lab_test_record(
-                db=db,
-                user_id=user.id,
-                test_results=new_tests_dict,  # Sadece yeni testler
-                analysis_result=data,
-                test_type="multiple"
-            )
-            
-            # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
-        except Exception as e:
-            # Database yazma hatası olsa bile global context güncellendi
-            print(f"Lab test database kaydı hatası: {e}")
+        # Lab test kaydı artık ai_messages'a yazılıyor - create_lab_test_record kaldırıldı
     
     # Database kaydı tamamlandı - Artık read-through sistemi çalışacak
     
@@ -1540,15 +1527,28 @@ def get_user_global_context_endpoint(user_id: str, db: Session = Depends(get_db)
 def get_user_progress(user_id: str, db: Session = Depends(get_db)):
     """Get user's lab test progress and trends"""
     
-    # Get lab test history using external_user_id
-    from backend.db import get_lab_test_history, get_user_by_external_id
+    # Get lab test history from ai_messages
+    from backend.db import get_ai_messages, get_user_by_external_id
     
     # external_user_id ile kullanıcıyı bul
     user = get_user_by_external_id(db, user_id)
     if not user:
         raise HTTPException(404, "Kullanıcı bulunamadı")
     
-    lab_history = get_lab_test_history(db, user.id, limit=20)
+    # Get lab tests from ai_messages
+    lab_messages = get_ai_messages(db, external_user_id=user_id, message_type="lab_single", limit=20)
+    lab_history = []
+    
+    # Convert ai_messages to lab_history format
+    for msg in lab_messages:
+        if msg.request_payload and "test" in msg.request_payload:
+            test_data = msg.request_payload["test"]
+            lab_history.append({
+                "id": msg.id,
+                "test_date": msg.created_at,
+                "test_type": "single",
+                "test_results": {"tests": [test_data]}
+            })
     
     # Analyze trends
     if len(lab_history) < 2:
@@ -1914,13 +1914,10 @@ def debug_database(current_user: str = Depends(get_current_user),
                    x_user_id: str | None = Header(default=None)):
     """Debug endpoint to check database contents"""
     try:
-        from backend.db import get_or_create_user_by_external_id, get_lab_test_history, get_ai_messages
+        from backend.db import get_or_create_user_by_external_id, get_ai_messages
         
         # User bilgilerini al
         user = get_or_create_user_by_external_id(db, x_user_id, "free")
-        
-        # Lab test history
-        lab_history = get_lab_test_history(db, user.id, limit=10)
         
         # AI messages
         ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=10)
@@ -1929,15 +1926,6 @@ def debug_database(current_user: str = Depends(get_current_user),
             "user_id": user.id,
             "external_user_id": user.external_user_id,
             "plan": user.plan,
-            "lab_tests_count": len(lab_history),
-            "lab_tests": [
-                {
-                    "id": test.id,
-                    "test_date": test.test_date.isoformat() if test.test_date else None,
-                    "test_type": test.test_type,
-                    "test_results": test.test_results
-                } for test in lab_history
-            ],
             "ai_messages_count": len(ai_messages),
             "ai_messages": [
                 {
