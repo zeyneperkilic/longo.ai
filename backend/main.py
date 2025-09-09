@@ -959,6 +959,16 @@ def analyze_single_lab(body: SingleLabRequest,
     # Convert test to dict for processing
     test_dict = body.test.model_dump()
     
+    # Test verisi validation
+    if not test_dict:
+        raise HTTPException(400, "Test verisi boş olamaz.")
+    
+    # Gerekli field'ları kontrol et
+    required_fields = ['name', 'value']
+    for field in required_fields:
+        if field not in test_dict or not test_dict[field]:
+            raise HTTPException(400, f"Test verisinde '{field}' field'ı gerekli ve boş olamaz.")
+    
     # ESKİ TESTLERİ DE ÇEK - Aynı test adına sahip eski sonuçları bul
     from backend.db import get_lab_test_history
     old_lab_tests = get_lab_test_history(db, user.id, limit=20)  # Son 20 seans
@@ -1083,26 +1093,23 @@ def analyze_single_session(body: SingleSessionRequest,
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     tests_dict = []
     
-    # 1. Önce body.session_tests'i dene
+    # 1. Önce body.session_tests'i dene (Pydantic model listesi)
     if body.session_tests:
         tests_dict = [test.model_dump() for test in body.session_tests]
-    # 2. Yoksa body.tests'i dene
+    # 2. Yoksa body.tests'i dene (raw dict listesi)
     elif body.tests:
         tests_dict = body.tests
-    # 3. Hiçbiri yoksa boş liste
+    # 3. Hiçbiri yoksa hata ver
     else:
-        tests_dict = []
+        raise HTTPException(400, "Test verisi bulunamadı. 'session_tests' veya 'tests' field'ı gerekli.")
     
-    # 4. Eğer tests_dict boşsa, default test oluştur
+    # Format standardizasyonu - her zaman dict listesi olmalı
+    if not isinstance(tests_dict, list):
+        raise HTTPException(400, "Test verisi liste formatında olmalı.")
+    
+    # Boş liste kontrolü
     if not tests_dict:
-        tests_dict = [
-            {
-                "name": "Test Sonucu",
-                "value": "Veri bulunamadı",
-                "unit": "N/A",
-                "reference_range": "N/A"
-            }
-        ]
+        raise HTTPException(400, "Test verisi boş olamaz.")
     
     # Health Guard kaldırıldı - Lab analizi zaten kontrollü içerik üretiyor
     
@@ -1146,15 +1153,23 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     new_tests_dict = []
     
-    # 1. Önce body.tests'i dene
+    # 1. Önce body.tests'i dene (Pydantic model listesi)
     if body.tests:
         new_tests_dict = [test.model_dump() for test in body.tests]
-    # 2. Yoksa body.lab_results'i dene
+    # 2. Yoksa body.lab_results'i dene (raw dict listesi)
     elif body.lab_results:
         new_tests_dict = body.lab_results
-    # 3. Hiçbiri yoksa boş liste
+    # 3. Hiçbiri yoksa hata ver
     else:
-        new_tests_dict = []
+        raise HTTPException(400, "Test verisi bulunamadı. 'tests' veya 'lab_results' field'ı gerekli.")
+    
+    # Format standardizasyonu - her zaman dict listesi olmalı
+    if not isinstance(new_tests_dict, list):
+        raise HTTPException(400, "Test verisi liste formatında olmalı.")
+    
+    # Boş liste kontrolü
+    if not new_tests_dict:
+        raise HTTPException(400, "Test verisi boş olamaz.")
     
     # ESKİ SEANSLARI DA DAHİL ET - Lab Summary için tüm geçmiş testler
     all_tests_dict = []
