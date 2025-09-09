@@ -792,7 +792,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Chat history
     for r in rows[-(CHAT_HISTORY_MAX-1):]:
-        history.append({"role": r.role, "content": r.content})
+        history.append({"role": r["role"], "content": r["content"]})
 
     # parallel chat with synthesis
     start = time.time()
