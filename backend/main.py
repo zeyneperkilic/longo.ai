@@ -1922,9 +1922,6 @@ def debug_database(current_user: str = Depends(get_current_user),
         # Lab test history
         lab_history = get_lab_test_history(db, user.id, limit=10)
         
-        # AI interactions (from ai_messages)
-        ai_interactions = get_ai_messages(db, external_user_id=x_user_id, limit=10)
-        
         # AI messages
         ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=10)
         
@@ -1940,15 +1937,6 @@ def debug_database(current_user: str = Depends(get_current_user),
                     "test_type": test.test_type,
                     "test_results": test.test_results
                 } for test in lab_history
-            ],
-            "ai_interactions_count": len(ai_interactions),
-            "ai_interactions": [
-                {
-                    "id": interaction.id,
-                    "interaction_type": interaction.message_type,
-                    "created_at": interaction.created_at.isoformat() if interaction.created_at else None,
-                    "model_used": interaction.model_used
-                } for interaction in ai_interactions
             ],
             "ai_messages_count": len(ai_messages),
             "ai_messages": [

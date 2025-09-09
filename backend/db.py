@@ -90,16 +90,6 @@ class LabTestHistory(Base):
     test_type = Column(String, default="multiple")  # single/multiple
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-class AIInteraction(Base):
-    __tablename__ = "ai_interactions"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    interaction_type = Column(String)  # chat, quiz, lab_single, lab_multiple
-    user_input = Column(Text, nullable=True)  # User input (quiz answers, lab results, chat message)
-    ai_response = Column(Text)  # AI response
-    model_used = Column(String, nullable=True)  # Which AI model was used
-    interaction_metadata = Column(JSON, nullable=True)  # Additional data (latency, tokens, cost, etc.)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 # Simpler, single-table logging for all AI messages without user table dependency
 class AIMessage(Base):
@@ -133,29 +123,6 @@ def create_lab_test_record(db: Session, user_id: int, test_results: dict, analys
     db.refresh(lab_record)
     return lab_record
 
-def create_ai_interaction(db: Session, user_id: int, interaction_type: str, user_input: str = None, 
-                         ai_response: str = None, model_used: str = None, interaction_metadata: dict = None):
-    """AI interaction kaydı oluştur"""
-    interaction = AIInteraction(
-        user_id=user_id,
-        interaction_type=interaction_type,
-        user_input=user_input,
-        ai_response=ai_response,
-        model_used=model_used,
-        interaction_metadata=interaction_metadata
-    )
-    db.add(interaction)
-    db.commit()
-    db.refresh(interaction)
-    return interaction
-
-def get_user_ai_interactions(db: Session, user_id: int, limit: int = 10):
-    """Kullanıcının AI interaction geçmişini getir"""
-    return db.query(AIInteraction).filter(
-        AIInteraction.user_id == user_id
-    ).order_by(
-        AIInteraction.created_at.desc()
-    ).limit(limit).all()
 
 def create_ai_message(
     db: Session,

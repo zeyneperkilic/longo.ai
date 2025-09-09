@@ -8,7 +8,7 @@ import os
 import json
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from backend.db import Base, SessionLocal, User, Conversation, Message, LabTestHistory, AIInteraction
+from backend.db import Base, SessionLocal, User, Conversation, Message, LabTestHistory
 
 def migrate_to_postgresql():
     """SQLite'dan PostgreSQL'e veri taşıma"""
@@ -56,9 +56,6 @@ def migrate_to_postgresql():
         lab_tests = sqlite_session.query(LabTestHistory).all()
         print(f"🔬 {len(lab_tests)} lab test bulundu")
         
-        # AI interactions
-        ai_interactions = sqlite_session.query(AIInteraction).all()
-        print(f"🤖 {len(ai_interactions)} AI interaction bulundu")
         
         # PostgreSQL'e veri yaz
         print("💾 PostgreSQL'e veri yazılıyor...")
@@ -118,19 +115,6 @@ def migrate_to_postgresql():
             )
             pg_session.add(pg_lab)
         
-        # AI interactions
-        for ai in ai_interactions:
-            pg_ai = AIInteraction(
-                id=ai.id,
-                user_id=ai.user_id,
-                interaction_type=ai.interaction_type,
-                user_input=ai.user_input,
-                ai_response=ai.ai_response,
-                model_used=ai.model_used,
-                interaction_metadata=ai.interaction_metadata,
-                created_at=ai.created_at
-            )
-            pg_session.add(pg_ai)
         
         # Commit
         pg_session.commit()
