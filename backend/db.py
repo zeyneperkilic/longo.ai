@@ -51,32 +51,6 @@ class User(Base):
     global_context = Column(JSON, nullable=True)  # Global user context (name, preferences, diseases)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-    conversations = relationship("Conversation", back_populates="user")
-
-class Conversation(Base):
-    __tablename__ = "conversations"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    started_at = Column(DateTime, default=datetime.datetime.utcnow)
-    status = Column(String, default="active")  # active/closed
-    title = Column(String, nullable=True)
-
-    user = relationship("User", back_populates="conversations")
-    messages = relationship("Message", back_populates="conversation")
-
-class Message(Base):
-    __tablename__ = "messages"
-    id = Column(Integer, primary_key=True, index=True)
-    conversation_id = Column(Integer, ForeignKey("conversations.id"))
-    user_id = Column(Integer, nullable=True)
-    role = Column(String)  # system/user/assistant
-    content = Column(Text)
-    model_latency_ms = Column(Integer, nullable=True)
-    response_id = Column(String, nullable=True)  # Unique response identifier
-    context_data = Column(JSON, nullable=True)  # Important context (name, preferences, etc.)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-    conversation = relationship("Conversation", back_populates="messages")
 
 
 
