@@ -1290,6 +1290,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
                                  current_user: str = Depends(get_current_user),
                                  db: Session = Depends(get_db),
                                  x_user_id: str | None = Header(default=None),
+                                 x_user_plan: str | None = Header(default=None),
                                  x_user_level: int | None = Header(default=None)):
     """Generate general summary of multiple lab tests with supplement recommendations and progress tracking"""
     
