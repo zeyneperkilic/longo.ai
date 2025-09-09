@@ -490,14 +490,8 @@ async def chat_message(req: ChatMessageRequest,
         db.add(m); db.commit()
         return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
 
-    # store user message FIRST (with lab and quiz info)
-    enhanced_message = message_text
-    if lab_info:
-        enhanced_message = lab_info + enhanced_message
-    if quiz_info:
-        enhanced_message = quiz_info + enhanced_message
-    
-    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=enhanced_message)); db.commit()
+    # store user message FIRST
+    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=message_text)); db.commit()
 
     # build history (including the new user message)
     rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
@@ -549,6 +543,19 @@ async def chat_message(req: ChatMessageRequest,
                 quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
                 quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
                 print(f"🔍 DEBUG: Quiz verileri user message'a da eklendi!")
+    
+    # User message'ı lab ve quiz bilgileri ile güncelle
+    if lab_info or quiz_info:
+        enhanced_message = message_text
+        if lab_info:
+            enhanced_message = lab_info + enhanced_message
+        if quiz_info:
+            enhanced_message = quiz_info + enhanced_message
+        
+        # Güncellenmiş message'ı kaydet
+        m = Message(conversation_id=conv.id, user_id=user.id, role="user", content=enhanced_message)
+        db.add(m); db.commit()
+        print(f"🔍 DEBUG: User message lab/quiz bilgileri ile güncellendi!")
     
     # Build enhanced system prompt with user context
     system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver,Sadece sağlık konusuna odaklan!"
