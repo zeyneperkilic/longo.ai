@@ -13,7 +13,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
-from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context
+from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context, create_ai_message
 from backend.auth import get_db, get_or_create_user
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
 from backend.health_guard import guard_or_message
@@ -196,6 +196,19 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
         # AI yanıtını memory'ye ekle
         free_user_conversations[x_user_id]["messages"].append({"role": "assistant", "content": msg})
+        # Log to ai_messages
+        try:
+            create_ai_message(
+                db=db,
+                external_user_id=x_user_id,
+                message_type="chat",
+                request_payload={"message": message_text, "conversation_id": 1},
+                response_payload={"reply": msg, "conversation_id": 1},
+                model_used="health_guard"
+            )
+        except Exception as e:
+            print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
+        
         return ChatResponse(conversation_id=1, reply=msg, latency_ms=0)
     
     # Ekstra kontrol: Sağlık/supplement dışı konuları reddet
@@ -779,6 +792,19 @@ async def chat_message(req: ChatMessageRequest,
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece chat yanıtını döndür
     
+    # Log to ai_messages
+    try:
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="chat",
+            request_payload={"message": message_text, "conversation_id": conv.id},
+            response_payload={"reply": final, "conversation_id": conv.id},
+            model_used="openrouter"
+        )
+    except Exception as e:
+        print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
+    
     return ChatResponse(conversation_id=conv.id, reply=final, latency_ms=latency_ms)
 
 # ---------- ANALYZE (FREE: one-time), LAB ----------
@@ -927,6 +953,19 @@ async def analyze_quiz(body: QuizRequest,
         except Exception as e:
             # Database yazma hatası olsa bile global context güncellendi
             print(f"Quiz database kaydı hatası: {e}")
+    
+    # Log to ai_messages
+    try:
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="quiz",
+            request_payload=body.dict(),
+            response_payload=data,
+            model_used="openrouter"
+        )
+    except Exception as e:
+        print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
     return data
@@ -1080,6 +1119,19 @@ def analyze_single_lab(body: SingleLabRequest,
         print(f"🔍 DEBUG: Lab endpoint'inde data veya analysis yok!")
         print(f"🔍 DEBUG: Data: {data}")
     
+    # Log to ai_messages
+    try:
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="lab_single",
+            request_payload=body.dict(),
+            response_payload=data,
+            model_used="openrouter"
+        )
+    except Exception as e:
+        print(f"🔍 DEBUG: Lab Single ai_messages kaydı hatası: {e}")
+    
     return data
 
 @app.post("/ai/lab/session", response_model=SingleSessionResponse)
@@ -1140,6 +1192,19 @@ def analyze_single_session(body: SingleSessionRequest,
     
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece AI yanıtını döndür
+    
+    # Log to ai_messages
+    try:
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="lab_session",
+            request_payload=body.dict(),
+            response_payload=data,
+            model_used="openrouter"
+        )
+    except Exception as e:
+        print(f"🔍 DEBUG: Lab Session ai_messages kaydı hatası: {e}")
     
     return data
 
@@ -1344,6 +1409,19 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             print(f"Lab test database kaydı hatası: {e}")
     
     # Database kaydı tamamlandı - Artık read-through sistemi çalışacak
+    
+    # Log to ai_messages
+    try:
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="lab_summary",
+            request_payload=body.dict(),
+            response_payload=data,
+            model_used="openrouter"
+        )
+    except Exception as e:
+        print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
 
@@ -1748,7 +1826,7 @@ def debug_database(current_user: str = Depends(get_current_user),
                    x_user_id: str | None = Header(default=None)):
     """Debug endpoint to check database contents"""
     try:
-        from backend.db import get_or_create_user_by_external_id, get_lab_test_history, get_user_ai_interactions
+        from backend.db import get_or_create_user_by_external_id, get_lab_test_history, get_user_ai_interactions, get_ai_messages
         
         # User bilgilerini al
         user = get_or_create_user_by_external_id(db, x_user_id, "free")
@@ -1758,6 +1836,9 @@ def debug_database(current_user: str = Depends(get_current_user),
         
         # AI interactions
         ai_interactions = get_user_ai_interactions(db, user.id, limit=10)
+        
+        # AI messages
+        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=10)
         
         return {
             "user_id": user.id,
@@ -1780,6 +1861,46 @@ def debug_database(current_user: str = Depends(get_current_user),
                     "created_at": interaction.created_at.isoformat() if interaction.created_at else None,
                     "model_used": interaction.model_used
                 } for interaction in ai_interactions
+            ],
+            "ai_messages_count": len(ai_messages),
+            "ai_messages": [
+                {
+                    "id": msg.id,
+                    "message_type": msg.message_type,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                    "model_used": msg.model_used
+                } for msg in ai_messages
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
+
+@app.get("/ai/messages")
+def get_ai_messages_endpoint(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    message_type: str | None = None,
+    limit: int = 50
+):
+    """Get AI messages for debugging"""
+    try:
+        from backend.db import get_ai_messages
+        messages = get_ai_messages(db, external_user_id=x_user_id, message_type=message_type, limit=limit)
+        
+        return {
+            "success": True,
+            "count": len(messages),
+            "messages": [
+                {
+                    "id": msg.id,
+                    "external_user_id": msg.external_user_id,
+                    "message_type": msg.message_type,
+                    "model_used": msg.model_used,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                    "request_payload": msg.request_payload,
+                    "response_payload": msg.response_payload
+                } for msg in messages
             ]
         }
     except Exception as e:

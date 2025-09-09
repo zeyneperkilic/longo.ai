@@ -101,6 +101,17 @@ class AIInteraction(Base):
     interaction_metadata = Column(JSON, nullable=True)  # Additional data (latency, tokens, cost, etc.)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+# Simpler, single-table logging for all AI messages without user table dependency
+class AIMessage(Base):
+    __tablename__ = "ai_messages"
+    id = Column(Integer, primary_key=True, index=True)
+    external_user_id = Column(String, index=True, nullable=True)
+    message_type = Column(String, index=True)  # chat, quiz, lab_single, lab_session, lab_summary
+    request_payload = Column(JSON, nullable=True)
+    response_payload = Column(JSON, nullable=True)
+    model_used = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 def get_lab_test_history(db: Session, user_id: int, limit: int = 10):
     """Kullanıcının lab test geçmişini getir"""
     return db.query(LabTestHistory).filter(
@@ -145,6 +156,41 @@ def get_user_ai_interactions(db: Session, user_id: int, limit: int = 10):
     ).order_by(
         AIInteraction.created_at.desc()
     ).limit(limit).all()
+
+def create_ai_message(
+    db: Session,
+    external_user_id: str | None,
+    message_type: str,
+    request_payload: dict | None,
+    response_payload: dict | None,
+    model_used: str | None = None,
+):
+    """Log a unified AI message row without requiring a User record."""
+    record = AIMessage(
+        external_user_id=external_user_id,
+        message_type=message_type,
+        request_payload=request_payload,
+        response_payload=response_payload,
+        model_used=model_used,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+def get_ai_messages(
+    db: Session,
+    external_user_id: str | None = None,
+    message_type: str | None = None,
+    limit: int = 50,
+):
+    """Query ai_messages optionally filtered by external_user_id and/or message_type."""
+    query = db.query(AIMessage)
+    if external_user_id:
+        query = query.filter(AIMessage.external_user_id == external_user_id)
+    if message_type:
+        query = query.filter(AIMessage.message_type == message_type)
+    return query.order_by(AIMessage.created_at.desc()).limit(limit).all()
 
 def get_or_create_user_by_external_id(db: Session, external_user_id: str, plan: str = "free") -> User:
     """External user ID ile kullanıcıyı bul veya oluştur"""
