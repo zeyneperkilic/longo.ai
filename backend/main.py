@@ -513,6 +513,7 @@ async def chat_message(req: ChatMessageRequest,
                 if normalized_key and normalized_key not in normalized_global:
                     normalized_global[normalized_key] = value  # ✅ DOĞRU KEY!
         user_context.update(normalized_global)
+        print(f"🔍 DEBUG: Chat endpoint - user_context: {user_context}")
     
     # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
     lab_info = ""
