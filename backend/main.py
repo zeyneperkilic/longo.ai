@@ -940,8 +940,8 @@ async def analyze_quiz(body: QuizRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-            )
-        except Exception as e:
+        )
+    except Exception as e:
         print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
