@@ -354,7 +354,7 @@ def chat_start(body: ChatStartRequest = None,
     user = get_or_create_user(db, x_user_id, user_plan)
     
     # Basit conversation ID oluştur (ai_messages'tan conversation sayısını al)
-    chat_messages = get_user_ai_messages(db, x_user_id, message_type="chat", limit=1000)
+    chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=1000)
     conversation_count = len(set(msg.request_payload.get("conversation_id", 1) for msg in chat_messages if msg.request_payload))
     user_based_conv_id = conversation_count + 1
     
@@ -384,7 +384,7 @@ def chat_history(conversation_id: int,
     # Conversation ID artık sadece referans için kullanılıyor
     
     # Chat history'yi ai_messages'tan al
-    chat_messages = get_user_ai_messages(db, x_user_id, message_type="chat", limit=CHAT_HISTORY_MAX)
+    chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_MAX)
     
     # ai_messages formatını chat history formatına çevir
     history = []
@@ -481,7 +481,7 @@ async def chat_message(req: ChatMessageRequest,
         return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
 
     # Chat history'yi ai_messages'tan al (Message tablosu yerine)
-    chat_messages = get_user_ai_messages(db, x_user_id, message_type="chat", limit=10)
+    chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=10)
     
     # ai_messages formatını history formatına çevir
     rows = []
@@ -982,16 +982,16 @@ async def analyze_quiz(body: QuizRequest,
         # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
     # Log to ai_messages
-    try:
+        try:
         create_ai_message(
-            db=db,
+                db=db,
             external_user_id=x_user_id,
             message_type="quiz",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
@@ -1471,14 +1471,14 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # Log to ai_messages
     try:
         create_ai_message(
-            db=db,
+                db=db,
             external_user_id=x_user_id,
             message_type="lab_summary",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
