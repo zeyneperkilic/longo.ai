@@ -399,13 +399,28 @@ def chat_history(conversation_id: int,
     if not conv:
         raise HTTPException(404, "Konuşma bulunamadı")
     
-    # Güvenlik için user ID kontrolü ekle
-    msgs = db.query(Message).filter(
-        Message.conversation_id == conv.id,
-        Message.user_id == user.id
-    ).order_by(Message.created_at.asc()).all()
+    # Chat history'yi ai_messages'tan al
+    chat_messages = get_user_ai_messages(db, x_user_id, message_type="chat", limit=CHAT_HISTORY_MAX)
     
-    return [{"role": m.role, "content": m.content, "ts": m.created_at.isoformat()} for m in msgs][-CHAT_HISTORY_MAX:]
+    # ai_messages formatını chat history formatına çevir
+    history = []
+    for msg in chat_messages:
+        if msg.request_payload and "message" in msg.request_payload:
+            # User message
+            history.append({
+                "role": "user", 
+                "content": msg.request_payload["message"], 
+                "ts": msg.created_at.isoformat()
+            })
+        if msg.response_payload and "reply" in msg.response_payload:
+            # Assistant message
+            history.append({
+                "role": "assistant", 
+                "content": msg.response_payload["reply"], 
+                "ts": msg.created_at.isoformat()
+            })
+    
+    return history[-CHAT_HISTORY_MAX:]
 
 @app.post("/ai/chat", response_model=ChatResponse)
 async def chat_message(req: ChatMessageRequest,
@@ -466,12 +481,8 @@ async def chat_message(req: ChatMessageRequest,
     # Hafıza soruları artık HEALTH kategorisinde, özel işlem yok
     memory_bypass = False
     if not ok:
-        # store user message
-        db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=message_text)); db.commit()
-        # reply fixed message
+        # Fixed message - sadece ai_messages'a kaydedilecek
         reply = msg
-        m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
-        db.add(m); db.commit()
         return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
     
     # Hafıza soruları artık normal AI model ile yanıtlanıyor
@@ -486,15 +497,18 @@ async def chat_message(req: ChatMessageRequest,
     # Eğer saf selamlama ise özel yanıt ver
     if any(kw == txt for kw in pure_greeting_keywords):
         reply = "Merhaba! Ben Longo AI. Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
-        m = Message(conversation_id=conv.id, role="assistant", content=reply, model_latency_ms=0)
-        db.add(m); db.commit()
         return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
 
-    # store user message FIRST
-    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=message_text)); db.commit()
-
-    # build history (including the new user message)
-    rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
+    # Chat history'yi ai_messages'tan al (Message tablosu yerine)
+    chat_messages = get_user_ai_messages(db, x_user_id, message_type="chat", limit=10)
+    
+    # ai_messages formatını history formatına çevir
+    rows = []
+    for msg in chat_messages:
+        if msg.request_payload and "message" in msg.request_payload:
+            rows.append({"role": "user", "content": msg.request_payload["message"], "created_at": msg.created_at})
+        if msg.response_payload and "reply" in msg.response_payload:
+            rows.append({"role": "assistant", "content": msg.response_payload["reply"], "created_at": msg.created_at})
     
     # Get user's previous analyses for context (CACHE THIS!)
     user_analyses = get_user_ai_messages(db, x_user_id, limit=5)
@@ -560,17 +574,13 @@ async def chat_message(req: ChatMessageRequest,
                 quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
                 print(f"🔍 DEBUG: Quiz verileri user message'a da eklendi!")
     
-    # User message'ı lab ve quiz bilgileri ile güncelle
+    # Lab ve quiz bilgileri artık ai_messages'a kaydedilecek
     if lab_info or quiz_info:
         enhanced_message = message_text
         if lab_info:
             enhanced_message = lab_info + enhanced_message
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
-        
-        # Güncellenmiş message'ı kaydet
-        m = Message(conversation_id=conv.id, user_id=user.id, role="user", content=enhanced_message)
-        db.add(m); db.commit()
         print(f"🔍 DEBUG: User message lab/quiz bilgileri ile güncellendi!")
     
     # Build enhanced system prompt with user context
@@ -821,16 +831,7 @@ async def chat_message(req: ChatMessageRequest,
     # Response ID oluştur ve context bilgilerini sakla
     response_id = generate_response_id()
     
-    # Assistant message'ı response ID ve context ile kaydet
-    m = Message(
-        conversation_id=conv.id, 
-        role="assistant", 
-        content=final, 
-        model_latency_ms=latency_ms,
-        response_id=response_id,
-        context_data=user_context
-    )
-    db.add(m); db.commit(); db.refresh(m)
+    # Assistant message artık ai_messages'a kaydedilecek
     
     # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
