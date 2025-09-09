@@ -464,7 +464,7 @@ async def chat_message(req: ChatMessageRequest,
     if not ok:
         # Fixed message - sadece ai_messages'a kaydedilecek
         reply = msg
-        return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
+        return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
     
     # Hafıza soruları artık normal AI model ile yanıtlanıyor
     
@@ -478,7 +478,7 @@ async def chat_message(req: ChatMessageRequest,
     # Eğer saf selamlama ise özel yanıt ver
     if any(kw == txt for kw in pure_greeting_keywords):
         reply = "Merhaba! Ben Longo AI. Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
-        return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
+        return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
 
     # Chat history'yi ai_messages'tan al (Message tablosu yerine)
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=10)
@@ -838,14 +838,14 @@ async def chat_message(req: ChatMessageRequest,
             db=db,
             external_user_id=x_user_id,
             message_type="chat",
-            request_payload={"message": message_text, "conversation_id": conv.id},
-            response_payload={"reply": final, "conversation_id": conv.id},
+            request_payload={"message": message_text, "conversation_id": conversation_id},
+            response_payload={"reply": final, "conversation_id": conversation_id},
             model_used="openrouter"
         )
     except Exception as e:
         print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
     
-    return ChatResponse(conversation_id=conv.id, reply=final, latency_ms=latency_ms)
+    return ChatResponse(conversation_id=conversation_id, reply=final, latency_ms=latency_ms)
 
 # ---------- ANALYZE (FREE: one-time), LAB ----------
 
