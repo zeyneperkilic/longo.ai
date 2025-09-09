@@ -592,7 +592,7 @@ async def chat_message(req: ChatMessageRequest,
         if "lab_summary" in user_context and user_context["lab_summary"]:
             system_prompt += f"LAB ÖZET: {user_context['lab_summary']}\n"
             print(f"🔍 DEBUG: Lab özet eklendi: {user_context['lab_summary']}")
-            
+        
         if "lab_tarih" in user_context and user_context["lab_tarih"]:
             system_prompt += f"LAB TARİH: {user_context['lab_tarih']}\n"
             print(f"🔍 DEBUG: Lab tarih eklendi: {user_context['lab_tarih']}")
@@ -603,7 +603,7 @@ async def chat_message(req: ChatMessageRequest,
         # Context yoksa default prompt ekle
         print(f"🔍 DEBUG: User context boş, default prompt kullanılıyor!")
         system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner.\n\n🍎 BESLENME ÖNERİSİ KURALLARI:\n- Kullanıcı 'beslenme önerisi ver' derse, SADECE beslenme tavsiyeleri ver!\n- Beslenme önerisi istenince supplement önerme!\n- Sadece doğal besinler, yemek önerileri, beslenme programı ver!\n- Supplement önerisi sadece kullanıcı özel olarak 'supplement öner' derse yap!"
-
+    
     # User analyses context - OPTIMIZED (only add if exists)
     if user_analyses:
         system_prompt += "\n\nKULLANICI GEÇMİŞİ:\n"
@@ -1086,9 +1086,26 @@ def analyze_single_lab(body: SingleLabRequest,
 def analyze_single_session(body: SingleSessionRequest,
                           current_user: str = Depends(get_current_user),
                           db: Session = Depends(get_db),
-                          x_user_id: str | None = Header(default=None)):
+                          x_user_id: str | None = Header(default=None),
+                          x_user_plan: str | None = Header(default=None),
+                          x_user_level: int | None = Header(default=None)):
     """Analyze single lab session with multiple tests"""
-    user = get_or_create_user(db, x_user_id, "premium")  # Asıl site zaten kontrol ediyor
+    
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        user_plan = x_user_plan or "premium"  # Asıl site zaten kontrol ediyor
+    
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     tests_dict = []
@@ -1146,7 +1163,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             user_plan = "free"  # Default fallback
     else:
         # Eski sistem fallback
-        user_plan = "premium"  # Asıl site zaten kontrol ediyor
+        user_plan = x_user_plan or "premium"  # Asıl site zaten kontrol ediyor
     
     user = get_or_create_user(db, x_user_id, user_plan)
     

@@ -242,7 +242,7 @@ Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
 #### Request Body
 ```json
 {
-  "tests": [
+  "session_tests": [
     {
       "name": "D Vitamini",
       "value": "15",
@@ -329,13 +329,6 @@ Tek bir test sonucunun detaylı analizi (supplement önerisi YOK).
   "disclaimer": "Bu yorum sadece bilgilendirme amaçlıdır. Kesin tanı ve tedavi için mutlaka doktorunuza başvurunuz."
 }
 ```
-
-#### Özellik
-- **Sadece analiz, supplement önerisi YOK**
-- **Detaylı yorum** ve klinik anlam
-- **Kategori analizi** ve takip önerileri
-
----
 
 ## 💬 Chat Endpoint
 
