@@ -13,7 +13,7 @@ import requests
 import xml.etree.ElementTree as ET
 
 from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
-from backend.db import Base, engine, SessionLocal, User, Conversation, Message, get_user_global_context, update_user_global_context, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
+from backend.db import Base, engine, SessionLocal, User, get_user_global_context, update_user_global_context, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
 from backend.auth import get_db, get_or_create_user
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
 from backend.health_guard import guard_or_message
@@ -872,9 +872,6 @@ async def chat_message(req: ChatMessageRequest,
 
 # ---------- ANALYZE (FREE: one-time), LAB ----------
 
-def count_user_analyses(db: Session, user_id: int) -> int:
-    # Count 'analyze' requests stored as system messages tagged? Simpler: count assistant messages with model_name like 'analyze'
-    return db.query(Message).filter(Message.user_id==user_id, Message.role=="assistant", Message.model_name=="analyze").count()
 
 @app.post("/ai/quiz", response_model=QuizResponse)
 async def analyze_quiz(body: QuizRequest,
