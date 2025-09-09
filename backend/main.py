@@ -22,6 +22,7 @@ from backend.cache_utils import cache_supplements
 
 
 
+
 # Basic Authentication
 def check_basic_auth(username: str, password: str):
     """Basit authentication kontrolü"""
@@ -1538,19 +1539,61 @@ async def premium_plus_lifestyle_recommendations(
     # Kullanıcıyı bul/oluştur
     user = get_or_create_user(db, x_user_id, user_plan)
     
-    # Quiz geçmişini al (basit implementasyon - quiz tablosu yok)
-    quiz_history = []  # TODO: Quiz geçmişi için ayrı tablo gerekli
+    # Quiz geçmişini al
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=3)
     
     # Lab analizlerini al
     lab_analyses = get_user_ai_messages_by_type(db, x_user_id, "lab_single", limit=3)
+    lab_sessions = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=3)
+    lab_summaries = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=3)
     
     # AI'ya gönderilecek context'i hazırla
     user_context = {}
     
+    # Quiz verilerini context'e ekle
+    if quiz_messages:
+        user_context["quiz_data"] = []
+        for msg in quiz_messages:
+            if msg.request_payload:
+                user_context["quiz_data"].append(msg.request_payload)
+    
+    # Lab verilerini context'e ekle
+    if lab_analyses or lab_sessions or lab_summaries:
+        user_context["lab_data"] = {
+            "single_tests": [],
+            "sessions": [],
+            "summaries": []
+        }
+        
+        # Lab Single verileri
+        for msg in lab_analyses:
+            if msg.request_payload and "test" in msg.request_payload:
+                user_context["lab_data"]["single_tests"].append(msg.request_payload["test"])
+        
+        # Lab Session verileri
+        for msg in lab_sessions:
+            if msg.request_payload and "session_tests" in msg.request_payload:
+                user_context["lab_data"]["sessions"].append({
+                    "laboratory": msg.request_payload.get("laboratory", ""),
+                    "test_date": msg.request_payload.get("test_date", ""),
+                    "tests": msg.request_payload["session_tests"]
+                })
+        
+        # Lab Summary verileri
+        for msg in lab_summaries:
+            if msg.request_payload and "tests" in msg.request_payload:
+                user_context["lab_data"]["summaries"].append({
+                    "test_count": msg.request_payload.get("test_count", 0),
+                    "tests": msg.request_payload["tests"]
+                })
+    
     # System prompt - Premium Plus özel
-    system_prompt = """Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
+    system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
 
 🎯 GÖREVİN: Kullanıcının quiz sonuçları ve lab verilerine göre kişiselleştirilmiş beslenme, spor ve egzersiz önerileri ver.
+
+📊 KULLANICI VERİLERİ:
+{user_context}
 
 📊 VERİ ANALİZİ:
 - Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi

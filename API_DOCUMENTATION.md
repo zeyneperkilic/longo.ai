@@ -15,8 +15,9 @@ password: 123456
 
 ### 👤 User Management Headers
 ```http
-x-user-id: unique_user_id        # Kullanıcı ID'si
-x-user-level: 0|1|2|3           # Kullanıcı seviyesi (0=free, 1=free, 2=premium, 3=premium_plus)
+x-user-id: unique_user_id        # Kullanıcı ID'si (zorunlu)
+x-user-plan: free|premium|premium_plus  # Kullanıcı planı (opsiyonel, default: free)
+x-user-level: 0|1|2|3           # Kullanıcı seviyesi (opsiyonel, default: 0)
 ```
 
 ---
@@ -30,10 +31,12 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
 #### Request Body
 ```json
 {
-  "quiz_answers": {
+  "quiz_data": {
     "age": 30,
-    "gender": "male",
-    "health_goals": ["energy"]
+    "gender": "female",
+    "health_conditions": [],
+    "current_supplements": [],
+    "goals": ["energy", "immunity"]
   }
 }
 ```
@@ -152,12 +155,13 @@ Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
 #### Request Body
 ```json
 {
+  "test_count": 2,
   "tests": [
     {
-      "name": "D Vitamini",
-      "value": "15",
+      "name": "Vitamin D",
+      "value": 18,
       "unit": "ng/mL",
-      "reference_range": "30-100"
+      "reference_range": "30-100 ng/mL"
     }
   ]
 }
@@ -242,12 +246,14 @@ Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
 #### Request Body
 ```json
 {
+  "laboratory": "Test Lab",
+  "test_date": "2024-01-15",
   "session_tests": [
     {
-      "name": "D Vitamini",
-      "value": "15",
+      "name": "Vitamin D",
+      "value": 18,
       "unit": "ng/mL",
-      "reference_range": "30-100"
+      "reference_range": "30-100 ng/mL"
     }
   ]
 }
@@ -310,10 +316,10 @@ Tek bir test sonucunun detaylı analizi (supplement önerisi YOK).
 ```json
 {
   "test": {
-    "name": "D Vitamini",
-    "value": "15",
+    "name": "Vitamin D",
+    "value": 18,
     "unit": "ng/mL",
-    "reference_range": "30-100"
+    "reference_range": "30-100 ng/mL"
   }
 }
 ```
@@ -332,44 +338,31 @@ Tek bir test sonucunun detaylı analizi (supplement önerisi YOK).
 
 ## 💬 Chat Endpoint
 
-### **POST** `/ai/chat/start`
-
-Chat oturumu başlatır.
-
-#### Request Body
-```json
-{}
-```
-
-#### Response
-```json
-{
-  "success": true,
-  "message": "Chat oturumu başlatıldı",
-  "session_id": "unique_session_id"
-}
-```
-
 ### **POST** `/ai/chat`
 
-Chat mesajı gönderir.
+Chat mesajı gönderir ve AI hafızasını kullanır.
 
 #### Request Body
 ```json
 {
-  "message": "Merhaba, nasılsın?",
-  "session_id": "unique_session_id"
+  "message": "Hangi takviyeleri önerdin bana?",
+  "conversation_id": 1757421486962
 }
 ```
 
 #### Response
 ```json
 {
-  "success": true,
-  "response": "Merhaba! Ben Longo AI'yım. Sağlık ve beslenme konularında sana yardımcı olabilirim. Nasıl yardımcı olabilirim?",
-  "session_id": "unique_session_id"
+  "conversation_id": 1757421486962,
+  "reply": "Merhaba! Seninle daha önce yaptığımız quiz ve laboratuvar sonuçlarında özellikle D vitamini eksikliği öne çıkmıştı...",
+  "latency_ms": 6176
 }
 ```
+
+#### Özellik
+- **AI Hafızası**: Quiz ve lab sonuçlarını hatırlar
+- **Kişiselleştirilmiş Yanıtlar**: Geçmiş verileri kullanarak öneriler verir
+- **Conversation ID**: Her yeni chat penceresi için farklı ID kullanın
 
 ---
 
@@ -377,7 +370,7 @@ Chat mesajı gönderir.
 
 ### **POST** `/ai/premium-plus/lifestyle-recommendations`
 
-Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egzersiz önerileri.
+Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egzersiz önerileri. Kullanıcının quiz ve lab verilerini kullanır.
 
 #### Request Body
 ```json
@@ -387,15 +380,18 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 #### Response
 ```json
 {
-  "success": true,
-  "message": "Premium Plus lifestyle önerileri hazırlandı",
-  "recommendations": {
-    "nutrition": ["Beslenme önerileri"],
-    "exercise": ["Egzersiz önerileri"],
-    "lifestyle": ["Yaşam tarzı önerileri"]
-  }
+  "status": "success",
+  "recommendations": "string (detaylı beslenme, spor ve egzersiz önerileri)",
+  "user_context": "object (kullanıcının quiz ve lab verileri)",
+  "quiz_count": "number",
+  "lab_count": "number"
 }
 ```
+
+#### Özellik
+- **AI Hafızası**: Quiz ve lab sonuçlarını hatırlar
+- **Kişiselleştirilmiş Öneriler**: Geçmiş verileri kullanarak beslenme, spor ve egzersiz planı verir
+- **Premium Plus Only**: Sadece `x-user-level: 3` kullanıcıları erişebilir
 
 
 ## 🔧 Frontend Integration
@@ -410,13 +406,15 @@ const response = await fetch('https://longo-ai.onrender.com/ai/quiz', {
     'username': 'longopass',
     'password': '123456',
     'x-user-id': 'user123',
-    'x-user-level': '2'
+    'x-user-plan': 'premium'
   },
   body: JSON.stringify({
-    quiz_answers: {
+    quiz_data: {
       age: 30,
-      gender: 'male',
-      health_goals: ['energy']
+      gender: 'female',
+      health_conditions: [],
+      current_supplements: [],
+      goals: ['energy', 'immunity']
     }
   })
 });
@@ -431,13 +429,15 @@ curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
   -H "username: longopass" \
   -H "password: 123456" \
   -H "x-user-id: test123" \
-  -H "x-user-level: 2" \
+  -H "x-user-plan: premium" \
   -H "Content-Type: application/json" \
   -d '{
-    "quiz_answers": {
+    "quiz_data": {
       "age": 30,
-      "gender": "male",
-      "health_goals": ["energy"]
+      "gender": "female",
+      "health_conditions": [],
+      "current_supplements": [],
+      "goals": ["energy", "immunity"]
     }
   }'
 ```
