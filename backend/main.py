@@ -490,17 +490,20 @@ async def chat_message(req: ChatMessageRequest,
         db.add(m); db.commit()
         return ChatResponse(conversation_id=conv.id, reply=reply, latency_ms=0)
 
-    # store user message FIRST
-    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=message_text)); db.commit()
+    # store user message FIRST (with lab and quiz info)
+    enhanced_message = message_text
+    if lab_info:
+        enhanced_message = lab_info + enhanced_message
+    if quiz_info:
+        enhanced_message = quiz_info + enhanced_message
+    
+    db.add(Message(conversation_id=conv.id, user_id=user.id, role="user", content=enhanced_message)); db.commit()
 
     # build history (including the new user message)
     rows = db.query(Message).filter(Message.conversation_id==conv.id).order_by(Message.created_at.asc()).all()
     
     # Get user's previous analyses for context (CACHE THIS!)
     user_analyses = get_user_ai_messages(db, x_user_id, limit=5)
-    
-    # Build enhanced system prompt with user context
-    system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver,Sadece sağlık konusuna odaklan!"
     
     # Global + Local Context Sistemi - OPTIMIZED
     user_context = {}
@@ -516,6 +519,39 @@ async def chat_message(req: ChatMessageRequest,
                 if normalized_key and normalized_key not in normalized_global:
                     normalized_global[normalized_key] = value  # ✅ DOĞRU KEY!
         user_context.update(normalized_global)
+    
+    # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
+    lab_info = ""
+    if user_context and "son_lab_test" in user_context and user_context["son_lab_test"]:
+        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
+        lab_info += f"SON LAB TEST: {user_context['son_lab_test']}\n"
+        
+        if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
+            lab_info += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
+            
+        if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
+            lab_info += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
+            
+        if "lab_tarih" in user_context and user_context["lab_tarih"]:
+            lab_info += f"LAB TARİH: {user_context['lab_tarih']}\n"
+        
+        lab_info += "\n"
+        print(f"🔍 DEBUG: Lab verileri user message'a da eklendi!")
+    
+    # Quiz verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
+    quiz_info = ""
+    if user_analyses:
+        quiz_analyses = [a for a in user_analyses if a.message_type == "quiz"]
+        if quiz_analyses:
+            latest_quiz = quiz_analyses[0]  # En son quiz
+            if latest_quiz.response_payload and "supplement_recommendations" in latest_quiz.response_payload:
+                supplements = [s["name"] for s in latest_quiz.response_payload["supplement_recommendations"][:3]]
+                quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
+                quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
+                print(f"🔍 DEBUG: Quiz verileri user message'a da eklendi!")
+    
+    # Build enhanced system prompt with user context
+    system_prompt = "Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!\n\nÖNEMLİ: Eğer kullanıcı bilgileri (isim, yaş, hastalık vb.) aşağıda verilmişse, bunları kullan ve hatırladığını göster.\n\n🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!\n\n❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver,Sadece sağlık konusuna odaklan!"
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
@@ -670,6 +706,18 @@ async def chat_message(req: ChatMessageRequest,
         
         lab_info += "\n"
         print(f"🔍 DEBUG: Lab verileri user message'a da eklendi!")
+    
+    # Quiz verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
+    quiz_info = ""
+    if user_analyses:
+        quiz_analyses = [a for a in user_analyses if a.message_type == "quiz"]
+        if quiz_analyses:
+            latest_quiz = quiz_analyses[0]  # En son quiz
+            if latest_quiz.response_payload and "supplement_recommendations" in latest_quiz.response_payload:
+                supplements = [s["name"] for s in latest_quiz.response_payload["supplement_recommendations"][:3]]
+                quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
+                quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
+                print(f"🔍 DEBUG: Quiz verileri user message'a da eklendi!")
     
     # Supplement listesini user message olarak ekle (quiz'deki gibi)
     # Kategori bazlı gruplandırma - token tasarrufu için
