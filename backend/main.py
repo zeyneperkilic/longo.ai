@@ -1000,17 +1000,19 @@ async def analyze_quiz(body: QuizRequest,
         # AI interaction kaydı kaldırıldı - create_ai_message kullanılıyor
     
     # Log to ai_messages
-        try:
+    try:
         create_ai_message(
-                db=db,
+            db=db,
             external_user_id=x_user_id,
             message_type="quiz",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-            )
-        except Exception as e:
+        )
+    except Exception as e:
         print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
+    
+    # Return quiz response
     
     # Return quiz response
     return data
