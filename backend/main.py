@@ -4,11 +4,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-import json, time
+import json
 import os
 from functools import wraps
 from collections import defaultdict
-import time
 import requests
 import xml.etree.ElementTree as ET
 
@@ -19,15 +18,8 @@ from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequ
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
-from backend.cache_utils import cache_supplements, cache_user_context, cache_model_response, get_cache_stats
+from backend.cache_utils import cache_supplements
 
-# Rate limiting removed for production - will be implemented properly later
-# request_counts = defaultdict(list)  # Removed to prevent memory leak
-# RATE_LIMIT_WINDOW = 60
-# RATE_LIMIT_MAX_REQUESTS = 100
-
-# def rate_limit(func):  # Removed to prevent memory leak
-#     ... removed ...
 
 # Basic Authentication
 def check_basic_auth(username: str, password: str):
@@ -69,10 +61,8 @@ def get_xml_products():
                 # CDATA içeriğini temizle
                 product_name = label_elem.text.strip()
                 products.append({'name': product_name})
-        print(f"🔍 DEBUG: XML'den {len(products)} ürün çekildi")
         return products
     except Exception as e:
-        print(f"🔍 DEBUG: XML ürünleri çekme hatası: {e}")
         return []
 
 app = FastAPI(title="Longopass AI Gateway")
