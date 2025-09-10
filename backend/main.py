@@ -52,32 +52,20 @@ def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
         return True
 
 def get_xml_products():
-    """Gerçek XML'den ürünleri çek - Fallback: Config"""
+    """XML'den 74 ürünü çek - Free kullanıcılar için"""
     try:
         response = requests.get('https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml', timeout=10)
         root = ET.fromstring(response.text)
         products = []
         for item in root.findall('.//item'):
-            id_elem = item.find('id')
             label_elem = item.find('label')
-            if id_elem is not None and label_elem is not None and label_elem.text:
+            if label_elem is not None and label_elem.text:
                 # CDATA içeriğini temizle
-                product_id = int(id_elem.text.strip())
                 product_name = label_elem.text.strip()
-                products.append({
-                    'id': product_id,
-                    'name': product_name,
-                    'category': 'Günlük Takviyeler'  # Default category
-                })
-        print(f"🔍 DEBUG: Gerçek XML'den {len(products)} ürün çekildi")
+                products.append({'name': product_name})
         return products
     except Exception as e:
-        print(f"🔍 DEBUG: XML çekme hatası: {e}, config'den fallback yapılıyor")
-        # XML çalışmazsa config'den fallback
-        from backend.config import SUPPLEMENTS_LIST
-        fallback_products = [{'id': item['id'], 'name': item['name'], 'category': item['category']} for item in SUPPLEMENTS_LIST]
-        print(f"🔍 DEBUG: Config'den {len(fallback_products)} ürün fallback yapıldı")
-        return fallback_products
+        return []
 
 app = FastAPI(title="Longopass AI Gateway")
 
@@ -691,7 +679,8 @@ async def chat_message(req: ChatMessageRequest,
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
 
     # XML'den supplement listesini ekle - AI'ya ürün önerileri için
-    supplements_list = get_xml_products()
+    from backend.config import SUPPLEMENTS_LIST
+    supplements_list = SUPPLEMENTS_LIST
     
     # Supplement listesi kuralları (quiz'deki gibi)
     system_prompt += "\n- Sakın ürünlerin id'lerini kullanıcıya gösterme!"
@@ -901,7 +890,8 @@ async def analyze_quiz(body: QuizRequest,
     quiz_dict = validate_input_data(body.quiz_answers or {}, [])  # Required fields yok, her şeyi kabul et
     
     # XML'den supplement listesini al (eğer body'de yoksa)
-    supplements_dict = body.available_supplements or get_xml_products()
+    from backend.config import SUPPLEMENTS_LIST
+    supplements_dict = body.available_supplements or SUPPLEMENTS_LIST
     
     # Use parallel quiz analysis with supplements
     res = parallel_quiz_analyze(quiz_dict, supplements_dict)
@@ -968,7 +958,7 @@ async def analyze_quiz(body: QuizRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
+            )
     except Exception as e:
         print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
@@ -1302,7 +1292,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     supplements_dict = body.available_supplements
     if not supplements_dict:
         # XML'den supplement listesini çek (gerçek veriler)
-        supplements_dict = get_xml_products()
+        from backend.config import SUPPLEMENTS_LIST
+        supplements_dict = SUPPLEMENTS_LIST
     
     # Use parallel multiple lab analysis with supplements
     total_sessions = body.total_test_sessions or 1  # Default 1
@@ -1449,7 +1440,36 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
         "recommendations": "Progress bazlı öneriler"
     }
 
-# XML endpoint kaldırıldı - Gerçek XML zaten mevcut: https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml
+@app.get("/api/supplements.xml")
+@cache_supplements(ttl_seconds=3600)  # 1 saat cache
+def get_supplements_xml():
+    """XML feed endpoint - Ana site için supplement listesi"""
+    from fastapi.responses import Response
+    from backend.config import SUPPLEMENTS_LIST
+    
+    # Gerçek supplement verileri (config'den)
+    supplements = SUPPLEMENTS_LIST
+    
+    # XML oluştur
+    xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<supplements>
+    <total_count>{len(supplements)}</total_count>
+    <last_updated>{time.strftime('%Y-%m-%d %H:%M:%S')}</last_updated>
+    <products>"""
+    
+    for supplement in supplements:
+        xml_content += f"""
+        <product id="{supplement['id']}">
+            <name>{supplement['name']}</name>
+            <category>{supplement['category']}</category>
+            <available>true</available>
+        </product>"""
+    
+    xml_content += """
+    </products>
+</supplements>"""
+    
+    return Response(xml_content, media_type="application/xml")
 
 
 # Production'da cache endpoint'leri güvenlik riski oluşturabilir - kaldırıldı
