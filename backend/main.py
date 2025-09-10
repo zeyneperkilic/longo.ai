@@ -1496,10 +1496,14 @@ async def premium_plus_lifestyle_recommendations(
     
     # Plan kontrolü - Yeni sistem: userLevel bazlı
     if x_user_level is not None:
-        if x_user_level == 3:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
             user_plan = "premium_plus"
         else:
-            user_plan = "free"  # Premium Plus değilse free
+            user_plan = "free"  # Default fallback
     else:
         # Eski sistem fallback
         user_plan = x_user_plan or "free"
