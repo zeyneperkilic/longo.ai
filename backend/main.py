@@ -559,9 +559,14 @@ async def chat_message(req: ChatMessageRequest,
 - "Hafızamda olan verilere göre..."
 - "Önceki analizlerde..."
 
-🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!
+🚨 SAĞLIK YÖNLENDİRME KURALI: Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir. Ama kullanıcı özel olarak öneri istemediği sürece hemen supplement önerme!
 
-❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!"""
+❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!
+
+💡 YANIT DENGESİ:
+- Kullanıcı sadece selam verirse, kısa selam ver ve nasıl yardımcı olabileceğini sor
+- Kullanıcı özel olarak "öneri ver", "ne alayım", "supplement öner" derse o zaman detaylı öneriler ver
+- Geçmiş verileri hatırladığını göster ama hemen öneriye geçme"""
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
