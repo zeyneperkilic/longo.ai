@@ -954,16 +954,17 @@ async def analyze_quiz(body: QuizRequest,
     
     # Log to ai_messages
     try:
-        create_ai_message(
+        try:
+            create_ai_message(
                 db=db,
-            external_user_id=x_user_id,
-            message_type="quiz",
-            request_payload=body.dict(),
-            response_payload=data,
-            model_used="openrouter"
+                external_user_id=x_user_id,
+                message_type="quiz",
+                request_payload=body.dict(),
+                response_payload=data,
+                model_used="openrouter"
             )
         except Exception as e:
-        print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
+            print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
     
