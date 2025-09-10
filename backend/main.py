@@ -1321,8 +1321,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-            )
-        except Exception as e:
+        )
+    except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
