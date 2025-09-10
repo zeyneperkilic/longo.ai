@@ -539,7 +539,7 @@ async def chat_message(req: ChatMessageRequest,
             enhanced_message = quiz_info + enhanced_message
         print(f"🔍 DEBUG: User message lab/quiz bilgileri ile güncellendi!")
         user_message = enhanced_message
-                else:
+    else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -679,6 +679,7 @@ async def chat_message(req: ChatMessageRequest,
                     elif analysis.message_type == "lab_single" and "test_name" in analysis.response_payload:
                         system_prompt += f"  Test: {analysis.response_payload['test_name']}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
+
 
     # XML'den supplement listesini ekle - AI'ya ürün önerileri için
     from backend.config import SUPPLEMENTS_LIST
