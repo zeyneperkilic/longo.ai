@@ -7,7 +7,7 @@
 **Content-Type:** `application/json`  
 **Response Format:** JSON
 
-### 🔐 Authentication Headers
+### 🔐 Authentication Headers (Zorunlu)
 ```http
 username: longopass
 password: 123456
@@ -19,6 +19,12 @@ x-user-id: unique_user_id        # Kullanıcı ID'si (zorunlu)
 x-user-plan: free|premium|premium_plus  # Kullanıcı planı (opsiyonel, default: free)
 x-user-level: 0|1|2|3           # Kullanıcı seviyesi (opsiyonel, default: 0)
 ```
+
+### 📝 Content-Type Header (Zorunlu)
+```http
+Content-Type: application/json
+```
+**TÜM POST endpoint'leri için zorunlu!**
 
 ---
 
@@ -431,11 +437,11 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 const response = await fetch('https://longo-ai.onrender.com/ai/quiz', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
-    'username': 'longopass',
-    'password': '123456',
-    'x-user-id': 'user123',
-    'x-user-plan': 'premium'
+    'Content-Type': 'application/json',  // ZORUNLU!
+    'username': 'longopass',             // ZORUNLU!
+    'password': '123456',                // ZORUNLU!
+    'x-user-id': 'user123',              // ZORUNLU!
+    'x-user-plan': 'premium'             // Opsiyonel
   },
   body: JSON.stringify({
     quiz_data: {
@@ -455,11 +461,11 @@ console.log(data.supplement_recommendations);
 ### cURL Example
 ```bash
 curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
-  -H "username: longopass" \
-  -H "password: 123456" \
-  -H "x-user-id: test123" \
-  -H "x-user-plan: premium" \
-  -H "Content-Type: application/json" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-plan: premium" \              # Opsiyonel
   -d '{
     "quiz_data": {
       "age": 30,
