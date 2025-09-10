@@ -1715,12 +1715,15 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
 Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
 Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner.
 
-ÖNEMLİ: Response'u şu 3 bölüme ayır:
-1. nutrition_plan: Beslenme önerileri
-2. exercise_plan: Spor ve egzersiz programı  
-3. lifestyle_tips: Yaşam tarzı önerileri
+ÖNEMLİ: Response'u şu JSON formatında ver:
 
-Her bölümü JSON formatında ver, sadece içerik olsun."""
+{{
+  "nutrition_plan": "Beslenme önerileri buraya...",
+  "exercise_plan": "Spor ve egzersiz programı buraya...",
+  "lifestyle_tips": "Yaşam tarzı önerileri buraya..."
+}}
+
+Sadece bu 3 field'ı doldur, başka hiçbir şey ekleme!"""
 
     # AI'ya gönder
     try:
