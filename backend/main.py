@@ -566,7 +566,9 @@ async def chat_message(req: ChatMessageRequest,
 💡 YANIT STİLİ: 
 - Kullanıcı sadece selamladıysa, önce selamlaş, sonra geçmiş verilerini hatırladığını göster
 - Öneri istemediği sürece agresif supplement önerisi yapma
-- Doğal ve akıcı konuş"""
+- Doğal ve akıcı konuş
+- Geçmiş quiz/lab verileri varsa, bunları kullanarak kişiselleştirilmiş yanıt ver
+- Sürekli bilgi isteme """
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
