@@ -539,7 +539,7 @@ async def chat_message(req: ChatMessageRequest,
             enhanced_message = quiz_info + enhanced_message
         print(f"🔍 DEBUG: User message lab/quiz bilgileri ile güncellendi!")
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -673,8 +673,9 @@ async def chat_message(req: ChatMessageRequest,
                 system_prompt += f"- {analysis.message_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
                 # Analiz içeriğini de ekle
                 if analysis.response_payload:
-                    if analysis.message_type == "quiz":
-                        system_prompt += f"  Quiz tamamlandı\n"
+                    if analysis.message_type == "quiz" and "supplement_recommendations" in analysis.response_payload:
+                        supplements = [s["name"] for s in analysis.response_payload["supplement_recommendations"][:3]]
+                        system_prompt += f"  Önerilen supplementler: {', '.join(supplements)}\n"
                     elif analysis.message_type == "lab_single" and "test_name" in analysis.response_payload:
                         system_prompt += f"  Test: {analysis.response_payload['test_name']}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
@@ -959,8 +960,8 @@ async def analyze_quiz(body: QuizRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
@@ -1322,8 +1323,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
