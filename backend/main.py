@@ -539,7 +539,7 @@ async def chat_message(req: ChatMessageRequest,
             enhanced_message = quiz_info + enhanced_message
         print(f"🔍 DEBUG: User message lab/quiz bilgileri ile güncellendi!")
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -559,16 +559,9 @@ async def chat_message(req: ChatMessageRequest,
 - "Hafızamda olan verilere göre..."
 - "Önceki analizlerde..."
 
-🚨 SAĞLIK YÖNLENDİRME KURALI: Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir. Ama kullanıcı özel olarak öneri istemediği sürece hemen supplement önerme!
+🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!
 
-❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!
-
-💡 YANIT DENGESİ:
-- Kullanıcı sadece selam verirse, kısa selam ver ve nasıl yardımcı olabileceğini sor
-- Kullanıcı özel olarak "öneri ver", "ne alayım", "supplement öner" derse o zaman detaylı öneriler ver
-- Geçmiş verileri hatırladığını göster ama hemen öneriye geçme
-- Sadece selam veren kullanıcıya supplement önerisi yapma, sadece "nasıl yardımcı olabilirim" de
-- Kullanıcı sadece "merhaba" derse, sadece "merhaba, nasıl yardımcı olabilirim" de, başka bir şey söyleme"""
+❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!"""
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
@@ -679,7 +672,6 @@ async def chat_message(req: ChatMessageRequest,
                     elif analysis.message_type == "lab_single" and "test_name" in analysis.response_payload:
                         system_prompt += f"  Test: {analysis.response_payload['test_name']}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
-
 
     # XML'den supplement listesini ekle - AI'ya ürün önerileri için
     from backend.config import SUPPLEMENTS_LIST
@@ -954,17 +946,16 @@ async def analyze_quiz(body: QuizRequest,
     
     # Log to ai_messages
     try:
-        try:
-            create_ai_message(
+        create_ai_message(
                 db=db,
-                external_user_id=x_user_id,
-                message_type="quiz",
-                request_payload=body.dict(),
-                response_payload=data,
-                model_used="openrouter"
+            external_user_id=x_user_id,
+            message_type="quiz",
+            request_payload=body.dict(),
+            response_payload=data,
+            model_used="openrouter"
             )
         except Exception as e:
-            print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
+        print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
     
     # Return quiz response
     
