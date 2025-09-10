@@ -52,7 +52,7 @@ def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
         return True
 
 def get_xml_products():
-    """XML'den 74 ürünü çek - Free kullanıcılar için"""
+    """XML'den ürünleri çek - Hibrit sistem: XML + Config fallback"""
     try:
         response = requests.get('https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml', timeout=10)
         root = ET.fromstring(response.text)
@@ -63,9 +63,15 @@ def get_xml_products():
                 # CDATA içeriğini temizle
                 product_name = label_elem.text.strip()
                 products.append({'name': product_name})
+        print(f"🔍 DEBUG: XML'den {len(products)} ürün çekildi")
         return products
     except Exception as e:
-        return []
+        print(f"🔍 DEBUG: XML çekme hatası: {e}, config'den fallback yapılıyor")
+        # XML çalışmazsa config'den fallback
+        from backend.config import SUPPLEMENTS_LIST
+        fallback_products = [{'name': item['name']} for item in SUPPLEMENTS_LIST]
+        print(f"🔍 DEBUG: Config'den {len(fallback_products)} ürün fallback yapıldı")
+        return fallback_products
 
 app = FastAPI(title="Longopass AI Gateway")
 
@@ -679,8 +685,7 @@ async def chat_message(req: ChatMessageRequest,
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
 
     # XML'den supplement listesini ekle - AI'ya ürün önerileri için
-    from backend.config import SUPPLEMENTS_LIST
-    supplements_list = SUPPLEMENTS_LIST
+    supplements_list = get_xml_products()
     
     # Supplement listesi kuralları (quiz'deki gibi)
     system_prompt += "\n- Sakın ürünlerin id'lerini kullanıcıya gösterme!"
@@ -890,8 +895,7 @@ async def analyze_quiz(body: QuizRequest,
     quiz_dict = validate_input_data(body.quiz_answers or {}, [])  # Required fields yok, her şeyi kabul et
     
     # XML'den supplement listesini al (eğer body'de yoksa)
-    from backend.config import SUPPLEMENTS_LIST
-    supplements_dict = body.available_supplements or SUPPLEMENTS_LIST
+    supplements_dict = body.available_supplements or get_xml_products()
     
     # Use parallel quiz analysis with supplements
     res = parallel_quiz_analyze(quiz_dict, supplements_dict)
@@ -1292,8 +1296,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     supplements_dict = body.available_supplements
     if not supplements_dict:
         # XML'den supplement listesini çek (gerçek veriler)
-        from backend.config import SUPPLEMENTS_LIST
-        supplements_dict = SUPPLEMENTS_LIST
+        supplements_dict = get_xml_products()
     
     # Use parallel multiple lab analysis with supplements
     total_sessions = body.total_test_sessions or 1  # Default 1
@@ -1445,10 +1448,9 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
 def get_supplements_xml():
     """XML feed endpoint - Ana site için supplement listesi"""
     from fastapi.responses import Response
-    from backend.config import SUPPLEMENTS_LIST
     
-    # Gerçek supplement verileri (config'den)
-    supplements = SUPPLEMENTS_LIST
+    # XML'den supplement verileri (hibrit sistem)
+    supplements = get_xml_products()
     
     # XML oluştur
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
