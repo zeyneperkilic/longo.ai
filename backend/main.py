@@ -1459,11 +1459,11 @@ def get_supplements_xml():
     <last_updated>{time.strftime('%Y-%m-%d %H:%M:%S')}</last_updated>
     <products>"""
     
-    for supplement in supplements:
+    for i, supplement in enumerate(supplements, 1):
         xml_content += f"""
-        <product id="{supplement['id']}">
+        <product id="{supplement.get('id', i)}">
             <name>{supplement['name']}</name>
-            <category>{supplement['category']}</category>
+            <category>{supplement.get('category', 'Günlük Takviyeler')}</category>
             <available>true</available>
         </product>"""
     
