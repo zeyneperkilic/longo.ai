@@ -49,88 +49,88 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
   "nutrition_advice": {
     "title": "Beslenme Önerileri",
     "recommendations": [
-      "Günlük protein alımını artır, özellikle kahvaltıda kaliteli protein tüket.",
-      "Enerji seviyeni korumak için rafine karbonhidratları sınırlayıp kompleks karbonhidratlara (yulaf, tam tahıl, bakliyat) ağırlık ver.",
-      "Yeterli su tüket ve dehidrasyonu önlemek için gün içinde düzenli sıvı al."
+      "Günlük olarak taze sebze ve meyve tüketimini artır, özellikle yeşil yapraklı sebzeleri önceliklendir.",
+      "Rafine karbonhidrat ve şekerden uzak dur, bunun yerine tam tahılları tercih et.",
+      "Su tüketimini artırarak günde en az 2-2.5 litre su içmeye özen göster."
     ]
   },
   "lifestyle_advice": {
     "title": "Yaşam Tarzı Önerileri",
     "recommendations": [
-      "Düzenli uyku rutini oluştur (günde 7-8 saat uyku).",
-      "Gün içine kısa egzersiz molaları ekleyerek enerjini yükselt.",
-      "Stres yönetimi için nefes egzersizi veya meditasyonu günlük rutine kat."
+      "Her gün en az 20-30 dakika yürüyüş veya hafif egzersiz yap.",
+      "Uyku kalitesini iyileştirmek için düzenli uyku saatleri oluştur.",
+      "Stresi azaltmak için nefes egzersizleri, yoga veya meditasyon yapmayı dene."
     ]
   },
   "general_warnings": {
     "title": "Genel Uyarılar",
     "warnings": [
-      "Takviyeleri doktor kontrolü olmadan yüksek dozlarda kullanma.",
-      "Sürekli yorgunluk ve enerji düşüklüğü yaşıyorsan altta yatan tıbbi bir durum olabilir, hekime danış.",
-      "Kafeinli ürünleri aşırıya kaçmadan kullan, gece uykunu bozabilir."
+      "Takviyeleri kullanmadan önce doktoruna danışmayı unutma.",
+      "Önerilen günlük dozları aşma.",
+      "Eğer kronik hastalığın veya düzenli kullandığın ilaçların varsa, etkileşim riskine karşı dikkatli ol."
     ]
   },
   "supplement_recommendations": [
     {
       "name": "D Vitamini (ID: 164)",
-      "description": "Kemik sağlığı, bağışıklık desteği ve enerji regülasyonu için temel.",
+      "description": "Kemik sağlığı, bağışıklık sistemi ve genel enerji için destek sağlar.",
       "daily_dose": "1000-2000 IU",
-      "benefits": ["Bağışıklık sistemini destekler", "Enerji seviyesini iyileştirir", "Kemik sağlığını korur"],
-      "warnings": ["Yüksek dozlarda toksisite riski olabilir."],
+      "benefits": ["Kemik sağlığını korur", "Bağışıklık sistemini güçlendirir", "Enerji seviyelerini destekler"],
+      "warnings": ["Yüksek dozda alımı böbrek taşı riskini artırabilir."],
       "priority": "high",
       "type": "default"
     },
     {
       "name": "Omega-3 Yağ Asitleri (Balık Yağı) (ID: 179)",
-      "description": "Beyin fonksiyonları ve enerji metabolizması için gerekli.",
+      "description": "Kalp ve beyin sağlığı için gerekli esansiyel yağ asitlerini sağlar.",
       "daily_dose": "1000 mg",
-      "benefits": ["Beyin sağlığını destekler", "Kalp sağlığını korur", "Enflamasyonu azaltır"],
-      "warnings": ["Kan sulandırıcı ilaçlarla etkileşebilir."],
+      "benefits": ["Kalp sağlığını destekler", "Hafıza ve odaklanmayı artırır", "İltihaplanmayı azaltır"],
+      "warnings": ["Kan sulandırıcı ilaç kullananlar doktor kontrolünde kullanmalı."],
       "priority": "high",
       "type": "default"
     },
     {
       "name": "Magnezyum (ID: 176)",
-      "description": "Kas, sinir sistemi ve enerji üretimi için hayati.",
-      "daily_dose": "200-400 mg",
-      "benefits": ["Kas fonksiyonlarını destekler", "Yorgunluğu azaltır", "Uyku kalitesini artırır"],
-      "warnings": ["Yüksek dozda ishal yapabilir."],
+      "description": "Kas ve sinir sistemi sağlığını destekler, uyku kalitesini artırır.",
+      "daily_dose": "300-400 mg",
+      "benefits": ["Kas kramplarını azaltır", "Stresi hafifletir", "Uyku kalitesini artırır"],
+      "warnings": ["Fazla kullanımda ishal yapabilir."],
       "priority": "high",
       "type": "default"
     },
     {
-      "name": "B12 Vitamini (ID: 154)",
-      "description": "Enerji metabolizması ve kırmızı kan hücresi oluşumu için kritik.",
+      "name": "B12 (Kobalamin) (ID: 154)",
+      "description": "Sinir sistemi, kırmızı kan hücreleri üretimi ve enerji metabolizmasını destekler.",
       "daily_dose": "500-1000 mcg",
-      "benefits": ["Enerji artışı sağlar", "Sinir sistemini korur", "Kan hücrelerini destekler"],
-      "warnings": ["B12 eksikliği uzun vadede ciddi sorunlara yol açabilir."],
+      "benefits": ["Enerji seviyelerini destekler", "Kansızlığı önler", "Sinir sistemini korur"],
+      "warnings": ["B12 fazlalığı genellikle zararsızdır ancak böbrek sorunları olanlarda dikkat edilmeli."],
       "priority": "high",
       "type": "default"
     },
     {
-      "name": "Koenzim Q10 (ID: 221)",
-      "description": "Enerji üretiminde görev alır, hücresel enerji seviyesini destekler.",
+      "name": "Probiyotik (ID: 181)",
+      "description": "Bağırsak sağlığı ve bağışıklık sistemi için destek sağlar.",
+      "daily_dose": "10-20 milyar CFU",
+      "benefits": ["Sindirim sistemini düzenler", "Bağışıklık direncini artırır", "Bağırsak florasını dengeler"],
+      "warnings": ["Bağışıklık sistemi baskılanmış kişiler dikkatle kullanmalı."],
+      "priority": "medium",
+      "type": "personalized"
+    },
+    {
+      "name": "Koenzim Q10 (CoQ10) (ID: 221)",
+      "description": "Hücrelerde enerji üretimini destekler, kalp sağlığına katkıda bulunur.",
       "daily_dose": "100-200 mg",
-      "benefits": ["Enerji artışı sağlar", "Kalp sağlığını destekler", "Mitokondri fonksiyonlarını güçlendirir"],
-      "warnings": ["Kan basıncı ilaçları ile etkileşebilir."],
+      "benefits": ["Kalp sağlığını destekler", "Enerji üretimini artırır", "Antioksidan etki sağlar"],
+      "warnings": ["Kan basıncı düşürücü ilaçlarla birlikte dikkatli kullanılmalı."],
       "priority": "medium",
       "type": "personalized"
     },
     {
-      "name": "Ginseng (ID: 214)",
-      "description": "Fiziksel ve zihinsel enerjiyi artırır, yorgunlukla mücadele eder.",
-      "daily_dose": "200-400 mg",
-      "benefits": ["Enerjiyi artırır", "Odaklanmayı destekler", "Yorgunluk hissini azaltır"],
-      "warnings": ["Fazla kullanımda uykusuzluk yapabilir."],
-      "priority": "medium",
-      "type": "personalized"
-    },
-    {
-      "name": "Enerji ve Odaklanma Formülü (ID: 263)",
-      "description": "Enerjiyi ve mental performansı artırmak için özel kombine formül.",
-      "daily_dose": "1 kapsül",
-      "benefits": ["Dayanıklılığı artırır", "Odaklanmayı güçlendirir", "Enerji metabolizmasını destekler"],
-      "warnings": ["Kafein içerebilir, gece kullanımı uyku sorununa yol açabilir."],
+      "name": "Kurkumin (Zerdeçaldan) (ID: 224)",
+      "description": "Güçlü anti-inflamatuar ve antioksidan özelliklere sahip.",
+      "daily_dose": "500-1000 mg",
+      "benefits": ["İltihaplanmayı azaltır", "Eklem sağlığını destekler", "Antioksidan koruma sağlar"],
+      "warnings": ["Safra kesesi taşı olanlar dikkatle kullanmalı."],
       "priority": "medium",
       "type": "personalized"
     }
@@ -142,7 +142,7 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
 #### Strateji
 - **4 DEFAULT + 3 PERSONALIZED = 7 supplement**
 - **DEFAULT**: D Vitamini, Omega-3, Magnezyum, B12
-- **PERSONALIZED**: Quiz cevaplarına göre (energy hedefi için Koenzim Q10, Ginseng, Enerji Formülü)
+- **PERSONALIZED**: Quiz cevaplarına göre (energy hedefi için Probiyotik, CoQ10, Kurkumin)
 
 ---
 
@@ -162,6 +162,12 @@ Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
       "value": 18,
       "unit": "ng/mL",
       "reference_range": "30-100 ng/mL"
+    },
+    {
+      "name": "Hemoglobin",
+      "value": 13.5,
+      "unit": "g/dL",
+      "reference_range": "12-16 g/dL"
     }
   ]
 }
@@ -171,69 +177,68 @@ Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
 ```json
 {
   "title": "Tüm Testlerin Genel Yorumu",
-  "genel_saglik_durumu": "Genel olarak kan değerlerin normal referans aralıklarında. Hemoglobin seviyen sağlıklı, bu da kansızlık bulgusu olmadığını gösteriyor. Glukoz düzeyin ise normal sınırlar içinde, yani diyabet riski açısından pozitif bir işaret.",
-  "genel_durum": "İki seans sonuçlarını kıyasladığımda hemoglobin değerlerin (13.8 – 14.2 g/dL) stabil seyretmiş. Glukozun normal aralıkta (95 – 98 mg/dL) sabit. Ancak total kolesterol, önceki testlerde normal mi değil mi bilgimiz yok, ama şu anki 220 mg/dL yüksek çıkmış ve takibi önemli.",
+  "genel_saglik_durumu": "Test sonuçların genel olarak dengeli görünüyor. Hemoglobin referans aralığında olduğundan kansızlık görünmüyor. Ancak D vitamini ciddi derecede düşük (18 ng/mL, alt sınır 30 ng/mL). Bu da kemik sağlığı, bağışıklık ve enerji üzerinde olumsuz etkilere yol açabilir.",
+  "genel_durum": "Mevcut tek seanslık testte en önemli bulgu D vitamini eksikliği. Daha önceki seanslarla kıyaslama olmadığından trend analizi yapılamıyor. Hemoglobin normal; bu da beslenme açısından yeterli demir desteği olduğunu gösteriyor. Ancak düşük D vitamini kemik sağlığı ve güneş yetersizliği açısından risk oluşturuyor.",
   "oneriler": [
-    "Doymuş yağlardan ve trans yağlardan uzak dur, daha çok zeytinyağı, avokado ve ceviz gibi sağlıklı yağlara yönel.",
-    "Her gün en az 30 dakika tempolu yürüyüş veya benzeri aerobik egzersiz yap.",
-    "Bol sebze, tam tahıl ve lif tüket; kırmızı et ve işlenmiş gıdaları azalt.",
-    "Balık (özellikle somon, sardalya) en az haftada 2 kez tüketmeye çalış.",
-    "Kan lipitlerini kontrol ettirmek için düzenli aralıklarla tekrar test yaptır."
+    "Haftada en az 3-4 gün 20 dakika güneş görmeyi alışkanlık haline getir.",
+    "D vitamini desteğini düzenli olarak kullanmaya başla ve tekrar testle takip et.",
+    "Kalsiyum ve magnezyumdan zengin gıdaları (yoğurt, badem, yeşil yapraklı sebzeler) beslenmene ekle.",
+    "Güçlü bağışıklık için yeterli uyku, düzenli egzersiz ve dengeli beslenmeye dikkat et.",
+    "Bol su içmeye devam et, bu vitaminlerin metabolizmasına yardımcı olur."
   ],
   "urun_onerileri": [
     {
-      "name": "Omega-3 Yağ Asitleri (Balık Yağı)",
-      "description": "Kolesterolü dengelemeye, kalp ve damar sağlığını desteklemeye yardımcı olur.",
-      "daily_dose": "1000-2000 mg EPA+DHA",
-      "benefits": ["Triglisitleri ve kötü kolesterolü (LDL) düşürmeye destek olabilir", "Kalp sağlığını korur", "Beyin fonksiyonlarını destekler"],
-      "warnings": ["Kan sulandırıcı ilaç kullanıyorsan doktora danışmalı"],
+      "name": "D3 Vitamini (ID: 165)",
+      "description": "Düzeyi düşük çıkan D vitaminini yükseltmek için en temel ve gerekli destek.",
+      "daily_dose": "1000-2000 IU (eksiklik düzeyine göre doktor kontrolünde daha yüksek doz kullanılabilir)",
+      "benefits": ["Kemik ve diş sağlığı", "Bağışıklık güçlenmesi", "Kas fonksiyonlarını destekleme"],
+      "warnings": ["Fazla dozda alımı toksisiteye yol açabilir", "Kalsiyum ile birlikte kullanıldığında dikkat edilmeli"],
       "priority": "high"
     },
     {
-      "name": "Koenzim Q10 (CoQ10)",
-      "description": "Kalp-damar sağlığı ve hücresel enerji üretimi için faydalıdır.",
-      "daily_dose": "100-200 mg",
-      "benefits": ["Kalp kası sağlığını destekler", "Kolesterol ilaçlarının yan etkilerini azaltabilir", "Enerji seviyelerini artırır"],
-      "warnings": ["Kan basıncı ilaçlarıyla etkileşebilir"],
+      "name": "K2 Vitamini (ID: 171)",
+      "description": "D vitamini ile birlikte alındığında kalsiyumun doğru şekilde kemiklere yönlenmesine yardımcı olur.",
+      "daily_dose": "90-120 mcg",
+      "benefits": ["Kemik yoğunluğunu destekler", "D vitamininin etkinliğini artırır", "Damar kalsifikasyonunu azaltır"],
+      "warnings": ["Kan sulandırıcı ilaç kullananlarda dikkat edilmeli"],
       "priority": "high"
     },
     {
-      "name": "Kurkumin (Zerdeçaldan)",
-      "description": "Anti-inflamatuar etkisiyle damar sağlığını ve kolesterol metabolizmasını destekler.",
-      "daily_dose": "500-1000 mg",
-      "benefits": ["Kolesterol dengesine katkıda bulunabilir", "Antioksidan ve antiinflamatuar etki sağlar", "Karaciğer sağlığını destekler"],
-      "warnings": ["Safra kesesi taşı olanlar dikkat etmeli"],
+      "name": "Magnezyum (ID: 176)",
+      "description": "D vitamini metabolizmasında kritik rol oynar, kas rahatlamasını ve enerji üretimini destekler.",
+      "daily_dose": "200-400 mg",
+      "benefits": ["Kas kramplarını azaltır", "Kemik sağlığını destekler", "Uyku kalitesini artırır"],
+      "warnings": ["Böbrek hastalarında doktor kontrolünde kullanılmalı"],
       "priority": "medium"
     },
     {
-      "name": "Probiyotik",
-      "description": "Bağırsak mikrobiyotasını düzenleyerek kolesterol seviyelerine dolaylı katkı sağlar.",
-      "daily_dose": "CFA sayısı: 1-10 milyar",
-      "benefits": ["Sindirim sağlığını iyileştirir", "Bağırsakta kolesterol metabolizmasını destekler", "Bağışıklığı güçlendirir"],
-      "warnings": ["Bağışıklık yetmezliği olanlarda doktor kontrolü gerekir"],
+      "name": "Omega-3 Yağ Asitleri (Balık Yağı) (ID: 179)",
+      "description": "Bağışıklık, damar sağlığı ve beyin fonksiyonlarını destekleyici genel bir sağlıklı yaşam desteği.",
+      "daily_dose": "1000 mg EPA+DHA",
+      "benefits": ["Kalp-damar sağlığını korur", "Anti-inflamatuar etki sağlar", "Beyin fonksiyonlarını destekler"],
+      "warnings": ["Kan sulandırıcı ilaçlarla birlikte dikkat edilmeli"],
       "priority": "medium"
     },
     {
-      "name": "Selenyum",
-      "description": "Antioksidan savunmayı güçlendirir ve kalp-damar sağlığına destek olur.",
-      "daily_dose": "50-100 mcg",
-      "benefits": ["Oksidatif stresi azaltır", "Tiroid fonksiyonlarını destekler", "Bağışıklığı güçlendirir"],
-      "warnings": ["Yüksek dozda toksik etki gösterebilir"],
+      "name": "Kadınlar için Sağlıklı Yaşam Multivitamini (ID: 251)",
+      "description": "Genel vitamin-mineral desteği sağlayarak bağışıklık ve enerji ihtiyacını dengeler.",
+      "daily_dose": "1 tablet",
+      "benefits": ["Genel enerji artışı", "Beslenme eksikliklerini tamamlar", "Bağışıklığı güçlendirir"],
+      "warnings": ["Fazladan vitamin takviyesi ile birlikte aşırı doz riski olabilir"],
       "priority": "low"
     }
   ],
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun.",
-  "test_count": 2,
+  "test_count": 1,
   "overall_status": "analiz_tamamlandı"
 }
 ```
 
 #### Strateji
 - **5 supplement** (lab sonuçlarına göre)
-- **DEFAULT**: D3 Vitamini, Omega-3, Magnezyum, B12
-- **PERSONALIZED**: Lab sonuçlarına göre (D vitamini düşükse K2 eklenir)
 - **Detaylı lab analizi** ve genel değerlendirme
 - **Yaşam tarzı önerileri** dahil
+- **Test sayısı** ve genel durum değerlendirmesi
 
 ---
 
@@ -264,19 +269,19 @@ Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
 {
   "title": "Test Seansı Analizi",
   "session_info": {
-    "laboratory": "Acıbadem Lab",
+    "laboratory": "Test Lab",
     "session_date": "2024-01-15",
     "total_tests": 1
   },
   "general_assessment": {
-    "clinical_meaning": "Bu laboratuvar seansında yalnızca D Vitamini testi yapılmış. Ölçülen değer 15 ng/mL olup, referans aralığı olan 30-100 ng/mL'nin altında. Bu sonuç D vitamini eksikliğini düşündürmektedir. D vitamini; kemik sağlığı, kas fonksiyonları, bağışıklık sistemi ve metabolik süreçler için oldukça önemlidir. Eksikliği uzun vadede kemik erimesi, kas güçsüzlüğü ve bağışıklık sorunlarına yol açabilir.",
-    "overall_health_status": "D Vitamini seviyesi düşük bulunmuştur (eksiklik)."
+    "clinical_meaning": "Bu test seansında sadece D Vitamini ölçülmüş. Sonucun 18 ng/mL olması, referans aralığının (30-100 ng/mL) altında kaldığını gösteriyor. Bu durum D vitamini eksikliğine işaret edebilir. D vitamini bağışıklık sistemi, kemik sağlığı ve kas fonksiyonları için önemli bir vitamindir. Eksikliği özellikle kış aylarında, güneş ışığının az olduğu dönemlerde daha sık görülür.",
+    "overall_health_status": "D Vitamini düşük bulundu."
   },
   "test_groups": {
     "Vitaminler": [
       {
         "test_adi": "D Vitamini",
-        "sonuc": "15 ng/mL",
+        "sonuc": "18 ng/mL",
         "referans_araligi": "30-100 ng/mL",
         "durum": "Anormal"
       }
@@ -288,12 +293,11 @@ Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
     "attention_count": 1
   },
   "general_recommendations": [
-    "Güneş ışığından daha fazla faydalanmaya çalış (özellikle sabah saatlerinde kısa süreli güneşlenme).",
-    "Kalsiyum ve D vitamini içeren doğal besinleri (yağlı balıklar, yumurta sarısı, süt ürünleri) beslenmene ekle.",
-    "Kapalı mekanlarda uzun süre kalmaktan kaçın, mümkün olduğunda açık havada aktif ol.",
-    "D vitamini seviyesinin birkaç ay içinde yeniden ölçülmesi faydalı olacaktır.",
-    "Düşük değerlerin kemik sağlığını etkileyip etkilemediğini görmek için kalsiyum ve fosfor gibi ek testler yapılabilir.",
-    "D vitamini eksikliğinin nedeni ve tedavi yaklaşımı için bir hekim ile görüşmen gerekir."
+    "Gün ışığından daha fazla yararlanmaya çalış (özellikle sabah ve öğle saatlerinde).",
+    "D vitamini yönünden zengin yiyecekleri (ör. yağlı balık, yumurta sarısı) beslenmene ekleyebilirsin.",
+    "Düzenli olarak açık havada yürüyüş yapmaya özen göster.",
+    "D vitamini seviyeni 3-6 ay içinde tekrar kontrol ettirmen faydalı olabilir.",
+    "Bu sonuçla birlikte doktoruna başvurarak ayrıntılı değerlendirme yaptırman önemli. Eksikliğin derecesine ve kişisel sağlık durumuna göre uygun yaklaşımı hekim belirleyecektir."
   ],
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
 }
@@ -328,15 +332,39 @@ Tek bir test sonucunun detaylı analizi (supplement önerisi YOK).
 ```json
 {
   "title": "Test Sonucu Yorumu",
-  "test_name": "D Vitamini (25-OH) Sonucu Değerlendirmesi",
-  "last_result": "Son Test Sonucunuz: 15 ng/mL (Düşük)",
+  "test_name": "Vitamin D Sonucu Değerlendirmesi",
+  "last_result": "Son Test Sonucunuz: 18 ng/mL (Düşük)",
   "reference_range": "Referans Aralığı: 30-100 ng/mL",
-  "test_analysis": "D vitamini düzeyin 15 ng/mL çıkmış ve bu değer referans aralığının (30-100 ng/mL) oldukça altında. 20 ng/mL altındaki sonuçlar genellikle 'eksiklik' düzeyi olarak kabul edilir. Bu durumda kemik sağlığın üzerinde olumsuz etkiler (örneğin osteomalazi riski, kemik yoğunluğunda azalma) oluşturabilir. Ayrıca bağışıklık ve metabolik fonksiyonlarda da rol oynadığı için düşük seviyeler genel sağlık açısından önemli olabilir. Bu test kategorisi vitamin ve mineral düzeylerini gösteren biyokimyasal parametreler arasında yer alır. Elimizde sadece 2024-01-15 tarihli tek bir ölçüm var, bu nedenle trend analizi yapılamıyor. Gelecek ölçümlerde bu değerin yükselip yükselmediği veya daha da düşüp düşmediği izlenmeli. Düzenli aralıklarla aynı laboratuvarda yapılacak tekrar testleri, gidişatı görmek açısından faydalı olur.",
+  "test_analysis": "25-Hidroksi Vitamin D testi kemik ve mineral metabolizması açısından kritik bir parametredir. Senin sonucun 18 ng/mL olup, referans aralığının (30-100 ng/mL) belirgin şekilde altındadır. Bu değer 'Vitamin D yetersizliği' kategorisine girer. D vitamininin düşük olması, kalsiyum emilimini ve kemik sağlığını olumsuz etkileyebilir, uzun vadede kas güçsüzlüğü, kemik erimesi ve bağışıklık fonksiyonlarında zayıflamaya yol açabilir. Şu an elimizde sadece tek bir sonuç var, bu yüzden trend analizi yapılamıyor. Eğer geçmişteki sonuçlar da olsaydı, düşüş mü yoksa artış mı olduğu net olarak değerlendirilebilirdi. Genel olarak, bu sonucun sağlık açısından önemli olduğu ve tıbbi takip gerektirdiğini söyleyebilirim.",
   "disclaimer": "Bu yorum sadece bilgilendirme amaçlıdır. Kesin tanı ve tedavi için mutlaka doktorunuza başvurunuz."
 }
 ```
 
-## 💬 Chat Endpoint
+---
+
+## 💬 Chat Endpoints
+
+### **POST** `/ai/chat/start`
+
+Yeni bir chat oturumu başlatır.
+
+#### Request Body
+```json
+{}
+```
+
+#### Response
+```json
+{
+  "conversation_id": 1757499211313
+}
+```
+
+#### Özellik
+- **Free Users**: `conversation_id = 1` (session-based)
+- **Premium Users**: Unique timestamp-based ID
+
+---
 
 ### **POST** `/ai/chat`
 
@@ -345,7 +373,7 @@ Chat mesajı gönderir ve AI hafızasını kullanır.
 #### Request Body
 ```json
 {
-  "message": "Hangi takviyeleri önerdin bana?",
+  "text": "Hangi takviyeleri önerdin bana?",
   "conversation_id": 1757421486962
 }
 ```
@@ -381,10 +409,10 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 ```json
 {
   "status": "success",
-  "recommendations": "string (detaylı beslenme, spor ve egzersiz önerileri)",
-  "user_context": "object (kullanıcının quiz ve lab verileri)",
-  "quiz_count": "number",
-  "lab_count": "number"
+  "recommendations": "Harika! Bana verdiğin bilgiler doğrultusunda (şu an yaş, cinsiyet, laboratuvar değerleri ve sağlık hedeflerin belirtilmediği için) **genel ama kişiselleştirilebilir bir beslenme ve egzersiz çerçevesi** hazırlayacağım...",
+  "user_context": {},
+  "quiz_count": 0,
+  "lab_count": 0
 }
 ```
 
@@ -393,6 +421,7 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 - **Kişiselleştirilmiş Öneriler**: Geçmiş verileri kullanarak beslenme, spor ve egzersiz planı verir
 - **Premium Plus Only**: Sadece `x-user-level: 3` kullanıcıları erişebilir
 
+---
 
 ## 🔧 Frontend Integration
 
@@ -441,6 +470,4 @@ curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
     }
   }'
 ```
-
-
 
