@@ -567,7 +567,8 @@ async def chat_message(req: ChatMessageRequest,
 - Kullanıcı sadece selam verirse, kısa selam ver ve nasıl yardımcı olabileceğini sor
 - Kullanıcı özel olarak "öneri ver", "ne alayım", "supplement öner" derse o zaman detaylı öneriler ver
 - Geçmiş verileri hatırladığını göster ama hemen öneriye geçme
-- Sadece selam veren kullanıcıya supplement önerisi yapma, sadece "nasıl yardımcı olabilirim" de"""
+- Sadece selam veren kullanıcıya supplement önerisi yapma, sadece "nasıl yardımcı olabilirim" de
+- Kullanıcı sadece "merhaba" derse, sadece "merhaba, nasıl yardımcı olabilirim" de, başka bir şey söyleme"""
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
@@ -672,9 +673,8 @@ async def chat_message(req: ChatMessageRequest,
                 system_prompt += f"- {analysis.message_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
                 # Analiz içeriğini de ekle
                 if analysis.response_payload:
-                    if analysis.message_type == "quiz" and "supplement_recommendations" in analysis.response_payload:
-                        supplements = [s["name"] for s in analysis.response_payload["supplement_recommendations"][:3]]
-                        system_prompt += f"  Önerilen supplementler: {', '.join(supplements)}\n"
+                    if analysis.message_type == "quiz":
+                        system_prompt += f"  Quiz tamamlandı\n"
                     elif analysis.message_type == "lab_single" and "test_name" in analysis.response_payload:
                         system_prompt += f"  Test: {analysis.response_payload['test_name']}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
