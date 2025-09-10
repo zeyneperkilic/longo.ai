@@ -1699,8 +1699,8 @@ Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
             "status": "success",
             "recommendations": reply,
             "user_context": user_context,
-            "quiz_count": len(quiz_history),
-            "lab_count": len(lab_analyses)
+            "quiz_count": len(quiz_messages) if quiz_messages else 0,
+            "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
         }
         
     except Exception as e:
