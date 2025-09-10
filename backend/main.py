@@ -836,6 +836,10 @@ async def analyze_quiz(body: QuizRequest,
     # Plan kontrolü
     user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
     
+    # User ID validasyonu (Free: Session ID, Premium: Real ID)
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
+    
     user = get_or_create_user(db, x_user_id, user_plan)
     
     # Quiz data'yı dict'e çevir ve validate et - TAMAMEN ESNEK
@@ -941,6 +945,14 @@ def analyze_single_lab(body: SingleLabRequest,
     else:
         # Eski sistem fallback
         user_plan = x_user_plan or "premium"
+    
+    # Free kullanıcı engeli - Lab testleri premium özellik
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Lab test analizi premium özelliktir")
+    
+    # User ID validasyonu (Free: Session ID, Premium: Real ID)
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
     
     user = get_or_create_user(db, x_user_id, user_plan)
     
@@ -1077,6 +1089,14 @@ def analyze_single_session(body: SingleSessionRequest,
         # Eski sistem fallback
         user_plan = x_user_plan or "premium"  # Asıl site zaten kontrol ediyor
     
+    # Free kullanıcı engeli - Lab testleri premium özellik
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Lab test analizi premium özelliktir")
+    
+    # User ID validasyonu (Free: Session ID, Premium: Real ID)
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
+    
     user = get_or_create_user(db, x_user_id, user_plan)
     
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
@@ -1150,6 +1170,14 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     else:
         # Eski sistem fallback
         user_plan = x_user_plan or "premium"  # Asıl site zaten kontrol ediyor
+    
+    # Free kullanıcı engeli - Lab testleri premium özellik
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Lab test analizi premium özelliktir")
+    
+    # User ID validasyonu (Free: Session ID, Premium: Real ID)
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
     
     user = get_or_create_user(db, x_user_id, user_plan)
     
