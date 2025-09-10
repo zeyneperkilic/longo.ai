@@ -1713,7 +1713,14 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
     user_message += f"""
 
 Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
-Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
+Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner.
+
+ÖNEMLİ: Response'u şu 3 bölüme ayır:
+1. nutrition_plan: Beslenme önerileri
+2. exercise_plan: Spor ve egzersiz programı  
+3. lifestyle_tips: Yaşam tarzı önerileri
+
+Her bölümü JSON formatında ver, sadece içerik olsun."""
 
     # AI'ya gönder
     try:
@@ -1721,13 +1728,29 @@ Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner."""
         
         reply = await get_ai_response(system_prompt, user_message)
         
-        return {
-            "status": "success",
-            "recommendations": reply,
-            "user_context": user_context,
-            "quiz_count": len(quiz_messages) if quiz_messages else 0,
-            "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
-        }
+        # AI response'unu parse et
+        try:
+            import json
+            parsed_reply = json.loads(reply)
+            
+            return {
+                "status": "success",
+                "nutrition_plan": parsed_reply.get("nutrition_plan", ""),
+                "exercise_plan": parsed_reply.get("exercise_plan", ""),
+                "lifestyle_tips": parsed_reply.get("lifestyle_tips", ""),
+                "quiz_count": len(quiz_messages) if quiz_messages else 0,
+                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
+            }
+        except json.JSONDecodeError:
+            # JSON parse edilemezse eski formatı kullan
+            return {
+                "status": "success",
+                "nutrition_plan": reply,
+                "exercise_plan": "",
+                "lifestyle_tips": "",
+                "quiz_count": len(quiz_messages) if quiz_messages else 0,
+                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
+            }
         
     except Exception as e:
         print(f"❌ Premium Plus lifestyle recommendations error: {e}")
