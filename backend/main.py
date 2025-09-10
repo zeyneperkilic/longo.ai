@@ -67,6 +67,142 @@ def get_xml_products():
     except Exception as e:
         return []
 
+def get_user_context_for_message(user_context: dict, user_analyses: list) -> tuple[str, str]:
+    """Lab ve quiz verilerini user message için hazırla"""
+    lab_info = ""
+    quiz_info = ""
+    
+    # Lab verilerini user message'a ekle
+    if user_context and "son_lab_test" in user_context and user_context["son_lab_test"]:
+        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
+        lab_info += f"SON LAB TEST: {user_context['son_lab_test']}\n"
+        
+        if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
+            lab_info += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
+            
+        if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
+            lab_info += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
+            
+        if "lab_tarih" in user_context and user_context["lab_tarih"]:
+            lab_info += f"LAB TARİH: {user_context['lab_tarih']}\n"
+        
+        lab_info += "\n"
+    
+    # Global context'te yoksa ai_messages'tan al
+    if not lab_info and user_analyses:
+        lab_analyses = [a for a in user_analyses if a.message_type == "lab_single"]
+        if lab_analyses:
+            latest_lab = lab_analyses[0]  # En son lab
+            if latest_lab.response_payload and "test_name" in latest_lab.response_payload:
+                lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
+                lab_info += f"SON LAB TEST: {latest_lab.response_payload['test_name']}\n"
+                if "last_result" in latest_lab.response_payload:
+                    lab_info += f"SON LAB DEĞER: {latest_lab.response_payload['last_result']}\n"
+                lab_info += "\n"
+    
+    # Quiz verilerini user message'a ekle
+    if user_analyses:
+        quiz_analyses = [a for a in user_analyses if a.message_type == "quiz"]
+        if quiz_analyses:
+            latest_quiz = quiz_analyses[0]  # En son quiz
+            if latest_quiz.response_payload and "supplement_recommendations" in latest_quiz.response_payload:
+                supplements = [s["name"] for s in latest_quiz.response_payload["supplement_recommendations"][:3]]
+                quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
+                quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
+    
+    return lab_info, quiz_info
+
+def get_user_plan_from_headers(x_user_level: int | None, x_user_plan: str | None) -> str:
+    """Header'lardan user plan'ı belirle"""
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            return "free"
+        elif x_user_level == 2:
+            return "premium"
+        elif x_user_level == 3:
+            return "premium_plus"
+        else:
+            return "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        return x_user_plan or "free"
+
+def build_chat_system_prompt() -> str:
+    """Chat için system prompt oluştur"""
+    return """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!
+
+🚨 ÇOK ÖNEMLİ: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 QUIZ SONUÇLARI" ile başlayan bölümler var. Bu bilgiler kullanıcının yazdığı DEĞİL! Bunlar senin hafızanda olan geçmiş veriler! Kullanıcı sadece son cümlesini yazdı, diğer bilgiler senin hafızandan.
+
+❌ YANLIŞ İFADELER KULLANMA:
+- "paylaştığın için teşekkür ederim" 
+- "sen yazdın"
+- "sen söyledin"
+- "sen belirttin"
+
+✅ DOĞRU İFADELER KULLAN:
+- "Geçmiş quiz sonuçlarına göre..."
+- "Lab sonuçlarında gördüğüm kadarıyla..."
+- "Hafızamda olan verilere göre..."
+- "Önceki analizlerde..."
+
+🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!
+
+❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!
+
+💡 YANIT STİLİ: 
+- Kullanıcı sadece selamladıysa, önce selamlaş, sonra geçmiş verilerini hatırladığını göster
+- Öneri istemediği sürece agresif supplement önerisi yapma
+- Doğal ve akıcı konuş
+- Geçmiş quiz/lab verileri varsa, bunları kullanarak kişiselleştirilmiş yanıt ver
+- Sürekli bilgi isteme
+- Sohbetin devamını sağla, her mesajda yeni konuşma başlatma
+- Kullanıcının önceki mesajlarına referans ver ve bağlantı kur"""
+
+def add_user_context_to_prompt(system_prompt: str, user_context: dict) -> str:
+    """Kullanıcı bilgilerini system prompt'a ekle"""
+    if not user_context or not any(user_context.values()):
+        return system_prompt + "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner.\n\n🍎 BESLENME ÖNERİSİ KURALLARI:\n- Kullanıcı 'beslenme önerisi ver' derse, SADECE beslenme tavsiyeleri ver!\n- Beslenme önerisi istenince supplement önerme!\n- Sadece doğal besinler, yemek önerileri, beslenme programı ver!\n- Supplement önerisi sadece kullanıcı özel olarak 'supplement öner' derse yap!"
+    
+    system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
+    
+    # String ve integer değerler için özel format
+    if "isim" in user_context and user_context["isim"]:
+        system_prompt += f"KULLANICI ADI: {user_context['isim']}\n"
+        
+    if "yas" in user_context and user_context["yas"]:
+        system_prompt += f"KULLANICI YAŞI: {user_context['yas']} yaşında\n"
+        
+    if "tercihler" in user_context and user_context["tercihler"]:
+        tercihler_str = ', '.join(user_context['tercihler']) if isinstance(user_context['tercihler'], list) else str(user_context['tercihler'])
+        system_prompt += f"KULLANICI TERCİHLERİ: {tercihler_str}\n"
+        
+    if "hastaliklar" in user_context and user_context["hastaliklar"]:
+        hastaliklar_str = ', '.join(user_context['hastaliklar']) if isinstance(user_context['hastaliklar'], list) else str(user_context['hastaliklar'])
+        system_prompt += f"HASTALIKLAR: {hastaliklar_str}\n"
+        
+    if "cinsiyet" in user_context and user_context["cinsiyet"]:
+        system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
+    
+    # Lab verilerini de göster - LAB SUMMARY BİLGİLERİ
+    if "lab_gecmisi" in user_context and user_context["lab_gecmisi"]:
+        system_prompt += f"LAB TEST GEÇMİŞİ (Son 1 Yıl):\n"
+        for i, lab in enumerate(user_context["lab_gecmisi"], 1):
+            system_prompt += f"{i}. {lab.get('ozet', '')}\n"
+    
+    # Lab summary bilgileri (en güncel)
+    if "lab_genel_durum" in user_context and user_context["lab_genel_durum"]:
+        system_prompt += f"\nLAB GENEL DURUM: {user_context['lab_genel_durum']}\n"
+        
+    if "lab_summary" in user_context and user_context["lab_summary"]:
+        system_prompt += f"LAB ÖZET: {user_context['lab_summary']}\n"
+    
+    if "lab_tarih" in user_context and user_context["lab_tarih"]:
+        system_prompt += f"LAB TARİH: {user_context['lab_tarih']}\n"
+        
+    system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını, hastalığını veya lab sonuçlarını sorduğunda yukarıdaki bilgilerle cevap ver!"
+    
+    return system_prompt
+
 app = FastAPI(title="Longopass AI Gateway")
 
 # Security middleware for production
@@ -403,19 +539,8 @@ async def chat_message(req: ChatMessageRequest,
                   x_user_plan: str | None = Header(default=None),
                   x_user_level: int | None = Header(default=None)):
     
-    # Plan kontrolü - Yeni sistem: userLevel bazlı
-    if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
-            user_plan = "free"
-        elif x_user_level == 2:
-            user_plan = "premium"
-        elif x_user_level == 3:
-            user_plan = "premium_plus"
-        else:
-            user_plan = "free"  # Default fallback
-    else:
-        # Eski sistem fallback
-        user_plan = x_user_plan or "free"
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
     
     is_premium = user_plan in ["premium", "premium_plus"]
     
@@ -485,92 +610,22 @@ async def chat_message(req: ChatMessageRequest,
     user_context = {}
     
     
-    # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
-    lab_info = ""
+    # Lab ve quiz verilerini user message için hazırla
+    lab_info, quiz_info = get_user_context_for_message(user_context, user_analyses)
     
-    # Önce global context'ten dene
-    if user_context and "son_lab_test" in user_context and user_context["son_lab_test"]:
-        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
-        lab_info += f"SON LAB TEST: {user_context['son_lab_test']}\n"
-        
-        if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
-            lab_info += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
-            
-        if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
-            lab_info += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
-            
-        if "lab_tarih" in user_context and user_context["lab_tarih"]:
-            lab_info += f"LAB TARİH: {user_context['lab_tarih']}\n"
-        
-        lab_info += "\n"
-        print(f"🔍 DEBUG: Lab verileri global context'ten user message'a eklendi!")
-    
-    # Global context'te yoksa ai_messages'tan al
-    if not lab_info and user_analyses:
-        lab_analyses = [a for a in user_analyses if a.message_type == "lab_single"]
-        if lab_analyses:
-            latest_lab = lab_analyses[0]  # En son lab
-            if latest_lab.response_payload and "test_name" in latest_lab.response_payload:
-                lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
-                lab_info += f"SON LAB TEST: {latest_lab.response_payload['test_name']}\n"
-                if "last_result" in latest_lab.response_payload:
-                    lab_info += f"SON LAB DEĞER: {latest_lab.response_payload['last_result']}\n"
-                lab_info += "\n"
-                print(f"🔍 DEBUG: Lab verileri ai_messages'tan user message'a eklendi!")
-    
-    # Quiz verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
-    quiz_info = ""
-    if user_analyses:
-        quiz_analyses = [a for a in user_analyses if a.message_type == "quiz"]
-        if quiz_analyses:
-            latest_quiz = quiz_analyses[0]  # En son quiz
-            if latest_quiz.response_payload and "supplement_recommendations" in latest_quiz.response_payload:
-                supplements = [s["name"] for s in latest_quiz.response_payload["supplement_recommendations"][:3]]
-                quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
-                quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
-                print(f"🔍 DEBUG: Quiz verileri user message'a da eklendi!")
-    
-    # Lab ve quiz bilgilerini user message'a ekle ama model'e açıkla
+    # Lab ve quiz bilgilerini user message'a ekle
     if lab_info or quiz_info:
         enhanced_message = message_text
         if lab_info:
             enhanced_message = lab_info + enhanced_message
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
-        print(f"🔍 DEBUG: User message lab/quiz bilgileri ile güncellendi!")
         user_message = enhanced_message
     else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
-    system_prompt = """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!
-
-🚨 ÇOK ÖNEMLİ: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 QUIZ SONUÇLARI" ile başlayan bölümler var. Bu bilgiler kullanıcının yazdığı DEĞİL! Bunlar senin hafızanda olan geçmiş veriler! Kullanıcı sadece son cümlesini yazdı, diğer bilgiler senin hafızandan.
-
-❌ YANLIŞ İFADELER KULLANMA:
-- "paylaştığın için teşekkür ederim" 
-- "sen yazdın"
-- "sen söyledin"
-- "sen belirttin"
-
-✅ DOĞRU İFADELER KULLAN:
-- "Geçmiş quiz sonuçlarına göre..."
-- "Lab sonuçlarında gördüğüm kadarıyla..."
-- "Hafızamda olan verilere göre..."
-- "Önceki analizlerde..."
-
-🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!
-
-❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!
-
-💡 YANIT STİLİ: 
-- Kullanıcı sadece selamladıysa, önce selamlaş, sonra geçmiş verilerini hatırladığını göster
-- Öneri istemediği sürece agresif supplement önerisi yapma
-- Doğal ve akıcı konuş
-- Geçmiş quiz/lab verileri varsa, bunları kullanarak kişiselleştirilmiş yanıt ver
-- Sürekli bilgi isteme
-- Sohbetin devamını sağla, her mesajda yeni konuşma başlatma
-- Kullanıcının önceki mesajlarına referans ver ve bağlantı kur"""
+    system_prompt = build_chat_system_prompt()
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
@@ -582,90 +637,27 @@ async def chat_message(req: ChatMessageRequest,
     # recent_messages = rows[-(CHAT_HISTORY_MAX-1):] if len(rows) > 0 else []
     new_context = {}
     
-    # 2. YENİ MESAJDAN CONTEXT ÇIKAR (opsiyonel - context yoksa da çalışsın)
+    # Yeni mesajdan context çıkar
     current_message_context = extract_user_context_hybrid(message_text, user.email) or {}
     for key, value in current_message_context.items():
-        # Key'i normalize et (encoding sorunlarını çöz)
         normalized_key = key.strip().lower()
-        if normalized_key and value:  # Boş değerleri atla
+        if normalized_key and value:
             if normalized_key not in new_context:
                 new_context[normalized_key] = value
             elif isinstance(value, list) and isinstance(new_context[normalized_key], list):
-                # Listeleri birleştir (duplicate'ları kaldır)
                 new_context[normalized_key] = list(set(new_context[normalized_key] + value))
             else:
-                # String değerleri güncelle
                 new_context[normalized_key] = value
     
-    # 3. YENİ CONTEXT'İ GLOBAL CONTEXT'E EKLE (DÖNGÜ DIŞINDA!)
-    context_changed = False
+    # Yeni context'i global context'e ekle
     if new_context and any(new_context.values()):
-        # Check if context actually changed
-        for key, value in new_context.items():
-            if key not in user_context or user_context[key] != value:
-                context_changed = True
-                break
-        
+        context_changed = any(key not in user_context or user_context[key] != value 
+                            for key, value in new_context.items())
         if context_changed:
-            # Local context'i güncelle
             user_context.update(new_context)
     
-    # 4. KULLANICI BİLGİLERİNİ AI'YA HATIRLAT (LAB VERİLERİ ÇIKARILDI)
-    print(f"🔍 DEBUG: Chat endpoint'inde user_context: {user_context}")
-    
-    if user_context and any(user_context.values()):
-        system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
-        print(f"🔍 DEBUG: Kullanıcı bilgileri prompt'a ekleniyor...")
-        
-        # String ve integer değerler için özel format
-        if "isim" in user_context and user_context["isim"]:
-            system_prompt += f"KULLANICI ADI: {user_context['isim']}\n"
-            print(f"🔍 DEBUG: Kullanıcı adı eklendi: {user_context['isim']}")
-            
-        if "yas" in user_context and user_context["yas"]:
-            system_prompt += f"KULLANICI YAŞI: {user_context['yas']} yaşında\n"
-            print(f"🔍 DEBUG: Kullanıcı yaşı eklendi: {user_context['yas']}")
-            
-        if "tercihler" in user_context and user_context["tercihler"]:
-            tercihler_str = ', '.join(user_context['tercihler']) if isinstance(user_context['tercihler'], list) else str(user_context['tercihler'])
-            system_prompt += f"KULLANICI TERCİHLERİ: {tercihler_str}\n"
-            print(f"🔍 DEBUG: Kullanıcı tercihleri eklendi: {tercihler_str}")
-            
-        if "hastaliklar" in user_context and user_context["hastaliklar"]:
-            hastaliklar_str = ', '.join(user_context['hastaliklar']) if isinstance(user_context['hastaliklar'], list) else str(user_context['hastaliklar'])
-            system_prompt += f"HASTALIKLAR: {hastaliklar_str}\n"
-            print(f"🔍 DEBUG: Hastalıklar eklendi: {hastaliklar_str}")
-            
-        if "cinsiyet" in user_context and user_context["cinsiyet"]:
-            system_prompt += f"KULLANICI CİNSİYETİ: {user_context['cinsiyet']}\n"
-            print(f"🔍 DEBUG: Kullanıcı cinsiyeti eklendi: {user_context['cinsiyet']}")
-        
-        # Lab verilerini de göster - LAB SUMMARY BİLGİLERİ
-        if "lab_gecmisi" in user_context and user_context["lab_gecmisi"]:
-            system_prompt += f"LAB TEST GEÇMİŞİ (Son 1 Yıl):\n"
-            for i, lab in enumerate(user_context["lab_gecmisi"], 1):
-                system_prompt += f"{i}. {lab.get('ozet', '')}\n"
-            print(f"🔍 DEBUG: Lab geçmişi eklendi: {len(user_context['lab_gecmisi'])} test")
-        
-        # Lab summary bilgileri (en güncel)
-        if "lab_genel_durum" in user_context and user_context["lab_genel_durum"]:
-            system_prompt += f"\nLAB GENEL DURUM: {user_context['lab_genel_durum']}\n"
-            print(f"🔍 DEBUG: Lab genel durum eklendi: {user_context['lab_genel_durum']}")
-            
-        if "lab_summary" in user_context and user_context["lab_summary"]:
-            system_prompt += f"LAB ÖZET: {user_context['lab_summary']}\n"
-            print(f"🔍 DEBUG: Lab özet eklendi: {user_context['lab_summary']}")
-        
-        if "lab_tarih" in user_context and user_context["lab_tarih"]:
-            system_prompt += f"LAB TARİH: {user_context['lab_tarih']}\n"
-            print(f"🔍 DEBUG: Lab tarih eklendi: {user_context['lab_tarih']}")
-            
-        print(f"🔍 DEBUG: Final system prompt lab verileri ile hazırlandı!")
-        system_prompt += "\nÖNEMLİ: Bu bilgileri kesinlikle hatırla! Kullanıcı sana adını, yaşını, hastalığını veya lab sonuçlarını sorduğunda yukarıdaki bilgilerle cevap ver!"
-    else:
-        # Context yoksa default prompt ekle
-        print(f"🔍 DEBUG: User context boş, default prompt kullanılıyor!")
-        system_prompt += "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner.\n\n🍎 BESLENME ÖNERİSİ KURALLARI:\n- Kullanıcı 'beslenme önerisi ver' derse, SADECE beslenme tavsiyeleri ver!\n- Beslenme önerisi istenince supplement önerme!\n- Sadece doğal besinler, yemek önerileri, beslenme programı ver!\n- Supplement önerisi sadece kullanıcı özel olarak 'supplement öner' derse yap!"
+    # Kullanıcı bilgilerini system prompt'a ekle
+    system_prompt = add_user_context_to_prompt(system_prompt, user_context)
     
     # User analyses context - OPTIMIZED (only add if exists)
     if user_analyses:
@@ -704,35 +696,8 @@ async def chat_message(req: ChatMessageRequest,
     system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
     system_prompt += "\n- Değerler iyiyse veya kullanıcı Longevity derse Longevity ürünler öner, kötüyse problem çözücü öner!"
     
-    # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
-    lab_info = ""
-    if user_context and "son_lab_test" in user_context and user_context["son_lab_test"]:
-        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
-        lab_info += f"SON LAB TEST: {user_context['son_lab_test']}\n"
-        
-        if "son_lab_deger" in user_context and user_context["son_lab_deger"]:
-            lab_info += f"SON LAB DEĞER: {user_context['son_lab_deger']}\n"
-            
-        if "son_lab_durum" in user_context and user_context["son_lab_durum"]:
-            lab_info += f"SON LAB DURUM: {user_context['son_lab_durum']}\n"
-            
-        if "lab_tarih" in user_context and user_context["lab_tarih"]:
-            lab_info += f"LAB TARİH: {user_context['lab_tarih']}\n"
-        
-        lab_info += "\n"
-        print(f"🔍 DEBUG: Lab verileri user message'a da eklendi!")
-    
-    # Quiz verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
-    quiz_info = ""
-    if user_analyses:
-        quiz_analyses = [a for a in user_analyses if a.message_type == "quiz"]
-        if quiz_analyses:
-            latest_quiz = quiz_analyses[0]  # En son quiz
-            if latest_quiz.response_payload and "supplement_recommendations" in latest_quiz.response_payload:
-                supplements = [s["name"] for s in latest_quiz.response_payload["supplement_recommendations"][:3]]
-                quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
-                quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
-                print(f"🔍 DEBUG: Quiz verileri user message'a da eklendi!")
+    # Lab ve quiz verilerini user message için hazırla
+    lab_info, quiz_info = get_user_context_for_message(user_context, user_analyses)
     
     # Supplement listesini user message olarak ekle (quiz'deki gibi)
     # Kategori bazlı gruplandırma - token tasarrufu için
@@ -753,19 +718,15 @@ async def chat_message(req: ChatMessageRequest,
     
     # Context'i ilk message'a ekle
     
-    # System message
-    print(f"🔍 DEBUG: Final system prompt:")
-    print(f"🔍 DEBUG: {system_prompt}")
-    print(f"🔍 DEBUG: Prompt uzunluğu: {len(system_prompt)} karakter")
+    # System message hazır
     
     history = [{"role": "system", "content": system_prompt, "context_data": user_context}]
     
-    # Lab verilerini user message olarak ekle (AI'nin kesinlikle görmesi için)
+    # Lab verilerini user message olarak ekle
     if lab_info:
         history.append({"role": "user", "content": lab_info})
-        print(f"🔍 DEBUG: Lab user message history'e eklendi!")
     
-    # Supplement listesi user message olarak ekle (quiz'deki gibi)
+    # Supplement listesi user message olarak ekle
     history.append({"role": "user", "content": supplements_info})
     
     # Quiz ve Lab verilerini ai_messages'tan çek ve AI'ya gönder
@@ -783,7 +744,6 @@ async def chat_message(req: ChatMessageRequest,
                 quiz_info += f"QUIZ SONUÇLARI: {msg.response_payload.get('nutrition_advice', {}).get('recommendations', [])}\n"
                 quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {[s.get('name', '') for s in msg.response_payload.get('supplement_recommendations', [])]}\n\n"
         history.append({"role": "user", "content": quiz_info})
-        print(f"🔍 DEBUG: Quiz bilgileri user message'a eklendi")
     
     # Lab verilerini ekle
     lab_info = "\n\n=== LAB BİLGİLERİ ===\n"
@@ -815,7 +775,6 @@ async def chat_message(req: ChatMessageRequest,
     
     if lab_info != "\n\n=== LAB BİLGİLERİ ===\n":
         history.append({"role": "user", "content": lab_info})
-        print(f"🔍 DEBUG: Lab bilgileri user message'a eklendi")
     
     # Chat history
     for r in rows[-(CHAT_HISTORY_MAX-1):]:
@@ -858,7 +817,7 @@ async def chat_message(req: ChatMessageRequest,
             model_used="openrouter"
         )
     except Exception as e:
-        print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
+        pass  # Silent fail for production
     
     return ChatResponse(conversation_id=conversation_id, reply=final, latency_ms=latency_ms)
 
@@ -874,19 +833,8 @@ async def analyze_quiz(body: QuizRequest,
                  x_user_level: int | None = Header(default=None)):
     """Quiz endpoint - Sadece AI model işlemi, asıl site entegrasyonu için optimize edildi"""
     
-    # Plan kontrolü - Yeni sistem: userLevel bazlı
-    if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
-            user_plan = "free"
-        elif x_user_level == 2:
-            user_plan = "premium"
-        elif x_user_level == 3:
-            user_plan = "premium_plus"
-        else:
-            user_plan = "free"  # Default fallback
-    else:
-        # Eski sistem fallback
-        user_plan = x_user_plan or "free"
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
     
     user = get_or_create_user(db, x_user_id, user_plan)
     
@@ -956,15 +904,15 @@ async def analyze_quiz(body: QuizRequest,
     # Log to ai_messages
     try:
         create_ai_message(
-                db=db,
+            db=db,
             external_user_id=x_user_id,
             message_type="quiz",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-            )
+        )
     except Exception as e:
-        print(f"🔍 DEBUG: Quiz ai_messages kaydı hatası: {e}")
+        pass  # Silent fail for production
     
     # Return quiz response
     
@@ -1102,7 +1050,7 @@ def analyze_single_lab(body: SingleLabRequest,
             model_used="openrouter"
         )
     except Exception as e:
-        print(f"🔍 DEBUG: Lab Single ai_messages kaydı hatası: {e}")
+        pass  # Silent fail for production
     
     return data
 
@@ -1638,205 +1586,4 @@ async def premium_plus_lifestyle_recommendations(
 - Kardiyovasküler, güç antrenmanı, esneklik dengesi
 - Başlangıç seviyesi için güvenli ve sürdürülebilir
 
-🥗 BESLENME ÖNERİLERİ:
-- Lab sonuçlarına göre eksik vitamin/mineraller için besin önerileri
-- Quiz'deki hedeflere uygun makro besin dağılımı
-- Öğün planlama ve porsiyon önerileri
-- Supplement ile beslenme dengesi
-
-⚡ ENERJİ VE PERFORMANS:
-- Egzersiz öncesi/sonrası beslenme
-- Hidrasyon stratejileri
-- Uyku ve recovery önerileri
-
-🚫 KISITLAMALAR:
-- Sadece genel öneriler, tıbbi tavsiye değil
-- Kişisel antrenör veya diyetisyen yerine geçmez
-- Güvenlik öncelikli yaklaşım
-
-💡 YANIT FORMATI:
-1. 📊 MEVCUT DURUM ANALİZİ
-2. 🏃‍♂️ SPOR/EGZERSİZ PROGRAMI
-3. 🥗 BESLENME ÖNERİLERİ
-4. ⚡ PERFORMANS İPUÇLARI
-5. 📅 HAFTALIK PLAN ÖNERİSİ
-
-DİL: SADECE TÜRKÇE YANIT VER!"""
-
-    # User message'ı hazırla
-    user_message = f"""Kullanıcının mevcut durumu:
-
-📊 KULLANICI BİLGİLERİ:
-"""
-    
-    # Quiz verilerini ekle
-    if user_context:
-        user_message += f"\n📋 QUIZ VERİLERİ:\n"
-        for key, value in user_context.items():
-            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
-                user_message += f"- {key.upper()}: {value}\n"
-    
-    # Quiz geçmişini ekle
-    if quiz_messages:
-        user_message += f"\n📋 SON QUIZ SONUÇLARI:\n"
-        for msg in quiz_messages[-1:]:  # En son quiz
-            if msg.request_payload:
-                user_message += f"- Quiz verileri: {msg.request_payload}\n"
-    
-    # Lab analizlerini ekle
-    if lab_analyses:
-        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
-        for analysis in lab_analyses[-1:]:  # En son analiz
-            if hasattr(analysis, 'summary') and analysis.summary:
-                user_message += f"- {analysis.summary}\n"
-            elif isinstance(analysis, dict) and analysis.get('summary'):
-                user_message += f"- {analysis['summary']}\n"
-    
-    # Global context'ten tüm verileri ekle
-    if user_context:
-        # Quiz verilerini ekle
-        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
-        quiz_data_found = False
-        for key in quiz_keys:
-            if key in user_context and user_context[key]:
-                if not quiz_data_found:
-                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
-                    quiz_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
-        
-        # Lab verilerini ekle
-        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
-        lab_data_found = False
-        for key in lab_keys:
-            if key in user_context and user_context[key]:
-                if not lab_data_found:
-                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
-                    lab_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
-    
-    user_message += f"""
-
-Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
-Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner.
-
-ÖNEMLİ: Response'u şu JSON formatında ver:
-
-{{
-  "nutrition_plan": "Beslenme önerileri buraya...",
-  "exercise_plan": "Spor ve egzersiz programı buraya...",
-  "lifestyle_tips": "Yaşam tarzı önerileri buraya..."
-}}
-
-Sadece bu 3 field'ı doldur, başka hiçbir şey ekleme!"""
-
-    # AI'ya gönder
-    try:
-        from backend.openrouter_client import get_ai_response
-        
-        reply = await get_ai_response(system_prompt, user_message)
-        
-        # AI response'unu parse et
-        try:
-            import json
-            parsed_reply = json.loads(reply)
-            
-            return {
-                "status": "success",
-                "nutrition_plan": parsed_reply.get("nutrition_plan", ""),
-                "exercise_plan": parsed_reply.get("exercise_plan", ""),
-                "lifestyle_tips": parsed_reply.get("lifestyle_tips", ""),
-                "quiz_count": len(quiz_messages) if quiz_messages else 0,
-                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
-            }
-        except json.JSONDecodeError:
-            # JSON parse edilemezse eski formatı kullan
-            return {
-                "status": "success",
-                "nutrition_plan": reply,
-                "exercise_plan": "",
-                "lifestyle_tips": "",
-                "quiz_count": len(quiz_messages) if quiz_messages else 0,
-                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
-            }
-        
-    except Exception as e:
-        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
-        raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
-
-# Input validation helper
-def validate_input_data(data: dict, required_fields: list = None) -> dict:
-    """Input data validation for production - TAMAMEN ESNEK"""
-    if not data:
-        data = {}
-    
-    # Required fields için default değer ata (ama strict validation yapma)
-    if required_fields:
-        for field in required_fields:
-            if field not in data:
-                data[field] = None
-    
-    # Her türlü input'u kabul et (string, int, float, dict, list)
-    # Pydantic schema'lar zaten extra = "allow" ile esnek
-    return data
-
-@app.get("/debug/database")
-def debug_database(current_user: str = Depends(get_current_user),
-                   db: Session = Depends(get_db),
-                   x_user_id: str | None = Header(default=None)):
-    """Debug endpoint to check database contents"""
-    try:
-        from backend.db import get_or_create_user_by_external_id, get_ai_messages
-        
-        # User bilgilerini al
-        user = get_or_create_user_by_external_id(db, x_user_id, "free")
-        
-        # AI messages
-        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=10)
-        
-        return {
-            "user_id": user.id,
-            "external_user_id": user.external_user_id,
-            "plan": user.plan,
-            "ai_messages_count": len(ai_messages),
-            "ai_messages": [
-                {
-                    "id": msg.id,
-                    "message_type": msg.message_type,
-                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
-                    "model_used": msg.model_used
-                } for msg in ai_messages
-            ]
-        }
-    except Exception as e:
-        return {"error": str(e), "type": type(e).__name__}
-
-@app.get("/ai/messages")
-def get_ai_messages_endpoint(
-    current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    x_user_id: str | None = Header(default=None),
-    message_type: str | None = None,
-    limit: int = 50
-):
-    """Get AI messages for debugging"""
-    try:
-        from backend.db import get_ai_messages
-        messages = get_ai_messages(db, external_user_id=x_user_id, message_type=message_type, limit=limit)
-        
-        return {
-            "success": True,
-            "count": len(messages),
-            "messages": [
-                {
-                    "id": msg.id,
-                    "external_user_id": msg.external_user_id,
-                    "message_type": msg.message_type,
-                    "model_used": msg.model_used,
-                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
-                    "request_payload": msg.request_payload,
-                    "response_payload": msg.response_payload
-                } for msg in messages
-            ]
-        }
-    except Exception as e:
-        return {"error": str(e), "type": type(e).__name__}
+🥗 
