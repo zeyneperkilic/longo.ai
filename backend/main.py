@@ -566,7 +566,8 @@ async def chat_message(req: ChatMessageRequest,
 💡 YANIT DENGESİ:
 - Kullanıcı sadece selam verirse, kısa selam ver ve nasıl yardımcı olabileceğini sor
 - Kullanıcı özel olarak "öneri ver", "ne alayım", "supplement öner" derse o zaman detaylı öneriler ver
-- Geçmiş verileri hatırladığını göster ama hemen öneriye geçme"""
+- Geçmiş verileri hatırladığını göster ama hemen öneriye geçme
+- Sadece selam veren kullanıcıya supplement önerisi yapma, sadece "nasıl yardımcı olabilirim" de"""
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
