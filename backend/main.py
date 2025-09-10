@@ -1573,7 +1573,7 @@ async def premium_plus_lifestyle_recommendations(
 🎯 GÖREVİN: Kullanıcının quiz sonuçları ve lab verilerine göre kişiselleştirilmiş beslenme, spor ve egzersiz önerileri ver.
 
 📊 KULLANICI VERİLERİ:
-{user_context}
+{str(user_context)}
 
 📊 VERİ ANALİZİ:
 - Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi
@@ -1586,4 +1586,205 @@ async def premium_plus_lifestyle_recommendations(
 - Kardiyovasküler, güç antrenmanı, esneklik dengesi
 - Başlangıç seviyesi için güvenli ve sürdürülebilir
 
-🥗 
+🥗 BESLENME ÖNERİLERİ:
+- Lab sonuçlarına göre eksik vitamin/mineraller için besin önerileri
+- Quiz'deki hedeflere uygun makro besin dağılımı
+- Öğün planlama ve porsiyon önerileri
+- Supplement ile beslenme dengesi
+
+⚡ ENERJİ VE PERFORMANS:
+- Egzersiz öncesi/sonrası beslenme
+- Hidrasyon stratejileri
+- Uyku ve recovery önerileri
+
+🚫 KISITLAMALAR:
+- Sadece genel öneriler, tıbbi tavsiye değil
+- Kişisel antrenör veya diyetisyen yerine geçmez
+- Güvenlik öncelikli yaklaşım
+
+💡 YANIT FORMATI:
+1. 📊 MEVCUT DURUM ANALİZİ
+2. 🏃‍♂️ SPOR/EGZERSİZ PROGRAMI
+3. 🥗 BESLENME ÖNERİLERİ
+4. ⚡ PERFORMANS İPUÇLARI
+5. 📅 HAFTALIK PLAN ÖNERİSİ
+
+DİL: SADECE TÜRKÇE YANIT VER!"""
+
+    # User message'ı hazırla
+    user_message = f"""Kullanıcının mevcut durumu:
+
+📊 KULLANICI BİLGİLERİ:
+"""
+    
+    # Quiz verilerini ekle
+    if user_context:
+        user_message += f"\n📋 QUIZ VERİLERİ:\n"
+        for key, value in user_context.items():
+            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
+                user_message += f"- {key.upper()}: {value}\n"
+    
+    # Quiz geçmişini ekle
+    if quiz_messages:
+        user_message += f"\n📋 SON QUIZ SONUÇLARI:\n"
+        for msg in quiz_messages[-1:]:  # En son quiz
+            if msg.request_payload:
+                user_message += f"- Quiz verileri: {msg.request_payload}\n"
+    
+    # Lab analizlerini ekle
+    if lab_analyses:
+        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        for analysis in lab_analyses[-1:]:  # En son analiz
+            if hasattr(analysis, 'summary') and analysis.summary:
+                user_message += f"- {analysis.summary}\n"
+            elif isinstance(analysis, dict) and analysis.get('summary'):
+                user_message += f"- {analysis['summary']}\n"
+    
+    # Global context'ten tüm verileri ekle
+    if user_context:
+        # Quiz verilerini ekle
+        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        quiz_data_found = False
+        for key in quiz_keys:
+            if key in user_context and user_context[key]:
+                if not quiz_data_found:
+                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    quiz_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+        
+        # Lab verilerini ekle
+        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        lab_data_found = False
+        for key in lab_keys:
+            if key in user_context and user_context[key]:
+                if not lab_data_found:
+                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    lab_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+    
+    user_message += f"""
+
+Bu bilgilere göre kullanıcı için kapsamlı beslenme, spor ve egzersiz önerileri hazırla. 
+Kişiselleştirilmiş, sürdürülebilir ve güvenli bir program öner.
+
+ÖNEMLİ: Response'u şu JSON formatında ver:
+
+{{
+  "nutrition_plan": "Beslenme önerileri buraya...",
+  "exercise_plan": "Spor ve egzersiz programı buraya...",
+  "lifestyle_tips": "Yaşam tarzı önerileri buraya..."
+}}
+
+Sadece bu 3 field'ı doldur, başka hiçbir şey ekleme!"""
+
+    # AI'ya gönder
+    try:
+        from backend.openrouter_client import get_ai_response
+        
+        reply = await get_ai_response(system_prompt, user_message)
+        
+        # AI response'unu parse et
+        try:
+            import json
+            parsed_reply = json.loads(reply)
+            
+            return {
+                "status": "success",
+                "nutrition_plan": parsed_reply.get("nutrition_plan", ""),
+                "exercise_plan": parsed_reply.get("exercise_plan", ""),
+                "lifestyle_tips": parsed_reply.get("lifestyle_tips", ""),
+                "quiz_count": len(quiz_messages) if quiz_messages else 0,
+                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
+            }
+        except json.JSONDecodeError:
+            # JSON parse edilemezse eski formatı kullan
+            return {
+                "status": "success",
+                "nutrition_plan": reply,
+                "exercise_plan": "",
+                "lifestyle_tips": "",
+                "quiz_count": len(quiz_messages) if quiz_messages else 0,
+                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
+            }
+        
+    except Exception as e:
+        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
+        raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
+
+# Input validation helper
+def validate_input_data(data: dict, required_fields: list = None) -> dict:
+    """Input data validation for production - TAMAMEN ESNEK"""
+    if not data:
+        data = {}
+    
+    # Required fields için default değer ata (ama strict validation yapma)
+    if required_fields:
+        for field in required_fields:
+            if field not in data:
+                data[field] = None
+    
+    # Her türlü input'u kabul et (string, int, float, dict, list)
+    # Pydantic schema'lar zaten extra = "allow" ile esnek
+    return data
+
+@app.get("/debug/database")
+def debug_database(current_user: str = Depends(get_current_user),
+                   db: Session = Depends(get_db),
+                   x_user_id: str | None = Header(default=None)):
+    """Debug endpoint to check database contents"""
+    try:
+        from backend.db import get_or_create_user_by_external_id, get_ai_messages
+        
+        # User bilgilerini al
+        user = get_or_create_user_by_external_id(db, x_user_id, "free")
+        
+        # AI messages
+        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=10)
+        
+        return {
+            "user_id": user.id,
+            "external_user_id": user.external_user_id,
+            "plan": user.plan,
+            "ai_messages_count": len(ai_messages),
+            "ai_messages": [
+                {
+                    "id": msg.id,
+                    "message_type": msg.message_type,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                    "model_used": msg.model_used
+                } for msg in ai_messages
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
+
+@app.get("/ai/messages")
+def get_ai_messages_endpoint(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    message_type: str | None = None,
+    limit: int = 50
+):
+    """Get AI messages for debugging"""
+    try:
+        from backend.db import get_ai_messages
+        messages = get_ai_messages(db, external_user_id=x_user_id, message_type=message_type, limit=limit)
+        
+        return {
+            "success": True,
+            "count": len(messages),
+            "messages": [
+                {
+                    "id": msg.id,
+                    "external_user_id": msg.external_user_id,
+                    "message_type": msg.message_type,
+                    "model_used": msg.model_used,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                    "request_payload": msg.request_payload,
+                    "response_payload": msg.response_payload
+                } for msg in messages
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
