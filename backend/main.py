@@ -698,7 +698,7 @@ async def chat_message(req: ChatMessageRequest,
     system_prompt += "\n- 'Supplement öner', 'Hangi ürünleri alayım?' şeklinde yönlendir!"
     system_prompt += "\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!\n- Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme!\n- Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al!\n- Riskli durumlar varsa o supplement'i önerme!\n- Kullanıcı özel olarak supplement istemiyorsa, sadece gerçekten gerekli olanları öner!"
     system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
-    system_prompt += "\n- Değerler iyiyse Longevity, kötüyse problem çözücü öner!"
+    system_prompt += "\n- Değerler iyiyse veya kullanıcı Longevity derse Longevity ürünler öner, kötüyse problem çözücü öner!"
     
     # Lab verilerini user message'a da ekle (AI'nin kesinlikle görmesi için)
     lab_info = ""
