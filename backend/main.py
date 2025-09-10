@@ -52,24 +52,30 @@ def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
         return True
 
 def get_xml_products():
-    """XML'den ürünleri çek - Hibrit sistem: XML + Config fallback"""
+    """Gerçek XML'den ürünleri çek - Fallback: Config"""
     try:
         response = requests.get('https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml', timeout=10)
         root = ET.fromstring(response.text)
         products = []
         for item in root.findall('.//item'):
+            id_elem = item.find('id')
             label_elem = item.find('label')
-            if label_elem is not None and label_elem.text:
+            if id_elem is not None and label_elem is not None and label_elem.text:
                 # CDATA içeriğini temizle
+                product_id = int(id_elem.text.strip())
                 product_name = label_elem.text.strip()
-                products.append({'name': product_name})
-        print(f"🔍 DEBUG: XML'den {len(products)} ürün çekildi")
+                products.append({
+                    'id': product_id,
+                    'name': product_name,
+                    'category': 'Günlük Takviyeler'  # Default category
+                })
+        print(f"🔍 DEBUG: Gerçek XML'den {len(products)} ürün çekildi")
         return products
     except Exception as e:
         print(f"🔍 DEBUG: XML çekme hatası: {e}, config'den fallback yapılıyor")
         # XML çalışmazsa config'den fallback
         from backend.config import SUPPLEMENTS_LIST
-        fallback_products = [{'name': item['name']} for item in SUPPLEMENTS_LIST]
+        fallback_products = [{'id': item['id'], 'name': item['name'], 'category': item['category']} for item in SUPPLEMENTS_LIST]
         print(f"🔍 DEBUG: Config'den {len(fallback_products)} ürün fallback yapıldı")
         return fallback_products
 
@@ -1443,35 +1449,7 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
         "recommendations": "Progress bazlı öneriler"
     }
 
-@app.get("/api/supplements.xml")
-@cache_supplements(ttl_seconds=3600)  # 1 saat cache
-def get_supplements_xml():
-    """XML feed endpoint - Ana site için supplement listesi"""
-    from fastapi.responses import Response
-    
-    # XML'den supplement verileri (hibrit sistem)
-    supplements = get_xml_products()
-    
-    # XML oluştur
-    xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<supplements>
-    <total_count>{len(supplements)}</total_count>
-    <last_updated>{time.strftime('%Y-%m-%d %H:%M:%S')}</last_updated>
-    <products>"""
-    
-    for i, supplement in enumerate(supplements, 1):
-        xml_content += f"""
-        <product id="{supplement.get('id', i)}">
-            <name>{supplement['name']}</name>
-            <category>{supplement.get('category', 'Günlük Takviyeler')}</category>
-            <available>true</available>
-        </product>"""
-    
-    xml_content += """
-    </products>
-</supplements>"""
-    
-    return Response(xml_content, media_type="application/xml")
+# XML endpoint kaldırıldı - Gerçek XML zaten mevcut: https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml
 
 
 # Production'da cache endpoint'leri güvenlik riski oluşturabilir - kaldırıldı
