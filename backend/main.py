@@ -539,7 +539,7 @@ async def chat_message(req: ChatMessageRequest,
             enhanced_message = quiz_info + enhanced_message
         print(f"🔍 DEBUG: User message lab/quiz bilgileri ile güncellendi!")
         user_message = enhanced_message
-                else:
+    else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
