@@ -410,22 +410,26 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 ```json
 {}
 ```
+**Not:** Request body boş olmalı. Kullanıcı verileri header'lardan ve AI hafızasından alınır.
 
 #### Response
 ```json
 {
   "status": "success",
-  "recommendations": "Harika! Bana verdiğin bilgiler doğrultusunda (şu an yaş, cinsiyet, laboratuvar değerleri ve sağlık hedeflerin belirtilmediği için) **genel ama kişiselleştirilebilir bir beslenme ve egzersiz çerçevesi** hazırlayacağım...",
-  "user_context": {},
-  "quiz_count": 0,
-  "lab_count": 0
+  "nutrition_plan": "Günlük beslenmende dengeli makro dağılımını hedefle: %40 kompleks karbonhidrat (tam tahıllar, kinoa, yulaf), %30 kaliteli protein (balık, tavuk, baklagiller, yumurta), %30 sağlıklı yağ (zeytinyağı, avokado, fındık). Vitamin/mineral desteği için koyu yeşil yapraklı sebzeler (ıspanak, brokoli), demir açısından kırmızı et veya mercimek, C vitamini için turunçgiller ve biber ekle.",
+  "exercise_plan": "Haftada en az 4 gün egzersiz: 2 gün kuvvet antrenmanı (tam vücut odaklı: squat, plank, şınav, direnç lastiği çalışmaları), 2 gün kardiyo (tempolu yürüyüş, bisiklet, yüzme). Başlangıçta 30-40 dk yeterli; kondisyon arttıkça süreyi 45-60 dk'ya çıkar.",
+  "lifestyle_tips": "Günde en az 2-2.5 litre su iç, özellikle antrenman günlerinde extra 500 ml ekle. Uyku kalitesini artırmak için her gün aynı saatte yat-kalk düzeni oluştur, 7-8 saat uyumayı hedefle. Stres yönetimi için nefes egzersizi veya kısa meditasyon önerilir.",
+  "quiz_count": 1,
+  "lab_count": 1
 }
 ```
 
 #### Özellik
 - **AI Hafızası**: Quiz ve lab sonuçlarını hatırlar
 - **Kişiselleştirilmiş Öneriler**: Geçmiş verileri kullanarak beslenme, spor ve egzersiz planı verir
+- **3 Ayrı Bölüm**: `nutrition_plan`, `exercise_plan`, `lifestyle_tips` olarak ayrılmış
 - **Premium Plus Only**: Sadece `x-user-level: 3` kullanıcıları erişebilir
+- **Temiz Response**: User context dahil edilmez, sadece öneriler
 
 ---
 
@@ -456,10 +460,29 @@ const response = await fetch('https://longo-ai.onrender.com/ai/quiz', {
 
 const data = await response.json();
 console.log(data.supplement_recommendations);
+
+// Premium Plus endpoint (Request body boş!)
+const premiumResponse = await fetch('https://longo-ai.onrender.com/ai/premium-plus/lifestyle-recommendations', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',  // ZORUNLU!
+    'username': 'longopass',             // ZORUNLU!
+    'password': '123456',                // ZORUNLU!
+    'x-user-id': 'user123',              // ZORUNLU!
+    'x-user-level': 3                    // ZORUNLU! (Premium Plus için)
+  },
+  body: JSON.stringify({})               // BOŞ OBJECT!
+});
+
+const premiumData = await premiumResponse.json();
+console.log(premiumData.nutrition_plan);
+console.log(premiumData.exercise_plan);
+console.log(premiumData.lifestyle_tips);
 ```
 
 ### cURL Example
 ```bash
+# Quiz endpoint
 curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
   -H "Content-Type: application/json" \    # ZORUNLU!
   -H "username: longopass" \               # ZORUNLU!
@@ -475,5 +498,14 @@ curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
       "goals": ["energy", "immunity"]
     }
   }'
+
+# Premium Plus endpoint (Request body boş!)
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/lifestyle-recommendations" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-level: 3" \                   # ZORUNLU! (Premium Plus için)
+  -d '{}'                                  # BOŞ OBJECT!
 ```
 
