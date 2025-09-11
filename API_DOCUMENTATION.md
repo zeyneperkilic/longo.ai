@@ -438,6 +438,72 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 
 ---
 
+## 🧪 Test Recommendations Endpoint
+
+### **POST** `/ai/test-recommendations`
+
+Premium ve Premium Plus kullanıcıları için kişiselleştirilmiş test önerileri. Kullanıcının quiz ve lab verilerini analiz ederek en uygun testleri önerir.
+
+#### Request Body
+```json
+{
+  "user_analysis": true,
+  "exclude_taken_tests": true,
+  "max_recommendations": 4
+}
+```
+
+#### Request Parameters
+- `user_analysis` (boolean): Kullanıcı verilerini analiz et (zorunlu: true)
+- `exclude_taken_tests` (boolean): Daha önce yapılan testleri hariç tut (zorunlu: true)
+- `max_recommendations` (integer): Maksimum öneri sayısı (1-10 arası, default: 4)
+
+#### Response
+```json
+{
+  "title": "Test Önerileri",
+  "recommended_tests": [
+    {
+      "test_name": "eGFR (Tahmini Glomerüler Filtrasyon Hızı)",
+      "reason": "Kreatinin yüksekliği böbrek fonksiyon bozukluğu olasılığını gösterir. eGFR böbreklerin filtreleme kapasitesini hesaplamada kullanılır.",
+      "benefit": "Böbrek fonksiyonunun evresini belirlemeye, kronik böbrek hastalığının derecesini saptamaya yardımcı olur."
+    },
+    {
+      "test_name": "BUN (Kan Üre Azotu)",
+      "reason": "Kreatinin yüksekliği ile birlikte üre düzeyini değerlendirmek böbrek fonksiyon bozukluğu hakkında daha net bilgi verir.",
+      "benefit": "Böbreklerin atık maddeleri uzaklaştırma yeteneğini ölçerek tanıyı destekler."
+    },
+    {
+      "test_name": "İdrar Albümin/Kreatinin Oranı (ACR)",
+      "reason": "Böbrek hasarının erken göstergesi olan protein kaçağını (albüminüri) saptamak için kullanılır.",
+      "benefit": "Erken böbrek hasarını saptar, hastalık ilerlemeden önlem alınmasına yardımcı olur."
+    },
+    {
+      "test_name": "Renal Ultrason",
+      "reason": "Kreatinin yüksekliği yapısal bir böbrek hastalığından kaynaklanıyor olabilir. Görüntüleme ile böbrek boyutu, yapısı ve olası tıkanıklıklar değerlendirilir.",
+      "benefit": "Böbreklerde taş, kist, tümör ya da hidronefroz gibi nedenlerin dışlanmasını sağlar."
+    }
+  ],
+  "analysis_summary": "Quiz analizi: 1 adet mevcut. Lab testleri: 1 adet mevcut.",
+  "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+}
+```
+
+#### Özellik
+- **AI Tabanlı**: Kullanıcının quiz ve lab verilerini analiz eder
+- **Kişiselleştirilmiş**: Mevcut sağlık durumuna göre öneriler verir
+- **Akıllı Filtreleme**: Daha önce yapılan testleri otomatik olarak hariç tutar
+- **Tıbbi Mantık**: Test sonuçlarına göre ilgili testleri önerir
+- **Premium Only**: Sadece `x-user-level: 2` (Premium) ve `x-user-level: 3` (Premium Plus) kullanıcıları erişebilir
+
+#### Strateji
+- **Quiz Verisi**: Yaş, cinsiyet, hastalıklar, hedefler analiz edilir
+- **Lab Verisi**: Mevcut test sonuçları değerlendirilir
+- **AI Analizi**: Tüm veriler AI tarafından analiz edilerek en uygun testler belirlenir
+- **Test Listesi**: 18 farklı test kategorisinden öneriler yapılır
+
+---
+
 ## 🔧 Frontend Integration
 
 ### JavaScript Example
@@ -450,7 +516,7 @@ const response = await fetch('https://longo-ai.onrender.com/ai/quiz', {
     'username': 'longopass',             // ZORUNLU!
     'password': '123456',                // ZORUNLU!
     'x-user-id': 'user123',              // ZORUNLU!
-    'x-user-plan': 'premium'             // Opsiyonel
+    'x-user-level': 2                    // Opsiyonel (2=Premium)
   },
   body: JSON.stringify({
     quiz_data: {
@@ -483,6 +549,26 @@ const premiumData = await premiumResponse.json();
 console.log(premiumData.nutrition_plan);
 console.log(premiumData.exercise_plan);
 console.log(premiumData.lifestyle_tips);
+
+// Test Recommendations endpoint (Premium ve Premium Plus)
+const testRecResponse = await fetch('https://longo-ai.onrender.com/ai/test-recommendations', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',  // ZORUNLU!
+    'username': 'longopass',             // ZORUNLU!
+    'password': '123456',                // ZORUNLU!
+    'x-user-id': 'user123',              // ZORUNLU!
+    'x-user-level': 2                    // ZORUNLU! (2=Premium, 3=Premium Plus)
+  },
+  body: JSON.stringify({
+    user_analysis: true,
+    exclude_taken_tests: true,
+    max_recommendations: 4
+  })
+});
+
+const testRecData = await testRecResponse.json();
+console.log(testRecData.recommended_tests);
 ```
 
 ### cURL Example
@@ -512,6 +598,19 @@ curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/lifestyle-recommenda
   -H "x-user-id: test123" \                # ZORUNLU!
   -H "x-user-level: 3" \                   # ZORUNLU! (3=Premium Plus)
   -d '{}'                                  # BOŞ OBJECT!
+
+# Test Recommendations endpoint (Premium ve Premium Plus)
+curl -X POST "https://longo-ai.onrender.com/ai/test-recommendations" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-level: 2" \                   # ZORUNLU! (2=Premium, 3=Premium Plus)
+  -d '{
+    "user_analysis": true,
+    "exclude_taken_tests": true,
+    "max_recommendations": 4
+  }'
 ```
 
 ---
