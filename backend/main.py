@@ -1903,6 +1903,7 @@ Bu verilere göre en uygun {body.max_recommendations} testi öner. SADECE JSON f
             # AI response'unu parse et
             import json
             try:
+                # JSON parse etmeyi dene
                 parsed_response = json.loads(ai_response)
                 if "recommended_tests" in parsed_response:
                     recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
@@ -1912,8 +1913,24 @@ Bu verilere göre en uygun {body.max_recommendations} testi öner. SADECE JSON f
             except (json.JSONDecodeError, ValueError, KeyError) as parse_error:
                 print(f"🔍 DEBUG: JSON parse hatası: {parse_error}")
                 print(f"🔍 DEBUG: Raw response: {ai_response}")
-                # AI response parse edilemezse fallback
-                raise ValueError("AI response parse edilemedi")
+                
+                # AI response'u temizle ve tekrar dene
+                cleaned_response = ai_response.strip()
+                if cleaned_response.startswith('```json'):
+                    cleaned_response = cleaned_response.replace('```json', '').replace('```', '').strip()
+                elif cleaned_response.startswith('```'):
+                    cleaned_response = cleaned_response.replace('```', '').strip()
+                
+                try:
+                    parsed_response = json.loads(cleaned_response)
+                    if "recommended_tests" in parsed_response:
+                        recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
+                        print(f"🔍 DEBUG: Temizlenmiş AI önerileri başarılı: {len(recommended_tests)} adet")
+                    else:
+                        raise ValueError("Temizlenmiş AI response format hatası")
+                except:
+                    # Son çare: AI response parse edilemezse fallback
+                    raise ValueError("AI response parse edilemedi")
                 
         except Exception as e:
             print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
