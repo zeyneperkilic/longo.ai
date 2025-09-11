@@ -1934,14 +1934,8 @@ Bu verilere göre en uygun {body.max_recommendations} testi öner. SADECE JSON f
                 
         except Exception as e:
             print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
-            # Fallback: Basit öneri sistemi
-            for test in available_tests[:body.max_recommendations]:
-                if test["priority"] == "high":
-                    recommended_tests.append({
-                        "test_name": test["test_name"],
-                        "reason": f"{test['category']} kategorisinde öncelikli test - {test['description'][:100]}...",
-                        "benefit": f"Bu test ile {test['category'].lower()} sağlığınızı değerlendirebilir ve erken teşhis imkanı elde edebilirsiniz."
-                    })
+            # Fallback kaldırıldı - AI çalışmazsa hata ver
+            raise HTTPException(status_code=500, detail=f"AI test önerisi oluşturulamadı: {str(e)}")
         
         # 5. Response oluştur
         response_data = {
