@@ -121,8 +121,8 @@ def get_user_context_for_message(user_context: dict, user_analyses: list) -> tup
     
     return lab_info, quiz_info
 
-def get_user_plan_from_headers(x_user_level: int | None, x_user_plan: str | None) -> str:
-    """Header'lardan user plan'ı belirle"""
+def get_user_plan_from_headers(x_user_level: int | None) -> str:
+    """Header'lardan user plan'ı belirle - sadece x_user_level kullan"""
     if x_user_level is not None:
         if x_user_level == 0 or x_user_level == 1:
             return "free"
@@ -133,8 +133,8 @@ def get_user_plan_from_headers(x_user_level: int | None, x_user_plan: str | None
         else:
             return "free"  # Default fallback
     else:
-        # Eski sistem fallback
-        return x_user_plan or "free"
+        # x_user_level gelmezse (üye değilse) free olarak kabul et
+        return "free"
 
 def build_chat_system_prompt() -> str:
     """Chat için system prompt oluştur"""
@@ -459,11 +459,10 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 @app.post("/ai/chat/start", response_model=ChatStartResponse)
 def chat_start(body: ChatStartRequest = None,
                db: Session = Depends(get_db),
-               x_user_id: str | None = Header(default=None),
-               x_user_plan: str | None = Header(default=None)):
+               x_user_id: str | None = Header(default=None)):
     
     # Plan kontrolü
-    user_plan = x_user_plan or "free"
+    user_plan = "free"  # Free chat için sabit
     is_premium = user_plan in ["premium", "premium_plus"]
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
@@ -497,11 +496,10 @@ def chat_start(body: ChatStartRequest = None,
 @app.get("/ai/chat/{conversation_id}/history")
 def chat_history(conversation_id: int,
                  db: Session = Depends(get_db),
-                 x_user_id: str | None = Header(default=None),
-                 x_user_plan: str | None = Header(default=None)):
+                 x_user_id: str | None = Header(default=None)):
     
     # Plan kontrolü
-    user_plan = x_user_plan or "free"
+    user_plan = "free"  # Free chat için sabit
     is_premium = user_plan in ["premium", "premium_plus"]
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
@@ -543,11 +541,10 @@ async def chat_message(req: ChatMessageRequest,
                   current_user: str = Depends(get_current_user),
                   db: Session = Depends(get_db),
                   x_user_id: str | None = Header(default=None),
-                  x_user_plan: str | None = Header(default=None),
                   x_user_level: int | None = Header(default=None)):
     
     # Plan kontrolü
-    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
+    user_plan = get_user_plan_from_headers(x_user_level)
     
     is_premium = user_plan in ["premium", "premium_plus"]
     
@@ -836,12 +833,11 @@ async def analyze_quiz(body: QuizRequest,
                  current_user: str = Depends(get_current_user),
                  db: Session = Depends(get_db),
                  x_user_id: str | None = Header(default=None),
-                 x_user_plan: str | None = Header(default=None),
                  x_user_level: int | None = Header(default=None)):
     """Quiz endpoint - Sadece AI model işlemi, asıl site entegrasyonu için optimize edildi"""
     
     # Plan kontrolü
-    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
+    user_plan = get_user_plan_from_headers(x_user_level)
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
     if not validate_chat_user_id(x_user_id or "", user_plan):
@@ -935,12 +931,11 @@ def analyze_single_lab(body: SingleLabRequest,
                         current_user: str = Depends(get_current_user),
                        db: Session = Depends(get_db),
                         x_user_id: str | None = Header(default=None),
-                        x_user_plan: str | None = Header(default=None),
                         x_user_level: int | None = Header(default=None)):
     """Analyze single lab test result with historical trend analysis"""
     
     # Plan kontrolü
-    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
+    user_plan = get_user_plan_from_headers(x_user_level)
     
     # Free kullanıcı engeli - Lab testleri premium özellik
     if user_plan == "free":
@@ -1067,12 +1062,11 @@ def analyze_single_session(body: SingleSessionRequest,
                           current_user: str = Depends(get_current_user),
                           db: Session = Depends(get_db),
                           x_user_id: str | None = Header(default=None),
-                          x_user_plan: str | None = Header(default=None),
                           x_user_level: int | None = Header(default=None)):
     """Analyze single lab session with multiple tests"""
     
     # Plan kontrolü
-    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
+    user_plan = get_user_plan_from_headers(x_user_level)
     
     # Free kullanıcı engeli - Lab testleri premium özellik
     if user_plan == "free":
@@ -1138,12 +1132,11 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
                                  current_user: str = Depends(get_current_user),
                                  db: Session = Depends(get_db),
                                  x_user_id: str | None = Header(default=None),
-                                 x_user_plan: str | None = Header(default=None),
                                  x_user_level: int | None = Header(default=None)):
     """Generate general summary of multiple lab tests with supplement recommendations and progress tracking"""
     
     # Plan kontrolü
-    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
+    user_plan = get_user_plan_from_headers(x_user_level)
     
     # Free kullanıcı engeli - Lab testleri premium özellik
     if user_plan == "free":
@@ -1491,7 +1484,6 @@ async def premium_plus_lifestyle_recommendations(
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db),
     x_user_id: str | None = Header(default=None),
-    x_user_plan: str | None = Header(default=None),
     x_user_level: int | None = Header(default=None)
 ):
     """Premium Plus kullanıcıları için beslenme, spor ve egzersiz önerileri"""
@@ -1508,7 +1500,7 @@ async def premium_plus_lifestyle_recommendations(
             user_plan = "free"  # Default fallback
     else:
         # Eski sistem fallback
-        user_plan = x_user_plan or "free"
+        user_plan = "free"
     
     if user_plan != "premium_plus":
         raise HTTPException(

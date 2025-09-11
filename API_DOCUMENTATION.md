@@ -16,9 +16,14 @@ password: 123456
 ### 👤 User Management Headers
 ```http
 x-user-id: unique_user_id        # Kullanıcı ID'si (zorunlu)
-x-user-plan: free|premium|premium_plus  # Kullanıcı planı (opsiyonel, default: free)
 x-user-level: 0|1|2|3           # Kullanıcı seviyesi (opsiyonel, default: 0)
 ```
+
+**Plan Mapping:**
+- `0` veya `1` → **Free** (10 soru limiti)
+- `2` → **Premium** (Sınırsız + Lab analizi)
+- `3` → **Premium Plus** (Tüm özellikler)
+- Header gelmezse → **Free** (üye değilse)
 
 ### 📝 Content-Type Header (Zorunlu)
 ```http
@@ -488,7 +493,7 @@ curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
   -H "username: longopass" \               # ZORUNLU!
   -H "password: 123456" \                  # ZORUNLU!
   -H "x-user-id: test123" \                # ZORUNLU!
-  -H "x-user-plan: premium" \              # Opsiyonel
+  -H "x-user-level: 2" \                   # Opsiyonel (2=Premium)
   -d '{
     "quiz_data": {
       "age": 30,
@@ -505,7 +510,92 @@ curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/lifestyle-recommenda
   -H "username: longopass" \               # ZORUNLU!
   -H "password: 123456" \                  # ZORUNLU!
   -H "x-user-id: test123" \                # ZORUNLU!
-  -H "x-user-level: 3" \                   # ZORUNLU! (Premium Plus için)
+  -H "x-user-level: 3" \                   # ZORUNLU! (3=Premium Plus)
   -d '{}'                                  # BOŞ OBJECT!
 ```
+
+---
+
+## 🔄 Lab Test Entegrasyonu - Asıl Site Tarafında
+
+### 📋 Genel Yaklaşım
+
+Lab test sonuçları girildikten sonra **otomatik olarak 3 endpoint'e** istek atılmalıdır:
+
+1. **Lab Single** - Her test için ayrı ayrı analiz
+2. **Lab Session** - Tüm testler bir seans olarak analiz  
+3. **Lab Summary** - Tüm testlerin genel analizi
+
+### 💻 JavaScript Entegrasyon Örneği
+
+```javascript
+// Lab test sonuçları girildikten sonra otomatik çalışacak fonksiyon
+async function processLabResults(labData) {
+  const userId = getCurrentUserId();
+  const userLevel = getCurrentUserLevel();
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    'username': 'longopass',
+    'password': '123456',
+    'x-user-id': userId,
+    'x-user-level': userLevel  // 0=Free, 1=Free, 2=Premium, 3=Premium Plus
+  };
+
+  try {
+    // 1. Her test için Lab Single analizi
+    for (const test of labData.tests) {
+      await fetch('/ai/lab/single', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          test: test
+        })
+      });
+    }
+
+    // 2. Tüm testler için Lab Session analizi
+    await fetch('/ai/lab/session', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        session_tests: labData.tests,
+        session_date: labData.session_date,
+        laboratory: labData.laboratory
+      })
+    });
+
+    // 3. Tüm testler için Lab Summary analizi
+    await fetch('/ai/lab/summary', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        tests: labData.tests,
+        total_test_sessions: 1
+      })
+    });
+
+    console.log('Lab analizleri tamamlandı');
+  } catch (error) {
+    console.error('Lab analizi hatası:', error);
+  }
+}
+
+// Kullanım örneği
+const labData = {
+  tests: [
+    {name: "Hemoglobin", value: "15.2", unit: "g/dL", reference_range: "12-16 g/dL"},
+    {name: "Glukoz", value: "95", unit: "mg/dL", reference_range: "70-100 mg/dL"},
+    {name: "Kolesterol", value: "180", unit: "mg/dL", reference_range: "<200 mg/dL"}
+  ],
+  session_date: "2024-01-15",
+  laboratory: "Acıbadem Lab"
+};
+
+// Lab data girildikten sonra otomatik çalıştır
+processLabResults(labData);
+```
+
+
+
 
