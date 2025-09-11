@@ -199,4 +199,152 @@ SUPPLEMENTS_LIST = [
     {"id": 147, "name": "A Vitamini", "category": "Günlük Takviyeler"}
 ]
 
+# Test Önerisi Endpoint'i için - Satışta Olan Testler
+AVAILABLE_TESTS = [
+    {
+        "test_id": "vitamin_mineral",
+        "test_name": "Vitamin ve Mineral Seviyeleri Testi",
+        "description": "Vücutta eksik veya fazla bulunan vitamin ve mineralleri analiz etmek için yapılan bir testtir. Bağışıklık sistemi, kemik sağlığı ve enerji seviyelerini değerlendirmeye yardımcı olur.",
+        "price": 0.00,
+        "category": "Vitaminler",
+        "priority": "high"
+    },
+    {
+        "test_id": "tumor_markers",
+        "test_name": "Tümör Belirteçleri Testi",
+        "description": "Kanser belirteçlerini analiz ederek erken tanı ve takibi sağlamak için yapılan bir testtir. Prostat, meme, karaciğer, akciğer ve sindirim sistemi kanserleri için kullanılır.",
+        "price": 0.00,
+        "category": "Kanser",
+        "priority": "high"
+    },
+    {
+        "test_id": "hormone",
+        "test_name": "Hormon Testi",
+        "description": "Tiroid, üreme hormonları ve stres hormonlarını analiz ederek metabolik ve hormonal dengeyi değerlendirmek için yapılan bir testtir. Adet düzensizlikleri, tiroid hastalıkları ve stres hormonları ile ilgili bilgiler sağlar.",
+        "price": 0.00,
+        "category": "Hormonlar",
+        "priority": "high"
+    },
+    {
+        "test_id": "heavy_metals",
+        "test_name": "Ağır Metal Testi",
+        "description": "Vücutta toksik ağır metal seviyelerini tespit etmek için yapılan bir testtir. Kurşun, cıva, arsenik gibi metallere maruz kalma düzeyini analiz eder.",
+        "price": 0.00,
+        "category": "Toksikoloji",
+        "priority": "medium"
+    },
+    {
+        "test_id": "diabetes",
+        "test_name": "Şeker ve Diyabet Testi",
+        "description": "Kan şekerini ve insülin seviyelerini kontrol ederek diyabet ve insülin direnci riskini belirlemek için yapılan bir testtir. HbA1c testi ile uzun vadeli kan şekeri kontrolü sağlanır.",
+        "price": 0.00,
+        "category": "Metabolizma",
+        "priority": "high"
+    },
+    {
+        "test_id": "lipid_cholesterol",
+        "test_name": "Lipid ve Kolesterol Testi",
+        "description": "Kan yağlarını analiz ederek kalp hastalığı ve damar tıkanıklığı riskini değerlendirmekte kullanılan bir testtir. İyi (HDL) ve kötü (LDL) kolesterol seviyelerinin takibini sağlar.",
+        "price": 0.00,
+        "category": "Kardiyovasküler",
+        "priority": "high"
+    },
+    {
+        "test_id": "skin_health",
+        "test_name": "Cilt Sağlığı Testi",
+        "description": "Cilt, saç ve tırnak sağlığı için gerekli olan vitamin ve minerallerin seviyelerini belirlemek için yapılan bir testtir. Biotin eksikliği, alerjik reaksiyonlar ve cilt hassasiyeti hakkında bilgi verir.",
+        "price": 0.00,
+        "category": "Cilt Sağlığı",
+        "priority": "medium"
+    },
+    {
+        "test_id": "eye_health",
+        "test_name": "Göz Sağlığı Testi",
+        "description": "Göz sağlığını destekleyen vitamin ve antioksidan seviyelerini belirlemek için yapılan bir testtir. Görme kaybı, katarakt ve göz yorgunluğunu önlemeye yardımcı olur.",
+        "price": 0.00,
+        "category": "Göz Sağlığı",
+        "priority": "medium"
+    },
+    {
+        "test_id": "digestive_system",
+        "test_name": "Bağırsak ve Sindirim Sistemi Testi",
+        "description": "Bağırsak sağlığını, gıda intoleranslarını ve sindirim enzimlerinin etkinliğini değerlendirmek için yapılan bir testtir. Çölyak hastalığı, bağırsak enfeksiyonları ve sindirim sistemi hastalıklarını belirlemede kullanılır.",
+        "price": 0.00,
+        "category": "Sindirim",
+        "priority": "high"
+    },
+    {
+        "test_id": "kidney_function",
+        "test_name": "Böbrek Fonksiyonları Testi",
+        "description": "Böbreklerin toksinleri ne kadar iyi filtrelediğini belirlemek, idrar yolları hastalıklarını ve böbrek yetmezliği riskini değerlendirmek için yapılan bir testtir.",
+        "price": 0.00,
+        "category": "Böbrek",
+        "priority": "high"
+    },
+    {
+        "test_id": "liver_function",
+        "test_name": "Karaciğer Fonksiyonları Testi",
+        "description": "Karaciğer enzimlerini, protein seviyelerini ve safra fonksiyonlarını değerlendirerek karaciğerin sağlığını belirlemek için yapılan bir testtir. Hepatit, siroz ve yağlı karaciğer hastalıkları teşhisinde kullanılır.",
+        "price": 0.00,
+        "category": "Karaciğer",
+        "priority": "high"
+    },
+    {
+        "test_id": "cardiovascular",
+        "test_name": "Kalp ve Damar Sağlığı Testi",
+        "description": "Kalp krizi riski, damar sağlığı ve kolesterol seviyelerini değerlendirmek için yapılan bir testtir. Kardiyovasküler hastalıkları önlemek ve erken teşhis etmek için kullanılır.",
+        "price": 0.00,
+        "category": "Kardiyovasküler",
+        "priority": "high"
+    },
+    {
+        "test_id": "brain_function",
+        "test_name": "Beyin Fonksiyonları Testi",
+        "description": "Beyin kimyasallarını analiz ederek nörolojik ve psikiyatrik hastalıkları değerlendirmek için yapılan bir testtir. Depresyon, anksiyete ve nörolojik bozuklukların belirlenmesine yardımcı olur.",
+        "price": 0.00,
+        "category": "Nöroloji",
+        "priority": "medium"
+    },
+    {
+        "test_id": "general_health",
+        "test_name": "Genel Sağlık Testi",
+        "description": "Kırmızı ve beyaz kan hücrelerinin, trombosit seviyelerinin ve enfeksiyon belirteçlerinin değerlendirilmesi için yapılan bir testtir. Anemi, bağışıklık sistemi hastalıkları ve enfeksiyon riskinin belirlenmesine yardımcı olur.",
+        "price": 0.00,
+        "category": "Genel Sağlık",
+        "priority": "high"
+    },
+    {
+        "test_id": "biomarkers",
+        "test_name": "Bio-Markers / Hastalık Belirteçleri",
+        "description": "Alzheimer, Parkinson, demans ve kanser gibi hastalıkların belirteçlerini analiz etmek için yapılan bir testtir. Erken teşhis ve önleyici sağlık planlaması yapmaya yardımcı olur.",
+        "price": 3470.56,
+        "category": "Biyomarker",
+        "priority": "high"
+    },
+    {
+        "test_id": "neurological_genetic",
+        "test_name": "Nörolojik ve Genetik Testler",
+        "description": "Genetik yapı ve nörotransmitter seviyelerini değerlendirerek nörolojik hastalık risklerini belirlemek için yapılan bir testtir. Hafıza, konsantrasyon ve psikolojik rahatsızlıklarla ilgili ipuçları sağlar.",
+        "price": 0.00,
+        "category": "Genetik",
+        "priority": "medium"
+    },
+    {
+        "test_id": "biochemical_inflammation",
+        "test_name": "Biyokimyasal ve İltihap Testleri",
+        "description": "Enflamasyon (iltihap) seviyelerini ölçerek bağışıklık sisteminin tepkisini analiz etmek için yapılan bir testtir. Kronik hastalıkların ve otoimmün hastalıkların belirlenmesine yardımcı olur.",
+        "price": 0.00,
+        "category": "İnflamasyon",
+        "priority": "high"
+    },
+    {
+        "test_id": "metabolic_health",
+        "test_name": "Metabolik ve Genel Sağlık Testleri",
+        "description": "Metabolik yaş, enerji üretimi ve temel sağlık parametrelerini değerlendirmek için yapılan bir testtir. Bireyin biyolojik yaşını belirleyerek genel sağlık durumunu analiz eder.",
+        "price": 0.00,
+        "category": "Metabolizma",
+        "priority": "high"
+    }
+]
+
 

@@ -19,11 +19,11 @@ from backend.config import (
     CHAT_HISTORY_LIMIT, USER_ANALYSES_LIMIT, QUIZ_LAB_MESSAGES_LIMIT,
     AI_MESSAGES_LIMIT, AI_MESSAGES_LIMIT_LARGE, LAB_MESSAGES_LIMIT,
     QUIZ_LAB_ANALYSES_LIMIT, DEBUG_AI_MESSAGES_LIMIT, MILLISECOND_MULTIPLIER,
-    MIN_LAB_TESTS_FOR_COMPARISON
+    MIN_LAB_TESTS_FOR_COMPARISON, AVAILABLE_TESTS
 )
 from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
 from backend.auth import get_db, get_or_create_user
-from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
+from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
@@ -1786,3 +1786,104 @@ def get_ai_messages_endpoint(
         }
     except Exception as e:
         return {"error": str(e), "type": type(e).__name__}
+
+# ---------- TEST ÖNERİSİ ENDPOINT ----------
+
+@app.post("/ai/test-recommendations", response_model=TestRecommendationResponse)
+async def get_test_recommendations(body: TestRecommendationRequest,
+                                 current_user: str = Depends(get_current_user),
+                                 db: Session = Depends(get_db),
+                                 x_user_id: str | None = Header(default=None),
+                                 x_user_level: int | None = Header(default=None)):
+    """Premium/Premium Plus kullanıcılar için kişiselleştirilmiş test önerileri"""
+    
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level)
+    
+    # Free kullanıcı engeli - Test önerileri premium özellik
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Test önerileri premium özelliktir")
+    
+    # User ID validasyonu
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
+    
+    user = get_or_create_user(db, x_user_id, user_plan)
+    
+    try:
+        # 1. Kullanıcının mevcut verilerini analiz et
+        user_context = {}
+        analysis_summary = ""
+        
+        if body.user_analysis:
+            # Quiz sonuçlarını al
+            quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_MESSAGES_LIMIT)
+            if quiz_messages:
+                user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
+                analysis_summary += f"Quiz analizi: {len(quiz_messages)} adet mevcut. "
+            
+            # Lab test sonuçlarını al
+            lab_single_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_single", LAB_MESSAGES_LIMIT)
+            lab_session_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_session", LAB_MESSAGES_LIMIT)
+            lab_summary_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", LAB_MESSAGES_LIMIT)
+            
+            total_lab_tests = len(lab_single_messages) + len(lab_session_messages) + len(lab_summary_messages)
+            if total_lab_tests > 0:
+                user_context["lab_data"] = {
+                    "single_tests": [msg.request_payload for msg in lab_single_messages],
+                    "session_tests": [msg.request_payload for msg in lab_session_messages],
+                    "summary_tests": [msg.request_payload for msg in lab_summary_messages]
+                }
+                analysis_summary += f"Lab testleri: {total_lab_tests} adet mevcut. "
+        
+        # 2. Daha önce baktırılan testleri filtrele
+        taken_test_ids = set()
+        if body.exclude_taken_tests and "lab_data" in user_context:
+            # Lab testlerinden test isimlerini çıkar
+            for lab_data in user_context["lab_data"]["single_tests"]:
+                if "test" in lab_data and "name" in lab_data["test"]:
+                    test_name = lab_data["test"]["name"].lower()
+                    # Test ismini test_id'ye çevir (basit mapping)
+                    if "hemoglobin" in test_name or "kan sayımı" in test_name:
+                        taken_test_ids.add("general_health")
+                    elif "glukoz" in test_name or "şeker" in test_name:
+                        taken_test_ids.add("diabetes")
+                    elif "kolesterol" in test_name or "lipid" in test_name:
+                        taken_test_ids.add("lipid_cholesterol")
+                    # Daha fazla mapping eklenebilir
+        
+        # 3. Mevcut testlerden filtrele
+        available_tests = [test for test in AVAILABLE_TESTS if test["test_id"] not in taken_test_ids]
+        
+        # 4. Basit öneri sistemi (AI olmadan)
+        recommended_tests = []
+        for test in available_tests[:body.max_recommendations]:
+            if test["priority"] == "high":
+                recommended_tests.append({
+                    "test_name": test["test_name"],
+                    "reason": f"{test['category']} kategorisinde öncelikli test - {test['description'][:100]}...",
+                    "benefit": f"Bu test ile {test['category'].lower()} sağlığınızı değerlendirebilir ve erken teşhis imkanı elde edebilirsiniz."
+                })
+        
+        # 5. Response oluştur
+        response_data = {
+            "title": "Test Önerileri",
+            "recommended_tests": recommended_tests,
+            "analysis_summary": analysis_summary or "Kullanıcı verisi bulunamadı",
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+        }
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            user_id=x_user_id,
+            message_type="test_recommendations",
+            request_payload=body.model_dump(),
+            response_payload=response_data,
+            model_used="test_recommendations_ai"
+        )
+        
+        return response_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Test önerisi oluşturulurken hata: {str(e)}")
