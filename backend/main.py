@@ -10,6 +10,8 @@ from functools import wraps
 from collections import defaultdict
 import requests
 import xml.etree.ElementTree as ET
+import time
+from datetime import datetime
 
 from backend.config import (
     ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT,
@@ -269,7 +271,6 @@ def longo_image():
 
 # Global free user conversation memory (basit dict)
 free_user_conversations = {}
-import time
 
 async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     """Free kullanıcılar için session-based chat handler"""
@@ -489,7 +490,6 @@ def chat_start(body: ChatStartRequest = None,
     user = get_or_create_user(db, x_user_id, user_plan)
     
     # Yeni conversation ID oluştur (timestamp-based)
-    import time
     new_conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)  # Millisecond timestamp
     
     return ChatStartResponse(conversation_id=new_conversation_id)
@@ -1108,7 +1108,6 @@ def analyze_single_session(body: SingleSessionRequest,
     # Health Guard kaldırıldı - Lab analizi zaten kontrollü içerik üretiyor
     
     # Use parallel single session analysis with flexible input
-    from datetime import datetime
     session_date = body.session_date or body.date or datetime.now().strftime("%Y-%m-%d")
     laboratory = body.laboratory or body.lab or "Bilinmeyen Laboratuvar"
     
