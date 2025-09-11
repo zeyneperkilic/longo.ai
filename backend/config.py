@@ -52,6 +52,21 @@ MODERATION_MODEL = "google/gemini-2.5-flash"
 
 MODERATION_TIMEOUT_MS = 10000  # 10 saniye (ücretli modeller için - hızlı)
 
+# Magic Numbers - Config'e taşındı
+XML_REQUEST_TIMEOUT = 10  # XML request timeout saniye
+FREE_QUESTION_LIMIT = 10  # Free kullanıcı günlük soru limiti
+FREE_SESSION_TIMEOUT_SECONDS = 7200  # Free session timeout (2 saat)
+CHAT_HISTORY_LIMIT = 10  # Chat history limiti
+USER_ANALYSES_LIMIT = 5  # User analyses limiti
+QUIZ_LAB_MESSAGES_LIMIT = 5  # Quiz/lab messages limiti
+AI_MESSAGES_LIMIT = 50  # AI messages limiti
+AI_MESSAGES_LIMIT_LARGE = 100  # Büyük AI messages limiti
+LAB_MESSAGES_LIMIT = 20  # Lab messages limiti
+QUIZ_LAB_ANALYSES_LIMIT = 3  # Quiz/lab analyses limiti
+DEBUG_AI_MESSAGES_LIMIT = 10  # Debug AI messages limiti
+MILLISECOND_MULTIPLIER = 1000  # Millisecond çarpanı
+MIN_LAB_TESTS_FOR_COMPARISON = 2  # Lab test karşılaştırması için minimum test sayısı
+
 # XML Supplement Listesi - Tüm endpoint'lerde kullanılacak
 SUPPLEMENTS_LIST = [
     {"id": 247, "name": "Zeaksantin", "category": "Longevity"},

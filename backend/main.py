@@ -11,7 +11,14 @@ from collections import defaultdict
 import requests
 import xml.etree.ElementTree as ET
 
-from backend.config import ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT
+from backend.config import (
+    ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT,
+    XML_REQUEST_TIMEOUT, FREE_QUESTION_LIMIT, FREE_SESSION_TIMEOUT_SECONDS,
+    CHAT_HISTORY_LIMIT, USER_ANALYSES_LIMIT, QUIZ_LAB_MESSAGES_LIMIT,
+    AI_MESSAGES_LIMIT, AI_MESSAGES_LIMIT_LARGE, LAB_MESSAGES_LIMIT,
+    QUIZ_LAB_ANALYSES_LIMIT, DEBUG_AI_MESSAGES_LIMIT, MILLISECOND_MULTIPLIER,
+    MIN_LAB_TESTS_FOR_COMPARISON
+)
 from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
 from backend.auth import get_db, get_or_create_user
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse
@@ -54,7 +61,7 @@ def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
 def get_xml_products():
     """XML'den 74 ürünü çek - Free kullanıcılar için"""
     try:
-        response = requests.get('https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml', timeout=10)
+        response = requests.get('https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml', timeout=XML_REQUEST_TIMEOUT)
         root = ET.fromstring(response.text)
         products = []
         for item in root.findall('.//item'):
@@ -271,8 +278,8 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     # Session-based question count kontrolü
     question_count = get_session_question_count(x_user_id)
     
-    # 10 soru limiti kontrolü
-    if question_count >= 10:
+    # Free kullanıcı soru limiti kontrolü
+    if question_count >= FREE_QUESTION_LIMIT:
         return ChatResponse(
             conversation_id=0,
             reply="LIMIT_POPUP:🎯 Günlük 10 soru limitiniz doldu! Yarın tekrar konuşmaya devam edebilirsiniz. 💡 Premium plana geçerek sınırsız soru sorma imkanına sahip olun!",
@@ -293,7 +300,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     current_time = time.time()
     expired_users = []
     for user_id, data in free_user_conversations.items():
-        if current_time - data["last_activity"] > 7200:  # 2 saat = 7200 saniye
+        if current_time - data["last_activity"] > FREE_SESSION_TIMEOUT_SECONDS:
             expired_users.append(user_id)
     
     for user_id in expired_users:
@@ -400,7 +407,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         xml_products = get_xml_products()
         
         # Conversation history'yi al (son 5 mesaj)
-        conversation_history = free_user_conversations[x_user_id]["messages"][-10:] if len(free_user_conversations[x_user_id]["messages"]) > 0 else []
+        conversation_history = free_user_conversations[x_user_id]["messages"][-CHAT_HISTORY_LIMIT:] if len(free_user_conversations[x_user_id]["messages"]) > 0 else []
         
         # Kullanıcı mesajını hazırla
         user_message = message_text
@@ -468,8 +475,8 @@ def chat_start(body: ChatStartRequest = None,
         from backend.cache_utils import get_session_question_count
         question_count = get_session_question_count(x_user_id or "anonymous")
         
-        # 10 soru limiti kontrolü
-        if question_count >= 10:
+        # Free kullanıcı soru limiti kontrolü
+        if question_count >= FREE_QUESTION_LIMIT:
             return ChatStartResponse(
                 conversation_id=0,
                 detail="🎯 Günlük 10 soru limitiniz doldu! Yarın tekrar konuşmaya devam edebilirsiniz. 💡 Premium plana geçerek sınırsız soru sorma imkanına sahip olun!"
@@ -483,7 +490,7 @@ def chat_start(body: ChatStartRequest = None,
     
     # Yeni conversation ID oluştur (timestamp-based)
     import time
-    new_conversation_id = int(time.time() * 1000)  # Millisecond timestamp
+    new_conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)  # Millisecond timestamp
     
     return ChatStartResponse(conversation_id=new_conversation_id)
 
@@ -593,7 +600,7 @@ async def chat_message(req: ChatMessageRequest,
         return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
 
     # Chat history'yi ai_messages'tan al (Message tablosu yerine)
-    chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=10)
+    chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_LIMIT)
     
     # ai_messages formatını history formatına çevir
     rows = []
@@ -604,7 +611,7 @@ async def chat_message(req: ChatMessageRequest,
             rows.append({"role": "assistant", "content": msg.response_payload["reply"], "created_at": msg.created_at})
     
     # Get user's previous analyses for context (CACHE THIS!)
-    user_analyses = get_user_ai_messages(db, x_user_id, limit=5)
+    user_analyses = get_user_ai_messages(db, x_user_id, limit=USER_ANALYSES_LIMIT)
     
     # Global + Local Context Sistemi - OPTIMIZED
     user_context = {}
@@ -730,10 +737,10 @@ async def chat_message(req: ChatMessageRequest,
     history.append({"role": "user", "content": supplements_info})
     
     # Quiz ve Lab verilerini ai_messages'tan çek ve AI'ya gönder
-    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=5)
-    lab_single_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_single", limit=5)
-    lab_session_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=5)
-    lab_summary_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=5)
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
+    lab_single_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_single", limit=QUIZ_LAB_MESSAGES_LIMIT)
+    lab_session_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=QUIZ_LAB_MESSAGES_LIMIT)
+    lab_summary_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=QUIZ_LAB_MESSAGES_LIMIT)
     
     # Quiz verilerini ekle
     if quiz_messages:
@@ -965,7 +972,7 @@ def analyze_single_lab(body: SingleLabRequest,
 
     try:
         # Son 50 ai_messages kaydını al ve gez
-        prior_msgs = get_ai_messages(db, external_user_id=x_user_id, limit=50)
+        prior_msgs = get_ai_messages(db, external_user_id=x_user_id, limit=AI_MESSAGES_LIMIT)
         for msg in prior_msgs:
             if not msg or not msg.request_payload:
                 continue
@@ -1101,8 +1108,9 @@ def analyze_single_session(body: SingleSessionRequest,
     # Health Guard kaldırıldı - Lab analizi zaten kontrollü içerik üretiyor
     
     # Use parallel single session analysis with flexible input
-    session_date = body.session_date or body.date or "2024-01-15"  # Default date
-    laboratory = body.laboratory or body.lab or "Laboratuvar"  # Default lab name
+    from datetime import datetime
+    session_date = body.session_date or body.date or datetime.now().strftime("%Y-%m-%d")
+    laboratory = body.laboratory or body.lab or "Bilinmeyen Laboratuvar"
     
     res = parallel_single_session_analyze(tests_dict, session_date, laboratory)
     final_json = res["content"]
@@ -1174,7 +1182,7 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
 
     from backend.db import get_ai_messages
     try:
-        prior_msgs = get_ai_messages(db, external_user_id=x_user_id, limit=100)
+        prior_msgs = get_ai_messages(db, external_user_id=x_user_id, limit=AI_MESSAGES_LIMIT_LARGE)
         for msg in prior_msgs:
             if not msg or not msg.request_payload:
                 continue
@@ -1293,7 +1301,7 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "Kullanıcı bulunamadı")
     
     # Get lab tests from ai_messages
-    lab_messages = get_ai_messages(db, external_user_id=user_id, message_type="lab_single", limit=20)
+    lab_messages = get_ai_messages(db, external_user_id=user_id, message_type="lab_single", limit=LAB_MESSAGES_LIMIT)
     lab_history = []
     
     # Convert ai_messages to lab_history format
@@ -1325,7 +1333,7 @@ def get_user_progress(user_id: str, db: Session = Depends(get_db)):
     }
     
     # Compare test results if we have at least 2 tests
-    if len(lab_history) >= 2:
+    if len(lab_history) >= MIN_LAB_TESTS_FOR_COMPARISON:
         latest_test = lab_history[0]  # Most recent
         previous_test = lab_history[1]  # Previous
         
@@ -1517,12 +1525,12 @@ async def premium_plus_lifestyle_recommendations(
     user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
     
     # Quiz geçmişini al
-    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=3)
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_ANALYSES_LIMIT)
     
     # Lab analizlerini al
-    lab_analyses = get_user_ai_messages_by_type(db, x_user_id, "lab_single", limit=3)
-    lab_sessions = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=3)
-    lab_summaries = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=3)
+    lab_analyses = get_user_ai_messages_by_type(db, x_user_id, "lab_single", limit=QUIZ_LAB_ANALYSES_LIMIT)
+    lab_sessions = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=QUIZ_LAB_ANALYSES_LIMIT)
+    lab_summaries = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=QUIZ_LAB_ANALYSES_LIMIT)
     
 
     
@@ -1738,7 +1746,7 @@ def debug_database(current_user: str = Depends(get_current_user),
         user = get_or_create_user_by_external_id(db, x_user_id, "free")
         
         # AI messages
-        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=10)
+        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=DEBUG_AI_MESSAGES_LIMIT)
         
         return {
             "user_id": user.id,
