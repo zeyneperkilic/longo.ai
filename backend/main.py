@@ -932,19 +932,8 @@ def analyze_single_lab(body: SingleLabRequest,
                         x_user_level: int | None = Header(default=None)):
     """Analyze single lab test result with historical trend analysis"""
     
-    # Plan kontrolü - Yeni sistem: userLevel bazlı
-    if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
-            user_plan = "free"
-        elif x_user_level == 2:
-            user_plan = "premium"
-        elif x_user_level == 3:
-            user_plan = "premium_plus"
-        else:
-            user_plan = "free"  # Default fallback
-    else:
-        # Eski sistem fallback
-        user_plan = x_user_plan or "premium"
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
     
     # Free kullanıcı engeli - Lab testleri premium özellik
     if user_plan == "free":
@@ -1075,19 +1064,8 @@ def analyze_single_session(body: SingleSessionRequest,
                           x_user_level: int | None = Header(default=None)):
     """Analyze single lab session with multiple tests"""
     
-    # Plan kontrolü - Yeni sistem: userLevel bazlı
-    if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
-            user_plan = "free"
-        elif x_user_level == 2:
-            user_plan = "premium"
-        elif x_user_level == 3:
-            user_plan = "premium_plus"
-        else:
-            user_plan = "free"  # Default fallback
-    else:
-        # Eski sistem fallback
-        user_plan = x_user_plan or "premium"  # Asıl site zaten kontrol ediyor
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
     
     # Free kullanıcı engeli - Lab testleri premium özellik
     if user_plan == "free":
@@ -1157,19 +1135,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
                                  x_user_level: int | None = Header(default=None)):
     """Generate general summary of multiple lab tests with supplement recommendations and progress tracking"""
     
-    # Plan kontrolü - Yeni sistem: userLevel bazlı
-    if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
-            user_plan = "free"
-        elif x_user_level == 2:
-            user_plan = "premium"
-        elif x_user_level == 3:
-            user_plan = "premium_plus"
-        else:
-            user_plan = "free"  # Default fallback
-    else:
-        # Eski sistem fallback
-        user_plan = x_user_plan or "premium"  # Asıl site zaten kontrol ediyor
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level, x_user_plan)
     
     # Free kullanıcı engeli - Lab testleri premium özellik
     if user_plan == "free":
