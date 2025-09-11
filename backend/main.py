@@ -1859,10 +1859,15 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         recommended_tests = []
         
         # AI'ya gönderilecek context'i hazırla
+        quiz_count = len(user_context.get("quiz_data", [])) if "quiz_data" in user_context else 0
+        lab_count = 0
+        if "lab_data" in user_context:
+            lab_count = len(user_context["lab_data"].get("single_tests", [])) + len(user_context["lab_data"].get("session_tests", [])) + len(user_context["lab_data"].get("summary_tests", []))
+        
         ai_context = f"""
 KULLANICI VERİLERİ:
-- Quiz sayısı: {len(quiz_messages) if 'quiz_data' in user_context else 0}
-- Lab test sayısı: {total_lab_tests if 'lab_data' in user_context else 0}
+- Quiz sayısı: {quiz_count}
+- Lab test sayısı: {lab_count}
 - Mevcut testler: {len(available_tests)} adet
 - Daha önce baktırılan testler: {len(taken_test_ids)} adet
 
