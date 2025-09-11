@@ -1876,7 +1876,7 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         # AI mesajını kaydet
         create_ai_message(
             db=db,
-            user_id=x_user_id,
+            external_user_id=x_user_id,
             message_type="test_recommendations",
             request_payload=body.model_dump(),
             response_payload=response_data,
