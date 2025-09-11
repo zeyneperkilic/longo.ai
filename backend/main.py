@@ -1836,24 +1836,17 @@ async def get_test_recommendations(body: TestRecommendationRequest,
                 }
                 analysis_summary += f"Lab testleri: {total_lab_tests} adet mevcut. "
         
-        # 2. Daha önce baktırılan testleri filtrele
-        taken_test_ids = set()
+        # 2. Daha önce baktırılan testleri AI'ya bildir
+        taken_test_names = []
         if body.exclude_taken_tests and "lab_data" in user_context:
             # Lab testlerinden test isimlerini çıkar
             for lab_data in user_context["lab_data"]["single_tests"]:
                 if "test" in lab_data and "name" in lab_data["test"]:
-                    test_name = lab_data["test"]["name"].lower()
-                    # Test ismini test_id'ye çevir (basit mapping)
-                    if "hemoglobin" in test_name or "kan sayımı" in test_name:
-                        taken_test_ids.add("general_health")
-                    elif "glukoz" in test_name or "şeker" in test_name:
-                        taken_test_ids.add("diabetes")
-                    elif "kolesterol" in test_name or "lipid" in test_name:
-                        taken_test_ids.add("lipid_cholesterol")
-                    # Daha fazla mapping eklenebilir
+                    test_name = lab_data["test"]["name"]
+                    taken_test_names.append(test_name)
         
-        # 3. Mevcut testlerden filtrele
-        available_tests = [test for test in AVAILABLE_TESTS if test["test_id"] not in taken_test_ids]
+        # 3. Tüm testleri AI'ya ver (filtreleme yapma)
+        available_tests = AVAILABLE_TESTS
         
         # 4. AI ile kişiselleştirilmiş öneri sistemi
         recommended_tests = []
@@ -1881,8 +1874,13 @@ async def get_test_recommendations(body: TestRecommendationRequest,
                 if "test" in test and "name" in test["test"]:
                     lab_info += f"- {test['test']['name']}: {test['test'].get('value', 'N/A')} ({test['test'].get('reference_range', 'N/A')})\n"
         
+        # Daha önce yapılan testleri ekle
+        taken_tests_info = ""
+        if taken_test_names:
+            taken_tests_info = f"\nDaha önce yapılan testler: {', '.join(taken_test_names)}\nBu testleri önerme!\n"
+        
         ai_context = f"""
-{user_info}{lab_info}
+{user_info}{lab_info}{taken_tests_info}
 
 Bu verilere göre en uygun {body.max_recommendations} testi öner. SADECE JSON formatında yanıt ver:
 
