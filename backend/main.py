@@ -1855,15 +1855,108 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         # 3. Mevcut testlerden filtrele
         available_tests = [test for test in AVAILABLE_TESTS if test["test_id"] not in taken_test_ids]
         
-        # 4. Basit öneri sistemi (AI olmadan)
+        # 4. AI ile kişiselleştirilmiş öneri sistemi
         recommended_tests = []
-        for test in available_tests[:body.max_recommendations]:
-            if test["priority"] == "high":
-                recommended_tests.append({
-                    "test_name": test["test_name"],
-                    "reason": f"{test['category']} kategorisinde öncelikli test - {test['description'][:100]}...",
-                    "benefit": f"Bu test ile {test['category'].lower()} sağlığınızı değerlendirebilir ve erken teşhis imkanı elde edebilirsiniz."
-                })
+        
+        # AI'ya gönderilecek context'i hazırla
+        ai_context = f"""
+KULLANICI VERİLERİ:
+- Quiz sayısı: {len(quiz_messages) if 'quiz_data' in user_context else 0}
+- Lab test sayısı: {total_lab_tests if 'lab_data' in user_context else 0}
+- Mevcut testler: {len(available_tests)} adet
+- Daha önce baktırılan testler: {len(taken_test_ids)} adet
+
+QUIZ VERİLERİ:
+"""
+        
+        if "quiz_data" in user_context and user_context["quiz_data"]:
+            for i, quiz in enumerate(user_context["quiz_data"][:2]):  # Son 2 quiz
+                ai_context += f"Quiz {i+1}: {str(quiz)[:200]}...\n"
+        else:
+            ai_context += "Quiz verisi bulunamadı\n"
+        
+        ai_context += f"""
+LAB VERİLERİ:
+"""
+        
+        if "lab_data" in user_context and user_context["lab_data"]:
+            # Lab single tests
+            if user_context["lab_data"]["single_tests"]:
+                ai_context += f"Single Tests: {len(user_context['lab_data']['single_tests'])} adet\n"
+                for test in user_context["lab_data"]["single_tests"][:3]:  # Son 3 test
+                    if "test" in test and "name" in test["test"]:
+                        ai_context += f"- {test['test']['name']}: {test['test'].get('value', 'N/A')}\n"
+            
+            # Lab sessions
+            if user_context["lab_data"]["session_tests"]:
+                ai_context += f"Session Tests: {len(user_context['lab_data']['session_tests'])} adet\n"
+                for session in user_context["lab_data"]["session_tests"][:2]:  # Son 2 session
+                    if "session_tests" in session:
+                        for test in session["session_tests"][:3]:
+                            ai_context += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')}\n"
+            
+            # Lab summaries
+            if user_context["lab_data"]["summary_tests"]:
+                ai_context += f"Summary Tests: {len(user_context['lab_data']['summary_tests'])} adet\n"
+        else:
+            ai_context += "Lab verisi bulunamadı\n"
+        
+        ai_context += f"""
+MEVCUT TESTLER:
+"""
+        for test in available_tests[:10]:  # İlk 10 testi göster
+            ai_context += f"- {test['test_name']} ({test['category']}) - {test['description'][:100]}...\n"
+        
+        ai_context += f"""
+GÖREV: Kullanıcının quiz ve lab verilerine göre en uygun {body.max_recommendations} testi öner.
+Her test için:
+1. test_name: Test adı
+2. reason: Neden önerildiği (kullanıcının verilerine göre)
+3. benefit: Kullanıcıya sağlayacağı fayda
+
+SADECE JSON formatında yanıt ver:
+{{
+  "recommended_tests": [
+    {{
+      "test_name": "Test Adı",
+      "reason": "Neden önerildiği",
+      "benefit": "Faydası"
+    }}
+  ]
+}}
+"""
+        
+        try:
+            from backend.openrouter_client import get_ai_response
+            
+            # AI'ya gönder
+            ai_response = await get_ai_response(
+                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının quiz ve lab verilerine göre test önerileri yapıyorsun. Kullanıcının mevcut sağlık durumuna göre en uygun testleri öner.",
+                user_message=ai_context
+            )
+            
+            # AI response'unu parse et
+            import json
+            try:
+                parsed_response = json.loads(ai_response)
+                if "recommended_tests" in parsed_response:
+                    recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
+                else:
+                    raise ValueError("AI response format hatası")
+            except (json.JSONDecodeError, ValueError, KeyError):
+                # AI response parse edilemezse fallback
+                raise ValueError("AI response parse edilemedi")
+                
+        except Exception as e:
+            print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
+            # Fallback: Basit öneri sistemi
+            for test in available_tests[:body.max_recommendations]:
+                if test["priority"] == "high":
+                    recommended_tests.append({
+                        "test_name": test["test_name"],
+                        "reason": f"{test['category']} kategorisinde öncelikli test - {test['description'][:100]}...",
+                        "benefit": f"Bu test ile {test['category'].lower()} sağlığınızı değerlendirebilir ve erken teşhis imkanı elde edebilirsiniz."
+                    })
         
         # 5. Response oluştur
         response_data = {
