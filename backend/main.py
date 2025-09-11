@@ -1864,71 +1864,29 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         if "lab_data" in user_context:
             lab_count = len(user_context["lab_data"].get("single_tests", [])) + len(user_context["lab_data"].get("session_tests", [])) + len(user_context["lab_data"].get("summary_tests", []))
         
-        ai_context = f"""
-KULLANICI VERİLERİ:
-- Quiz sayısı: {quiz_count}
-- Lab test sayısı: {lab_count}
-- Mevcut testler: {len(available_tests)} adet
-- Daha önce baktırılan testler: {len(taken_test_ids)} adet
-
-QUIZ VERİLERİ:
-"""
-        
+        # Basit AI context hazırla
+        user_info = ""
         if "quiz_data" in user_context and user_context["quiz_data"]:
-            for i, quiz in enumerate(user_context["quiz_data"][:2]):  # Son 2 quiz
-                ai_context += f"Quiz {i+1}: {str(quiz)[:200]}...\n"
-        else:
-            ai_context += "Quiz verisi bulunamadı\n"
+            quiz = user_context["quiz_data"][0]  # Son quiz
+            user_info += f"Kullanıcı: {quiz.get('age', 'N/A')} yaş, {quiz.get('gender', 'N/A')}, "
+            if quiz.get('health_conditions'):
+                user_info += f"hastalıklar: {', '.join(quiz['health_conditions'])}, "
+            if quiz.get('goals'):
+                user_info += f"hedefler: {', '.join(quiz['goals'])}\n"
         
-        ai_context += f"""
-LAB VERİLERİ:
-"""
+        lab_info = ""
+        if "lab_data" in user_context and user_context["lab_data"]["single_tests"]:
+            lab_info = "Lab testleri:\n"
+            for test in user_context["lab_data"]["single_tests"][:2]:
+                if "test" in test and "name" in test["test"]:
+                    lab_info += f"- {test['test']['name']}: {test['test'].get('value', 'N/A')} ({test['test'].get('reference_range', 'N/A')})\n"
         
-        if "lab_data" in user_context and user_context["lab_data"]:
-            # Lab single tests
-            if user_context["lab_data"]["single_tests"]:
-                ai_context += f"Single Tests: {len(user_context['lab_data']['single_tests'])} adet\n"
-                for test in user_context["lab_data"]["single_tests"][:3]:  # Son 3 test
-                    if "test" in test and "name" in test["test"]:
-                        ai_context += f"- {test['test']['name']}: {test['test'].get('value', 'N/A')}\n"
-            
-            # Lab sessions
-            if user_context["lab_data"]["session_tests"]:
-                ai_context += f"Session Tests: {len(user_context['lab_data']['session_tests'])} adet\n"
-                for session in user_context["lab_data"]["session_tests"][:2]:  # Son 2 session
-                    if "session_tests" in session:
-                        for test in session["session_tests"][:3]:
-                            ai_context += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')}\n"
-            
-            # Lab summaries
-            if user_context["lab_data"]["summary_tests"]:
-                ai_context += f"Summary Tests: {len(user_context['lab_data']['summary_tests'])} adet\n"
-        else:
-            ai_context += "Lab verisi bulunamadı\n"
-        
-        ai_context += f"""
-MEVCUT TESTLER:
-"""
-        for test in available_tests[:10]:  # İlk 10 testi göster
-            ai_context += f"- {test['test_name']} ({test['category']}) - {test['description'][:100]}...\n"
-        
-        ai_context += f"""
-GÖREV: Kullanıcının quiz ve lab verilerine göre en uygun {body.max_recommendations} testi öner.
-Her test için:
-1. test_name: Test adı
-2. reason: Neden önerildiği (kullanıcının verilerine göre)
-3. benefit: Kullanıcıya sağlayacağı fayda
+        ai_context = f"""
+{user_info}{lab_info}
 
-SADECE JSON formatında yanıt ver:
-{{
-  "recommended_tests": [
-    {{
-      "test_name": "Test Adı",
-      "reason": "Neden önerildiği",
-      "benefit": "Faydası"
-    }}
-  ]
-}}
+Bu verilere göre en uygun {body.max_recommendations} testi öner. SADECE JSON formatında yanıt ver:
+
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Neden önerildiği", "benefit": "Faydası"}}]}}
 """
         
         try:
