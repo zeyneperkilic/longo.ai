@@ -1935,15 +1935,20 @@ SADECE JSON formatında yanıt ver:
                 user_message=ai_context
             )
             
+            print(f"🔍 DEBUG: AI Response: {ai_response}")
+            
             # AI response'unu parse et
             import json
             try:
                 parsed_response = json.loads(ai_response)
                 if "recommended_tests" in parsed_response:
                     recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
+                    print(f"🔍 DEBUG: AI önerileri başarılı: {len(recommended_tests)} adet")
                 else:
                     raise ValueError("AI response format hatası")
-            except (json.JSONDecodeError, ValueError, KeyError):
+            except (json.JSONDecodeError, ValueError, KeyError) as parse_error:
+                print(f"🔍 DEBUG: JSON parse hatası: {parse_error}")
+                print(f"🔍 DEBUG: Raw response: {ai_response}")
                 # AI response parse edilemezse fallback
                 raise ValueError("AI response parse edilemedi")
                 
