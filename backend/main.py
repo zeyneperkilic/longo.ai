@@ -78,18 +78,27 @@ def get_xml_products():
 
 def get_standardized_lab_data(db, user_id, limit=5):
     """Tüm endpoint'ler için standart lab verisi - ham test verileri"""
+    print(f"🔍 DEBUG: get_standardized_lab_data called for user {user_id}")
+    
     # Önce lab_summary'den dene (en kapsamlı)
     lab_summary = get_user_ai_messages_by_type(db, user_id, "lab_summary", limit)
+    print(f"🔍 DEBUG: lab_summary found: {len(lab_summary) if lab_summary else 0}")
+    
     if lab_summary and lab_summary[0].request_payload and "tests" in lab_summary[0].request_payload:
-        return lab_summary[0].request_payload["tests"]
+        tests = lab_summary[0].request_payload["tests"]
+        print(f"🔍 DEBUG: Returning lab_summary tests: {len(tests)} tests")
+        return tests
     
     # Lab_summary yoksa lab_single'dan al
     lab_single = get_user_ai_messages_by_type(db, user_id, "lab_single", limit)
+    print(f"🔍 DEBUG: lab_single found: {len(lab_single) if lab_single else 0}")
+    
     tests = []
     for msg in lab_single:
         if msg.request_payload and "test" in msg.request_payload:
             tests.append(msg.request_payload["test"])
     
+    print(f"🔍 DEBUG: Returning lab_single tests: {len(tests)} tests")
     return tests
 
 def get_user_context_for_message(user_context: dict, user_analyses: list) -> tuple[str, str]:
