@@ -76,6 +76,22 @@ def get_xml_products():
     except Exception as e:
         return []
 
+def get_standardized_lab_data(db, user_id, limit=5):
+    """Tüm endpoint'ler için standart lab verisi - ham test verileri"""
+    # Önce lab_summary'den dene (en kapsamlı)
+    lab_summary = get_user_ai_messages_by_type(db, user_id, "lab_summary", limit)
+    if lab_summary and lab_summary[0].request_payload and "tests" in lab_summary[0].request_payload:
+        return lab_summary[0].request_payload["tests"]
+    
+    # Lab_summary yoksa lab_single'dan al
+    lab_single = get_user_ai_messages_by_type(db, user_id, "lab_single", limit)
+    tests = []
+    for msg in lab_single:
+        if msg.request_payload and "test" in msg.request_payload:
+            tests.append(msg.request_payload["test"])
+    
+    return tests
+
 def get_user_context_for_message(user_context: dict, user_analyses: list) -> tuple[str, str]:
     """Lab ve quiz verilerini user message için hazırla"""
     lab_info = ""
