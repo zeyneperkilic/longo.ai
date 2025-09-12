@@ -1791,9 +1791,11 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         if source == "quiz":
             # Sadece quiz verisi al
             quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_MESSAGES_LIMIT)
+            print(f"🔍 DEBUG: Quiz messages found: {len(quiz_messages) if quiz_messages else 0}")
             if quiz_messages:
                 user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
                 analysis_summary = "Quiz verilerine göre analiz tamamlandı."
+                print(f"🔍 DEBUG: Quiz data: {user_context['quiz_data']}")
         
         elif source == "lab":
             # Sadece lab verisi al
