@@ -1861,6 +1861,13 @@ KURALLAR:
 - Yaş/cinsiyet risk faktörlerini değerlendir
 - Sadece gerekli testleri öner
 
+ÖNEMLİ: 
+- Ailede diyabet varsa HbA1c, açlık kan şekeri testleri öner
+- Ailede kalp hastalığı varsa lipid profili, kardiyovasküler testler öner
+- Yaş 40+ ise genel sağlık taraması testleri öner
+- Yaş 50+ ise kanser tarama testleri öner
+- Sadece gerçekten gerekli olan testleri öner
+
 JSON formatında yanıt ver:
 {{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Neden önerildiği", "benefit": "Faydası"}}]}}
 """
