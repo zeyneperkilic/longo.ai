@@ -1820,7 +1820,7 @@ async def get_test_recommendations(body: TestRecommendationRequest,
             quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_MESSAGES_LIMIT)
             if quiz_messages:
                 user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
-                analysis_summary += f"Quiz analizi: {len(quiz_messages)} adet mevcut. "
+                analysis_summary = "Kişiselleştirilmiş analiz tamamlandı."
             
             # Lab test sonuçlarını al
             lab_single_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_single", LAB_MESSAGES_LIMIT)
@@ -1834,7 +1834,8 @@ async def get_test_recommendations(body: TestRecommendationRequest,
                     "session_tests": [msg.request_payload for msg in lab_session_messages],
                     "summary_tests": [msg.request_payload for msg in lab_summary_messages]
                 }
-                analysis_summary += f"Lab testleri: {total_lab_tests} adet mevcut. "
+                if not analysis_summary:
+                    analysis_summary = "Kişiselleştirilmiş analiz tamamlandı."
         
         # 2. Daha önce baktırılan testleri AI'ya bildir
         taken_test_names = []
