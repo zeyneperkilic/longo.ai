@@ -1534,12 +1534,8 @@ async def premium_plus_lifestyle_recommendations(
     # Quiz geçmişini al
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_ANALYSES_LIMIT)
     
-    # Lab analizlerini al
-    lab_analyses = get_user_ai_messages_by_type(db, x_user_id, "lab_single", limit=QUIZ_LAB_ANALYSES_LIMIT)
-    lab_sessions = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=QUIZ_LAB_ANALYSES_LIMIT)
-    lab_summaries = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=QUIZ_LAB_ANALYSES_LIMIT)
-    
-
+    # Lab analizlerini al - Helper fonksiyon kullan
+    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
     
     # AI'ya gönderilecek context'i hazırla
     user_context = {}
@@ -1552,34 +1548,10 @@ async def premium_plus_lifestyle_recommendations(
                 user_context["quiz_data"].append(msg.request_payload)
     
     # Lab verilerini context'e ekle
-    if lab_analyses or lab_sessions or lab_summaries:
+    if lab_tests:
         user_context["lab_data"] = {
-            "single_tests": [],
-            "sessions": [],
-            "summaries": []
+            "tests": lab_tests
         }
-        
-        # Lab Single verileri
-        for msg in lab_analyses:
-            if msg.request_payload and "test" in msg.request_payload:
-                user_context["lab_data"]["single_tests"].append(msg.request_payload["test"])
-        
-        # Lab Session verileri
-        for msg in lab_sessions:
-            if msg.request_payload and "session_tests" in msg.request_payload:
-                user_context["lab_data"]["sessions"].append({
-                    "laboratory": msg.request_payload.get("laboratory", ""),
-                    "test_date": msg.request_payload.get("test_date", ""),
-                    "tests": msg.request_payload["session_tests"]
-                })
-        
-        # Lab Summary verileri
-        for msg in lab_summaries:
-            if msg.request_payload and "tests" in msg.request_payload:
-                user_context["lab_data"]["summaries"].append({
-                    "test_count": msg.request_payload.get("test_count", 0),
-                    "tests": msg.request_payload["tests"]
-                })
     
     # System prompt - Premium Plus özel
     system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
@@ -1708,7 +1680,7 @@ Sadece bu 3 field'ı doldur, başka hiçbir şey ekleme!"""
                 "exercise_plan": parsed_reply.get("exercise_plan", ""),
                 "lifestyle_tips": parsed_reply.get("lifestyle_tips", ""),
                 "quiz_count": len(quiz_messages) if quiz_messages else 0,
-                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
+                "lab_count": len(lab_tests) if lab_tests else 0
             }
         except json.JSONDecodeError:
             # JSON parse edilemezse eski formatı kullan
@@ -1718,7 +1690,7 @@ Sadece bu 3 field'ı doldur, başka hiçbir şey ekleme!"""
                 "exercise_plan": "",
                 "lifestyle_tips": "",
                 "quiz_count": len(quiz_messages) if quiz_messages else 0,
-                "lab_count": len(lab_analyses) + len(lab_sessions) + len(lab_summaries)
+                "lab_count": len(lab_tests) if lab_tests else 0
             }
         
     except Exception as e:
@@ -1838,28 +1810,22 @@ async def get_test_recommendations(body: TestRecommendationRequest,
                 user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
                 analysis_summary = "Kişiselleştirilmiş analiz tamamlandı."
             
-            # Lab test sonuçlarını al
-            lab_single_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_single", LAB_MESSAGES_LIMIT)
-            lab_session_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_session", LAB_MESSAGES_LIMIT)
-            lab_summary_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", LAB_MESSAGES_LIMIT)
-            
-            total_lab_tests = len(lab_single_messages) + len(lab_session_messages) + len(lab_summary_messages)
-            if total_lab_tests > 0:
+            # Lab test sonuçlarını al - Helper fonksiyon kullan
+            lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+            if lab_tests:
                 user_context["lab_data"] = {
-                    "single_tests": [msg.request_payload for msg in lab_single_messages],
-                    "session_tests": [msg.request_payload for msg in lab_session_messages],
-                    "summary_tests": [msg.request_payload for msg in lab_summary_messages]
+                    "tests": lab_tests
                 }
                 if not analysis_summary:
                     analysis_summary = "Kişiselleştirilmiş analiz tamamlandı."
         
         # 2. Daha önce baktırılan testleri AI'ya bildir
         taken_test_names = []
-        if body.exclude_taken_tests and "lab_data" in user_context:
+        if body.exclude_taken_tests and "lab_data" in user_context and "tests" in user_context["lab_data"]:
             # Lab testlerinden test isimlerini çıkar
-            for lab_data in user_context["lab_data"]["single_tests"]:
-                if "test" in lab_data and "name" in lab_data["test"]:
-                    test_name = lab_data["test"]["name"]
+            for test in user_context["lab_data"]["tests"]:
+                if "name" in test:
+                    test_name = test["name"]
                     taken_test_names.append(test_name)
         
         # 3. Tüm testleri AI'ya ver (filtreleme yapma)
@@ -1870,9 +1836,7 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         
         # AI'ya gönderilecek context'i hazırla
         quiz_count = len(user_context.get("quiz_data", [])) if "quiz_data" in user_context else 0
-        lab_count = 0
-        if "lab_data" in user_context:
-            lab_count = len(user_context["lab_data"].get("single_tests", [])) + len(user_context["lab_data"].get("session_tests", [])) + len(user_context["lab_data"].get("summary_tests", []))
+        lab_count = len(user_context.get("lab_data", {}).get("tests", [])) if "lab_data" in user_context else 0
         
         # Basit AI context hazırla
         user_info = ""
@@ -1885,11 +1849,11 @@ async def get_test_recommendations(body: TestRecommendationRequest,
                 user_info += f"hedefler: {', '.join(quiz['goals'])}\n"
         
         lab_info = ""
-        if "lab_data" in user_context and user_context["lab_data"]["single_tests"]:
+        if "lab_data" in user_context and user_context["lab_data"].get("tests"):
             lab_info = "Lab testleri:\n"
-            for test in user_context["lab_data"]["single_tests"][:2]:
-                if "test" in test and "name" in test["test"]:
-                    lab_info += f"- {test['test']['name']}: {test['test'].get('value', 'N/A')} ({test['test'].get('reference_range', 'N/A')})\n"
+            for test in user_context["lab_data"]["tests"][:2]:
+                if "name" in test:
+                    lab_info += f"- {test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
         
         # Daha önce yapılan testleri ekle
         taken_tests_info = ""
