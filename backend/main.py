@@ -929,7 +929,7 @@ async def analyze_quiz(body: QuizRequest,
                 db=db,
             external_user_id=x_user_id,
             message_type="quiz",
-            request_payload=body.dict(),
+            request_payload=quiz_dict,
             response_payload=data,
             model_used="openrouter"
         )
