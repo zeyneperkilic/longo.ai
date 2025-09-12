@@ -1849,48 +1849,38 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         # Source'a göre AI context hazırla
         if source == "quiz":
             ai_context = f"""
-KULLANICI BİLGİLERİ:
+KULLANICI QUIZ CEVAPLARI:
 {user_info}
 
 {taken_tests_info}
 
-GÖREV: Bu kullanıcının quiz cevaplarına göre en uygun testleri öner. Maksimum 10 test öner.
+GÖREV: Quiz cevaplarına göre test öner. Maksimum 3 test öner.
 
-ÖNEMLİ KURALLAR:
-1. **AİLE HASTALIK GEÇMİŞİ** - Ailede diyabet varsa HbA1c, kalp hastalığı varsa kardiyovasküler testler öner
-2. **YAŞ VE CİNSİYET** - Yaşa ve cinsiyete göre risk faktörlerini değerlendir
-3. **SAĞLIK HEDEFLERİ** - Kullanıcının hedeflerine göre testler öner
-4. **MEVCUT HASTALIKLAR** - Varsa ilgili testleri öner
-5. **BOŞ YERE TEST ÖNERME** - Sadece gerçekten gerekli olan testleri öner
+KURALLAR:
+- Aile hastalık geçmişi varsa ilgili testleri öner
+- Yaş/cinsiyet risk faktörlerini değerlendir
+- Sadece gerekli testleri öner
 
-SADECE JSON formatında yanıt ver:
-{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Quiz cevaplarınıza göre neden önerildiği", "benefit": "Size sağlayacağı fayda"}}]}}
+JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Neden önerildiği", "benefit": "Faydası"}}]}}
 """
         
         elif source == "lab":
             ai_context = f"""
-KULLANICI BİLGİLERİ:
-{user_info}
-
 MEVCUT LAB SONUÇLARI:
 {lab_info}
 
 {taken_tests_info}
 
-GÖREV: Bu kullanıcının mevcut lab sonuçlarına göre en uygun testleri öner. Maksimum 10 test öner.
+GÖREV: Lab sonuçlarına göre test öner. Maksimum 3 test öner.
 
-ÖNEMLİ KURALLAR:
-1. **SADECE ANORMAL DEĞERLER İÇİN TEST ÖNER** - Normal değerlere gereksiz test önerme
-2. Her test önerisi için kullanıcının MEVCUT değerlerini referans al
-3. "Glukozunuz 102 mg/dL (yüksek) için..." gibi spesifik değerlerle açıkla
-4. Neden o testi önerdiğini mevcut durumla ilişkilendir
-5. **ÖZELLİKLE ÖNEMLİ**: Eğer kullanıcının testlerinde anormal/düşük/yüksek değerler varsa, o konuyla ilgili testleri MUTLAKA öner
-6. Örnek: D vitamini düşükse vitamin testi, kolesterol yüksekse kalp testi, glukoz yüksekse diyabet testi öner
-7. **BOŞ YERE TEST ÖNERME** - Sadece gerçekten gerekli olan testleri öner
-8. Normal değerler için "kontrol amaçlı" test önerme
+KURALLAR:
+- Sadece anormal değerler için test öner
+- Mevcut değerleri referans al
+- Normal değerlere gereksiz test önerme
 
-SADECE JSON formatında yanıt ver:
-{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Size sağlayacağı fayda"}}]}}
+JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Faydası"}}]}}
 """
         
         try:
@@ -1898,11 +1888,11 @@ SADECE JSON formatında yanıt ver:
             
             # AI'ya gönder
             ai_response = await get_ai_response(
-                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının quiz ve lab verilerine göre test önerileri yapıyorsun. Kullanıcının mevcut sağlık durumuna göre en uygun testleri öner.",
+                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
                 user_message=ai_context
             )
             
-            print(f"🔍 DEBUG: AI Response: {ai_response}")
+            print(f"🔍 DEBUG: AI Response for {source}: {ai_response}")
             
             # AI response'unu parse et
             import json
@@ -1926,6 +1916,18 @@ SADECE JSON formatında yanıt ver:
                     cleaned_response = cleaned_response.replace('```', '').strip()
                 
                 try:
+                    # JSON'u daha agresif temizle
+                    cleaned_response = cleaned_response.replace('\n', ' ').replace('\r', '')
+                    
+                    # Eğer JSON kesilmişse, son kısmı tamamla
+                    if not cleaned_response.strip().endswith('}'):
+                        last_brace = cleaned_response.rfind('}')
+                        if last_brace != -1:
+                            cleaned_response = cleaned_response[:last_brace + 1]
+                        else:
+                            # Hiç } yoksa, basit bir response oluştur
+                            cleaned_response = '{"recommended_tests": []}'
+                    
                     parsed_response = json.loads(cleaned_response)
                     if "recommended_tests" in parsed_response:
                         recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
