@@ -923,14 +923,11 @@ async def analyze_quiz(body: QuizRequest,
     # Test recommendations ekle (sadece premium+ kullanıcılar için)
     if user_plan in ["premium", "premium_plus"]:
         try:
-            # Quiz verisini al
-            quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
-            if quiz_messages:
-                quiz = quiz_messages[0].request_payload
-                
+            # Quiz verisini al (yeni gönderilen veri)
+            if quiz_dict:
                 # Quiz verisini AI'ya gönder
                 quiz_info_parts = []
-                for key, value in quiz.items():
+                for key, value in quiz_dict.items():
                     if isinstance(value, list):
                         quiz_info_parts.append(f"{key}: {', '.join(map(str, value))}")
                     else:
