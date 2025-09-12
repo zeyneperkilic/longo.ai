@@ -233,7 +233,7 @@ class AnalyzeResponse(BaseModel):
 class TestRecommendationRequest(BaseModel):
     user_analysis: bool = Field(default=True, description="Kullanıcı analizi yap")
     exclude_taken_tests: bool = Field(default=True, description="Baktırılan testleri çıkar")
-    max_recommendations: int = Field(default=5, description="Maksimum öneri sayısı")
+    max_recommendations: int = Field(default=3, description="Maksimum öneri sayısı")
     
     class Config:
         extra = "allow"

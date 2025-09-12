@@ -449,14 +449,14 @@ Premium ve Premium Plus kullanıcıları için kişiselleştirilmiş test öneri
 {
   "user_analysis": true,
   "exclude_taken_tests": true,
-  "max_recommendations": 4
+  "max_recommendations": 3
 }
 ```
 
 #### Request Parameters
 - `user_analysis` (boolean): Kullanıcı verilerini analiz et (zorunlu: true)
 - `exclude_taken_tests` (boolean): Daha önce yapılan testleri hariç tut (zorunlu: true)
-- `max_recommendations` (integer): Maksimum öneri sayısı (1-10 arası, default: 4)
+- `max_recommendations` (integer): Maksimum öneri sayısı (1-10 arası, default: 3)
 
 #### Response
 ```json
@@ -477,11 +477,6 @@ Premium ve Premium Plus kullanıcıları için kişiselleştirilmiş test öneri
       "test_name": "İdrar Albümin/Kreatinin Oranı (ACR)",
       "reason": "Böbrek hasarının erken göstergesi olan protein kaçağını (albüminüri) saptamak için kullanılır.",
       "benefit": "Erken böbrek hasarını saptar, hastalık ilerlemeden önlem alınmasına yardımcı olur."
-    },
-    {
-      "test_name": "Renal Ultrason",
-      "reason": "Kreatinin yüksekliği yapısal bir böbrek hastalığından kaynaklanıyor olabilir. Görüntüleme ile böbrek boyutu, yapısı ve olası tıkanıklıklar değerlendirilir.",
-      "benefit": "Böbreklerde taş, kist, tümör ya da hidronefroz gibi nedenlerin dışlanmasını sağlar."
     }
   ],
   "analysis_summary": "Quiz analizi: 1 adet mevcut. Lab testleri: 1 adet mevcut.",
@@ -609,7 +604,7 @@ curl -X POST "https://longo-ai.onrender.com/ai/test-recommendations" \
   -d '{
     "user_analysis": true,
     "exclude_taken_tests": true,
-    "max_recommendations": 4
+    "max_recommendations": 3
   }'
 ```
 
