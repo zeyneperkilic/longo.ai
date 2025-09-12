@@ -651,7 +651,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -916,8 +916,8 @@ async def analyze_quiz(body: QuizRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         pass  # Silent fail for production
     
     # Return quiz response
@@ -1267,8 +1267,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
@@ -1762,8 +1762,13 @@ async def get_test_recommendations(body: TestRecommendationRequest,
                                  current_user: str = Depends(get_current_user),
                                  db: Session = Depends(get_db),
                                  x_user_id: str | None = Header(default=None),
-                                 x_user_level: int | None = Header(default=None)):
+                                 x_user_level: int | None = Header(default=None),
+                                 source: str = Query(description="Data source: quiz or lab")):
     """Premium/Premium Plus kullanıcılar için kişiselleştirilmiş test önerileri"""
+    
+    # Source validation
+    if source not in ["quiz", "lab"]:
+        raise HTTPException(status_code=400, detail="Source must be 'quiz' or 'lab'")
     
     # Plan kontrolü
     user_plan = get_user_plan_from_headers(x_user_level)
@@ -1779,25 +1784,26 @@ async def get_test_recommendations(body: TestRecommendationRequest,
     user = get_or_create_user(db, x_user_id, user_plan)
     
     try:
-        # 1. Kullanıcının mevcut verilerini analiz et
+        # 1. Source'a göre veri toplama
         user_context = {}
         analysis_summary = ""
         
         if body.user_analysis:
-            # Quiz sonuçlarını al
-            quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_MESSAGES_LIMIT)
-            if quiz_messages:
-                user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
-                analysis_summary = "Kişiselleştirilmiş analiz tamamlandı."
+            if source == "quiz":
+                # Sadece quiz verisi al
+                quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_MESSAGES_LIMIT)
+                if quiz_messages:
+                    user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
+                    analysis_summary = "Quiz verilerine göre analiz tamamlandı."
             
-            # Lab test sonuçlarını al - Helper fonksiyon kullan
-            lab_tests = get_standardized_lab_data(db, x_user_id, 5)
-            if lab_tests:
-                user_context["lab_data"] = {
-                    "tests": lab_tests
-                }
-                if not analysis_summary:
-                    analysis_summary = "Kişiselleştirilmiş analiz tamamlandı."
+            elif source == "lab":
+                # Sadece lab verisi al
+                lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+                if lab_tests:
+                    user_context["lab_data"] = {
+                        "tests": lab_tests
+                    }
+                    analysis_summary = "Lab verilerine göre analiz tamamlandı."
         
         # 2. Daha önce baktırılan testleri AI'ya bildir
         taken_test_names = []
@@ -1840,7 +1846,29 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         if taken_test_names:
             taken_tests_info = f"\nDaha önce yapılan testler: {', '.join(taken_test_names)}\nBu testleri önerme!\n"
         
-        ai_context = f"""
+        # Source'a göre AI context hazırla
+        if source == "quiz":
+            ai_context = f"""
+KULLANICI BİLGİLERİ:
+{user_info}
+
+{taken_tests_info}
+
+GÖREV: Bu kullanıcının quiz cevaplarına göre en uygun testleri öner. Maksimum 10 test öner.
+
+ÖNEMLİ KURALLAR:
+1. **AİLE HASTALIK GEÇMİŞİ** - Ailede diyabet varsa HbA1c, kalp hastalığı varsa kardiyovasküler testler öner
+2. **YAŞ VE CİNSİYET** - Yaşa ve cinsiyete göre risk faktörlerini değerlendir
+3. **SAĞLIK HEDEFLERİ** - Kullanıcının hedeflerine göre testler öner
+4. **MEVCUT HASTALIKLAR** - Varsa ilgili testleri öner
+5. **BOŞ YERE TEST ÖNERME** - Sadece gerçekten gerekli olan testleri öner
+
+SADECE JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Quiz cevaplarınıza göre neden önerildiği", "benefit": "Size sağlayacağı fayda"}}]}}
+"""
+        
+        elif source == "lab":
+            ai_context = f"""
 KULLANICI BİLGİLERİ:
 {user_info}
 
@@ -1849,7 +1877,7 @@ MEVCUT LAB SONUÇLARI:
 
 {taken_tests_info}
 
-GÖREV: Bu kullanıcının mevcut lab sonuçlarına ve kişisel bilgilerine göre en uygun testleri öner. Maksimum 10 test öner.
+GÖREV: Bu kullanıcının mevcut lab sonuçlarına göre en uygun testleri öner. Maksimum 10 test öner.
 
 ÖNEMLİ KURALLAR:
 1. **SADECE ANORMAL DEĞERLER İÇİN TEST ÖNER** - Normal değerlere gereksiz test önerme
