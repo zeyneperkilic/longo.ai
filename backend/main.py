@@ -1141,7 +1141,7 @@ def analyze_single_session(body: SingleSessionRequest,
     return data
 
 @app.post("/ai/lab/summary", response_model=GeneralLabSummaryResponse)
-def analyze_multiple_lab_summary(body: MultipleLabRequest,
+async def analyze_multiple_lab_summary(body: MultipleLabRequest,
                                  current_user: str = Depends(get_current_user),
                                  db: Session = Depends(get_db),
                                  x_user_id: str | None = Header(default=None),
@@ -1272,10 +1272,26 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
     
     # Database kaydı tamamlandı - Artık read-through sistemi çalışacak
     
+    # Test recommendations ekle (sadece premium+ kullanıcılar için)
+    if user_plan in ["premium", "premium_plus"]:
+        try:
+            # Test recommendations fonksiyonunu çağır
+            test_rec_response = await get_test_recommendations_internal(
+                db=db, 
+                x_user_id=x_user_id, 
+                user_plan=user_plan, 
+                source="lab",
+                max_recommendations=3
+            )
+            if test_rec_response and test_rec_response.get("recommended_tests"):
+                data["test_recommendations"] = test_rec_response
+        except Exception as e:
+            print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
+    
     # Log to ai_messages
     try:
         create_ai_message(
-                db=db,
+            db=db,
             external_user_id=x_user_id,
             message_type="lab_summary",
             request_payload=body.dict(),
