@@ -907,6 +907,19 @@ async def analyze_quiz(body: QuizRequest,
         }
     
     
+    # Log to ai_messages
+    try:
+        create_ai_message(
+                db=db,
+            external_user_id=x_user_id,
+            message_type="quiz",
+            request_payload=quiz_dict,
+            response_payload=data,
+            model_used="openrouter"
+        )
+    except Exception as e:
+        pass  # Silent fail for production
+    
     # Test recommendations ekle (sadece premium+ kullanıcılar için)
     if user_plan in ["premium", "premium_plus"]:
         try:
@@ -997,19 +1010,6 @@ JSON formatında yanıt ver:
                     
         except Exception as e:
             print(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
-    
-    # Log to ai_messages
-    try:
-        create_ai_message(
-                db=db,
-            external_user_id=x_user_id,
-            message_type="quiz",
-            request_payload=quiz_dict,
-            response_payload=data,
-            model_used="openrouter"
-        )
-    except Exception as e:
-        pass  # Silent fail for production
     
     # Return quiz response
     return data
