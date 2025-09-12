@@ -765,14 +765,13 @@ async def chat_message(req: ChatMessageRequest,
     lab_session_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=QUIZ_LAB_MESSAGES_LIMIT)
     lab_summary_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=QUIZ_LAB_MESSAGES_LIMIT)
     
-    # Quiz verilerini ekle
+    # Quiz verilerini ekle - Ham quiz cevapları (diğer endpoint'ler gibi)
     if quiz_messages:
         quiz_info = "\n\n=== QUIZ BİLGİLERİ ===\n"
         for msg in quiz_messages:
-            if msg.response_payload and "supplement_recommendations" in msg.response_payload:
+            if msg.request_payload:
                 quiz_info += f"QUIZ TARİHİ: {msg.created_at.strftime('%Y-%m-%d')}\n"
-                quiz_info += f"QUIZ SONUÇLARI: {msg.response_payload.get('nutrition_advice', {}).get('recommendations', [])}\n"
-                quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {[s.get('name', '') for s in msg.response_payload.get('supplement_recommendations', [])]}\n\n"
+                quiz_info += f"QUIZ CEVAPLARI: {msg.request_payload}\n\n"
         history.append({"role": "user", "content": quiz_info})
     
     # Lab verilerini ekle
