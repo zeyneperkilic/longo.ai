@@ -1350,29 +1350,18 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # Test recommendations ekle (sadece premium+ kullanıcılar için)
     if user_plan in ["premium", "premium_plus"]:
         try:
-            # Lab verisini hazırla (yeni gönderilen veri)
+            # Lab verisini al (yeni gönderilen veri)
             if all_tests_dict:
-                # AI context hazırla
-                lab_info = "Lab testleri:\n"
-                for test in all_tests_dict[:3]:  # İlk 3 testi göster
-                    if "name" in test:
-                        lab_info += f"- {test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
-                
-                # Daha önce yapılan testleri ekle
-                taken_test_names = []
+                # Lab verisini AI'ya gönder
+                lab_info_parts = []
                 for test in all_tests_dict:
                     if "name" in test:
-                        taken_test_names.append(test["name"])
-                
-                taken_tests_info = ""
-                if taken_test_names:
-                    taken_tests_info = f"\nDaha önce yapılan testler: {', '.join(taken_test_names)}\nBu testleri önerme!\n"
+                        lab_info_parts.append(f"{test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})")
+                lab_info = f"Lab verileri: {', '.join(lab_info_parts)}\n"
                 
                 ai_context = f"""
-MEVCUT LAB SONUÇLARI:
+KULLANICI LAB SONUÇLARI:
 {lab_info}
-
-{taken_tests_info}
 
 GÖREV: Lab sonuçlarına göre test öner. Maksimum 3 test öner.
 
@@ -1380,6 +1369,12 @@ KURALLAR:
 - Sadece anormal değerler için test öner
 - Mevcut değerleri referans al
 - Normal değerlere gereksiz test önerme
+
+ÖNEMLİ:
+- Düşük hemoglobin varsa demir, ferritin testleri öner
+- Yüksek glukoz varsa HbA1c, OGTT testleri öner
+- Anormal lipid değerleri varsa kardiyovasküler testler öner
+- Sadece gerçekten gerekli olan testleri öner
 
 JSON formatında yanıt ver:
 {{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Faydası"}}]}}
