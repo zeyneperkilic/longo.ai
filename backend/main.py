@@ -1532,7 +1532,7 @@ async def premium_plus_lifestyle_recommendations(
     user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
     
     # Quiz geçmişini al
-    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_ANALYSES_LIMIT)
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
     
     # Lab analizlerini al - Helper fonksiyon kullan
     lab_tests = get_standardized_lab_data(db, x_user_id, 5)
@@ -1618,13 +1618,10 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
                 user_message += f"- Quiz verileri: {msg.request_payload}\n"
     
     # Lab analizlerini ekle
-    if lab_analyses:
+    if lab_tests:
         user_message += f"\n🧪 LAB ANALİZLERİ:\n"
-        for analysis in lab_analyses[-1:]:  # En son analiz
-            if hasattr(analysis, 'summary') and analysis.summary:
-                user_message += f"- {analysis.summary}\n"
-            elif isinstance(analysis, dict) and analysis.get('summary'):
-                user_message += f"- {analysis['summary']}\n"
+        for test in lab_tests[:2]:  # İlk 2 test
+            user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
     
     # Global context'ten tüm verileri ekle
     if user_context:
