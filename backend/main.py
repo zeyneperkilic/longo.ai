@@ -1825,17 +1825,18 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         quiz_count = len(user_context.get("quiz_data", [])) if "quiz_data" in user_context else 0
         lab_count = len(user_context.get("lab_data", {}).get("tests", [])) if "lab_data" in user_context else 0
         
-        # Basit AI context hazırla
+        # Quiz verisi flexible olarak AI'ya gönder
         user_info = ""
         if "quiz_data" in user_context and user_context["quiz_data"]:
             quiz = user_context["quiz_data"][0]  # Son quiz
-            user_info += f"Kullanıcı: {quiz.get('age', 'N/A')} yaş, {quiz.get('gender', 'N/A')}, "
-            if quiz.get('health_conditions'):
-                user_info += f"hastalıklar: {', '.join(quiz['health_conditions'])}, "
-            if quiz.get('health_goals'):
-                user_info += f"hedefler: {', '.join(quiz['health_goals'])}, "
-            if quiz.get('activity_level'):
-                user_info += f"aktivite: {quiz['activity_level']}\n"
+            # Quiz verisini flexible olarak formatla
+            quiz_info_parts = []
+            for key, value in quiz.items():
+                if isinstance(value, list):
+                    quiz_info_parts.append(f"{key}: {', '.join(map(str, value))}")
+                else:
+                    quiz_info_parts.append(f"{key}: {value}")
+            user_info = f"Quiz verileri: {', '.join(quiz_info_parts)}\n"
         
         lab_info = ""
         if "lab_data" in user_context and user_context["lab_data"].get("tests"):
