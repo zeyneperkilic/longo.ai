@@ -759,11 +759,8 @@ async def chat_message(req: ChatMessageRequest,
     # Supplement listesi user message olarak ekle
     history.append({"role": "user", "content": supplements_info})
     
-    # Quiz ve Lab verilerini ai_messages'tan çek ve AI'ya gönder
+    # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
-    lab_single_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_single", limit=QUIZ_LAB_MESSAGES_LIMIT)
-    lab_session_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_session", limit=QUIZ_LAB_MESSAGES_LIMIT)
-    lab_summary_messages = get_user_ai_messages_by_type(db, x_user_id, "lab_summary", limit=QUIZ_LAB_MESSAGES_LIMIT)
     
     # Quiz verilerini ekle - Ham quiz cevapları (diğer endpoint'ler gibi)
     if quiz_messages:
@@ -774,35 +771,12 @@ async def chat_message(req: ChatMessageRequest,
                 quiz_info += f"QUIZ CEVAPLARI: {msg.request_payload}\n\n"
         history.append({"role": "user", "content": quiz_info})
     
-    # Lab verilerini ekle
-    lab_info = "\n\n=== LAB BİLGİLERİ ===\n"
-    
-    # Lab Single verileri
-    if lab_single_messages:
+    # Lab verilerini ekle - Sadece helper'dan gelen veriler (diğer endpoint'ler gibi)
+    if lab_tests:
+        lab_info = "\n\n=== LAB BİLGİLERİ ===\n"
         lab_info += "LAB TEST SONUÇLARI:\n"
-        for msg in lab_single_messages:
-            if msg.request_payload and "test" in msg.request_payload:
-                test = msg.request_payload["test"]
-                lab_info += f"- {test.get('name', '')}: {test.get('value', '')} {test.get('unit', '')} (Referans: {test.get('reference_range', '')})\n"
-    
-    # Lab Session verileri
-    if lab_session_messages:
-        lab_info += "\nLAB SEANS SONUÇLARI:\n"
-        for msg in lab_session_messages:
-            if msg.request_payload and "session_tests" in msg.request_payload:
-                for test in msg.request_payload["session_tests"]:
-                    lab_info += f"- {test.get('name', '')}: {test.get('value', '')} {test.get('unit', '')} (Referans: {test.get('reference_range', '')})\n"
-    
-    # Lab Summary verileri
-    if lab_summary_messages:
-        lab_info += "\nLAB ÖZET ANALİZLERİ:\n"
-        for msg in lab_summary_messages:
-            if msg.response_payload:
-                lab_info += f"GENEL DURUM: {msg.response_payload.get('genel_saglik_durumu', '')}\n"
-                lab_info += f"ÖNERİLER: {msg.response_payload.get('oneriler', [])}\n"
-                lab_info += f"ÖNERİLEN SUPPLEMENTLER: {[s.get('name', '') for s in msg.response_payload.get('urun_onerileri', [])]}\n\n"
-    
-    if lab_info != "\n\n=== LAB BİLGİLERİ ===\n":
+        for test in lab_tests[:3]:  # İlk 3 test
+            lab_info += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} {test.get('unit', '')} (Referans: {test.get('reference_range', 'N/A')})\n"
         history.append({"role": "user", "content": lab_info})
     
     # Chat history
