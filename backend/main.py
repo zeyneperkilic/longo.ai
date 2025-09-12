@@ -1918,9 +1918,21 @@ JSON formatında yanıt ver:
                 # AI response'u temizle ve tekrar dene
                 cleaned_response = ai_response.strip()
                 if cleaned_response.startswith('```json'):
-                    cleaned_response = cleaned_response.replace('```json', '').replace('```', '').strip()
+                    # ```json ile başlayan kısmı çıkar
+                    json_start = cleaned_response.find('```json') + 7
+                    json_end = cleaned_response.find('```', json_start)
+                    if json_end != -1:
+                        cleaned_response = cleaned_response[json_start:json_end].strip()
+                    else:
+                        cleaned_response = cleaned_response[json_start:].strip()
                 elif cleaned_response.startswith('```'):
-                    cleaned_response = cleaned_response.replace('```', '').strip()
+                    # Sadece ``` ile başlayan kısmı çıkar
+                    json_start = cleaned_response.find('```') + 3
+                    json_end = cleaned_response.find('```', json_start)
+                    if json_end != -1:
+                        cleaned_response = cleaned_response[json_start:json_end].strip()
+                    else:
+                        cleaned_response = cleaned_response[json_start:].strip()
                 
                 try:
                     # JSON'u daha agresif temizle
