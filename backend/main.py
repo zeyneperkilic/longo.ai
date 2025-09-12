@@ -1275,16 +1275,84 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # Test recommendations ekle (sadece premium+ kullanıcılar için)
     if user_plan in ["premium", "premium_plus"]:
         try:
-            # Test recommendations fonksiyonunu çağır
-            test_rec_response = await get_test_recommendations_internal(
-                db=db, 
-                x_user_id=x_user_id, 
-                user_plan=user_plan, 
-                source="lab",
-                max_recommendations=3
-            )
-            if test_rec_response and test_rec_response.get("recommended_tests"):
-                data["test_recommendations"] = test_rec_response
+            # Lab summary için özel test recommendations - yeni lab verisini de dahil et
+            lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+            if not lab_tests:
+                # Eğer geçmiş lab verisi yoksa, yeni gönderilen veriyi kullan
+                lab_tests = all_tests_dict
+            
+            if lab_tests:
+                # Test recommendations için lab verisini hazırla
+                user_context = {
+                    "lab_data": {
+                        "tests": lab_tests
+                    }
+                }
+                
+                # AI context hazırla
+                lab_info = "Lab testleri:\n"
+                for test in lab_tests[:3]:  # İlk 3 testi göster
+                    if "name" in test:
+                        lab_info += f"- {test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
+                
+                # Daha önce yapılan testleri ekle
+                taken_test_names = []
+                for test in lab_tests:
+                    if "name" in test:
+                        taken_test_names.append(test["name"])
+                
+                taken_tests_info = ""
+                if taken_test_names:
+                    taken_tests_info = f"\nDaha önce yapılan testler: {', '.join(taken_test_names)}\nBu testleri önerme!\n"
+                
+                ai_context = f"""
+MEVCUT LAB SONUÇLARI:
+{lab_info}
+
+{taken_tests_info}
+
+GÖREV: Lab sonuçlarına göre test öner. Maksimum 3 test öner.
+
+KURALLAR:
+- Sadece anormal değerler için test öner
+- Mevcut değerleri referans al
+- Normal değerlere gereksiz test önerme
+
+JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Faydası"}}]}}
+"""
+                
+                try:
+                    from backend.openrouter_client import get_ai_response
+                    
+                    # AI'ya gönder
+                    ai_response = await get_ai_response(
+                        system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+                        user_message=ai_context
+                    )
+                    
+                    # AI response'unu parse et
+                    import json
+                    try:
+                        parsed_response = json.loads(ai_response)
+                        if "recommended_tests" in parsed_response:
+                            recommended_tests = parsed_response["recommended_tests"][:3]
+                            
+                            # Response oluştur
+                            test_rec_response = {
+                                "title": "Test Önerileri",
+                                "recommended_tests": recommended_tests,
+                                "analysis_summary": "Lab verilerine göre analiz tamamlandı",
+                                "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+                            }
+                            
+                            data["test_recommendations"] = test_rec_response
+                    except Exception as parse_error:
+                        print(f"🔍 DEBUG: Lab summary AI parse hatası: {parse_error}")
+                        
+                except Exception as ai_error:
+                    print(f"🔍 DEBUG: Lab summary AI hatası: {ai_error}")
+                    
         except Exception as e:
             print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
     
@@ -1829,6 +1897,10 @@ async def get_test_recommendations_internal(
                     "tests": lab_tests
                 }
                 analysis_summary = "Lab verilerine göre analiz tamamlandı."
+            else:
+                # Lab verisi yoksa, yeni gönderilen veriyi kullan
+                # Bu durumda lab summary endpoint'inden çağrılıyor olabilir
+                analysis_summary = "Yeni lab verilerine göre analiz tamamlandı."
         
         # 2. Daha önce baktırılan testleri AI'ya bildir
         taken_test_names = []
