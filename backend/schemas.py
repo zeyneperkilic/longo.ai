@@ -48,6 +48,23 @@ class GeneralWarnings(BaseModel):
     class Config:
         extra = "allow"
 
+class TestRecommendation(BaseModel):
+    test_name: str = Field(description="Test adı")
+    reason: str = Field(description="Neden önerildiği")
+    benefit: str = Field(description="Kullanıcıya sağlayacağı fayda")
+    
+    class Config:
+        extra = "allow"
+
+class TestRecommendations(BaseModel):
+    title: str = "Test Önerileri"
+    recommended_tests: List[TestRecommendation] = Field(default_factory=list)
+    analysis_summary: str = "Analiz tamamlandı"
+    disclaimer: str = "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+    
+    class Config:
+        extra = "allow"
+
 # Lab Analysis Schemas - ESNEK YAPI
 class LabTestResult(BaseModel):
     # TÜM FIELD'LAR OPSİYONEL - Asıl site'dan herhangi bir format gelebilir
@@ -159,6 +176,7 @@ class QuizResponse(BaseModel):
     lifestyle_advice: Optional[Dict[str, Any]] = Field(default_factory=dict)
     general_warnings: Optional[Dict[str, Any]] = Field(default_factory=dict)
     supplement_recommendations: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    test_recommendations: Optional[TestRecommendations] = Field(default=None, description="Test önerileri (Premium+ kullanıcılar için)")
     disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
     
     class Config:
@@ -194,6 +212,7 @@ class GeneralLabSummaryResponse(BaseModel):
     genel_durum: Optional[str] = Field(default="Testlerin genel kapsamlı analizi varsa eski sonuçlarla karşılaştırma.")
     oneriler: Optional[List[str]] = Field(default_factory=list)
     urun_onerileri: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    test_recommendations: Optional[TestRecommendations] = Field(default=None, description="Test önerileri (Premium+ kullanıcılar için)")
     disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
     
     class Config:
