@@ -651,7 +651,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -910,14 +910,14 @@ async def analyze_quiz(body: QuizRequest,
     # Log to ai_messages
     try:
         create_ai_message(
-            db=db,
+                db=db,
             external_user_id=x_user_id,
             message_type="quiz",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         pass  # Silent fail for production
     
     # Return quiz response
@@ -1267,8 +1267,8 @@ def analyze_multiple_lab_summary(body: MultipleLabRequest,
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
@@ -1841,11 +1841,24 @@ async def get_test_recommendations(body: TestRecommendationRequest,
             taken_tests_info = f"\nDaha önce yapılan testler: {', '.join(taken_test_names)}\nBu testleri önerme!\n"
         
         ai_context = f"""
-{user_info}{lab_info}{taken_tests_info}
+KULLANICI BİLGİLERİ:
+{user_info}
 
-Bu verilere göre en uygun {body.max_recommendations} testi öner. SADECE JSON formatında yanıt ver:
+MEVCUT LAB SONUÇLARI:
+{lab_info}
 
-{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Neden önerildiği", "benefit": "Faydası"}}]}}
+{taken_tests_info}
+
+GÖREV: Bu kullanıcının mevcut lab sonuçlarına ve kişisel bilgilerine göre en uygun {body.max_recommendations} testi öner.
+
+ÖNEMLİ KURALLAR:
+1. Her test önerisi için kullanıcının MEVCUT değerlerini referans al
+2. "Glukozunuz 95 mg/dL (normal) ama..." gibi spesifik değerlerle açıkla
+3. Neden o testi önerdiğini mevcut durumla ilişkilendir
+4. Genel öneriler yapma, kişiselleştirilmiş açıklama yap
+
+SADECE JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Size sağlayacağı fayda"}}]}}
 """
         
         try:
