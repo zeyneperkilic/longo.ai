@@ -1788,22 +1788,21 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         user_context = {}
         analysis_summary = ""
         
-        if body.user_analysis:
-            if source == "quiz":
-                # Sadece quiz verisi al
-                quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_MESSAGES_LIMIT)
-                if quiz_messages:
-                    user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
-                    analysis_summary = "Quiz verilerine göre analiz tamamlandı."
-            
-            elif source == "lab":
-                # Sadece lab verisi al
-                lab_tests = get_standardized_lab_data(db, x_user_id, 5)
-                if lab_tests:
-                    user_context["lab_data"] = {
-                        "tests": lab_tests
-                    }
-                    analysis_summary = "Lab verilerine göre analiz tamamlandı."
+        if source == "quiz":
+            # Sadece quiz verisi al
+            quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_MESSAGES_LIMIT)
+            if quiz_messages:
+                user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
+                analysis_summary = "Quiz verilerine göre analiz tamamlandı."
+        
+        elif source == "lab":
+            # Sadece lab verisi al
+            lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+            if lab_tests:
+                user_context["lab_data"] = {
+                    "tests": lab_tests
+                }
+                analysis_summary = "Lab verilerine göre analiz tamamlandı."
         
         # 2. Daha önce baktırılan testleri AI'ya bildir
         taken_test_names = []
@@ -1848,6 +1847,9 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         
         # Source'a göre AI context hazırla
         if source == "quiz":
+            print(f"🔍 DEBUG: Quiz user_info: {user_info}")
+            print(f"🔍 DEBUG: Quiz taken_tests_info: {taken_tests_info}")
+            
             ai_context = f"""
 KULLANICI QUIZ CEVAPLARI:
 {user_info}
