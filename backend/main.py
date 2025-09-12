@@ -1849,15 +1849,17 @@ MEVCUT LAB SONUÇLARI:
 
 {taken_tests_info}
 
-GÖREV: Bu kullanıcının mevcut lab sonuçlarına ve kişisel bilgilerine göre en uygun {body.max_recommendations} testi öner. Mümkünse 4 test öner.
+GÖREV: Bu kullanıcının mevcut lab sonuçlarına ve kişisel bilgilerine göre en uygun testleri öner. Maksimum 10 test öner.
 
 ÖNEMLİ KURALLAR:
-1. Her test önerisi için kullanıcının MEVCUT değerlerini referans al
-2. "Glukozunuz 95 mg/dL (normal) ama..." gibi spesifik değerlerle açıkla
-3. Neden o testi önerdiğini mevcut durumla ilişkilendir
-4. Genel öneriler yapma, kişiselleştirilmiş açıklama yap
+1. **SADECE ANORMAL DEĞERLER İÇİN TEST ÖNER** - Normal değerlere gereksiz test önerme
+2. Her test önerisi için kullanıcının MEVCUT değerlerini referans al
+3. "Glukozunuz 102 mg/dL (yüksek) için..." gibi spesifik değerlerle açıkla
+4. Neden o testi önerdiğini mevcut durumla ilişkilendir
 5. **ÖZELLİKLE ÖNEMLİ**: Eğer kullanıcının testlerinde anormal/düşük/yüksek değerler varsa, o konuyla ilgili testleri MUTLAKA öner
 6. Örnek: D vitamini düşükse vitamin testi, kolesterol yüksekse kalp testi, glukoz yüksekse diyabet testi öner
+7. **BOŞ YERE TEST ÖNERME** - Sadece gerçekten gerekli olan testleri öner
+8. Normal değerler için "kontrol amaçlı" test önerme
 
 SADECE JSON formatında yanıt ver:
 {{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Size sağlayacağı fayda"}}]}}
