@@ -442,14 +442,14 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 
 ### **POST** `/ai/test-recommendations`
 
-Premium ve Premium Plus kullanıcıları için kişiselleştirilmiş test önerileri. Kullanıcının quiz ve lab verilerini analiz ederek en uygun testleri önerir.
+Premium ve Premium Plus kullanıcıları için kişiselleştirilmiş test önerileri. Kullanıcının quiz ve lab verilerini analiz ederek **sadece anormal değerler için** en uygun testleri önerir.
 
 #### Request Body
 ```json
 {
   "user_analysis": true,
   "exclude_taken_tests": true,
-  "max_recommendations": 3
+  "max_recommendations": 10
 }
 ```
 
@@ -458,35 +458,43 @@ Premium ve Premium Plus kullanıcıları için kişiselleştirilmiş test öneri
 - `exclude_taken_tests` (boolean): Daha önce yapılan testleri hariç tut (zorunlu: true)
 - `max_recommendations` (integer): Maksimum öneri sayısı (1-10 arası, default: 3)
 
+#### Özellikler
+- **Akıllı Analiz**: Sadece anormal/düşük/yüksek lab değerleri için test önerir
+- **Kişiselleştirilmiş**: Kullanıcının mevcut değerlerini referans alarak açıklama yapar
+- **Gereksiz Test Önleme**: Normal değerlere "kontrol amaçlı" test önermez
+- **Maksimum 10 Test**: Boş yere test önermez, sadece gerekli olanları önerir
+
 #### Response
 ```json
 {
   "title": "Test Önerileri",
   "recommended_tests": [
     {
-      "test_name": "eGFR (Tahmini Glomerüler Filtrasyon Hızı)",
-      "reason": "Kreatinin yüksekliği böbrek fonksiyon bozukluğu olasılığını gösterir. eGFR böbreklerin filtreleme kapasitesini hesaplamada kullanılır.",
-      "benefit": "Böbrek fonksiyonunun evresini belirlemeye, kronik böbrek hastalığının derecesini saptamaya yardımcı olur."
+      "test_name": "HbA1c (Glikozillenmiş Hemoglobin)",
+      "reason": "Glukozunuz 110 mg/dL (referans: 70-100) ile hafif yüksek. Bu, insülin direnci veya prediyabet riski göstergesi olabilir. HbA1c testi, son 2-3 aylık ortalama kan şekeri düzeyinizi değerlendirmeye yardımcı olur.",
+      "benefit": "Diyabet veya prediyabet riskinizi erken tespit ederek, yaşam tarzı değişiklikleri veya tedaviye erken başlamanıza olanak tanır."
     },
     {
-      "test_name": "BUN (Kan Üre Azotu)",
-      "reason": "Kreatinin yüksekliği ile birlikte üre düzeyini değerlendirmek böbrek fonksiyon bozukluğu hakkında daha net bilgi verir.",
-      "benefit": "Böbreklerin atık maddeleri uzaklaştırma yeteneğini ölçerek tanıyı destekler."
+      "test_name": "Serum Demir, Ferritin ve Total Demir Bağlama Kapasitesi (TIBC)",
+      "reason": "Hemoglobininiz 11.8 g/dL (referans: 12-16) ile hafif düşük. Bu, demir eksikliği anemisini düşündürebilir. Ferritin ve demir testleri vücuttaki demir depolarını değerlendirir.",
+      "benefit": "Demir eksikliğiniz olup olmadığını netleştirerek doğru tedavi (ör. demir takviyesi) planlanmasına yardımcı olur."
     },
     {
-      "test_name": "İdrar Albümin/Kreatinin Oranı (ACR)",
-      "reason": "Böbrek hasarının erken göstergesi olan protein kaçağını (albüminüri) saptamak için kullanılır.",
-      "benefit": "Erken böbrek hasarını saptar, hastalık ilerlemeden önlem alınmasına yardımcı olur."
+      "test_name": "Vitamin B12 ve Folat",
+      "reason": "Hemoglobininiz düşük (11.8 g/dL). Demir dışında B12 ve folat eksiklikleri de kansızlığa sebep olabilir.",
+      "benefit": "Aneminin nedeni B12/Folat eksikliğine bağlıysa doğru tedavi planlanır."
     }
   ],
-  "analysis_summary": "Quiz analizi: 1 adet mevcut. Lab testleri: 1 adet mevcut.",
+  "analysis_summary": "Kişiselleştirilmiş analiz tamamlandı.",
   "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
 }
 ```
 
 #### Özellik
 - **AI Tabanlı**: Kullanıcının quiz ve lab verilerini analiz eder
-- **Kişiselleştirilmiş**: Mevcut sağlık durumuna göre öneriler verir
+- **Akıllı Analiz**: Sadece anormal değerler için test önerir
+- **Kişiselleştirilmiş**: Mevcut değerleri referans alarak açıklama yapar
+- **Gereksiz Test Önleme**: Normal değerlere "kontrol amaçlı" test önermez
 - **Akıllı Filtreleme**: Daha önce yapılan testleri otomatik olarak hariç tutar
 - **Tıbbi Mantık**: Test sonuçlarına göre ilgili testleri önerir
 - **Premium Only**: Sadece `x-user-level: 2` (Premium) ve `x-user-level: 3` (Premium Plus) kullanıcıları erişebilir
@@ -558,7 +566,7 @@ const testRecResponse = await fetch('https://longo-ai.onrender.com/ai/test-recom
   body: JSON.stringify({
     user_analysis: true,
     exclude_taken_tests: true,
-    max_recommendations: 4
+    max_recommendations: 10
   })
 });
 
@@ -604,7 +612,7 @@ curl -X POST "https://longo-ai.onrender.com/ai/test-recommendations" \
   -d '{
     "user_analysis": true,
     "exclude_taken_tests": true,
-    "max_recommendations": 3
+    "max_recommendations": 10
   }'
 ```
 
