@@ -78,27 +78,18 @@ def get_xml_products():
 
 def get_standardized_lab_data(db, user_id, limit=5):
     """Tüm endpoint'ler için standart lab verisi - ham test verileri"""
-    print(f"🔍 DEBUG: get_standardized_lab_data called for user {user_id}")
-    
     # Önce lab_summary'den dene (en kapsamlı)
     lab_summary = get_user_ai_messages_by_type(db, user_id, "lab_summary", limit)
-    print(f"🔍 DEBUG: lab_summary found: {len(lab_summary) if lab_summary else 0}")
-    
     if lab_summary and lab_summary[0].request_payload and "tests" in lab_summary[0].request_payload:
-        tests = lab_summary[0].request_payload["tests"]
-        print(f"🔍 DEBUG: Returning lab_summary tests: {len(tests)} tests")
-        return tests
+        return lab_summary[0].request_payload["tests"]
     
     # Lab_summary yoksa lab_single'dan al
     lab_single = get_user_ai_messages_by_type(db, user_id, "lab_single", limit)
-    print(f"🔍 DEBUG: lab_single found: {len(lab_single) if lab_single else 0}")
-    
     tests = []
     for msg in lab_single:
         if msg.request_payload and "test" in msg.request_payload:
             tests.append(msg.request_payload["test"])
     
-    print(f"🔍 DEBUG: Returning lab_single tests: {len(tests)} tests")
     return tests
 
 def get_user_context_for_message(user_context: dict, user_analyses: list) -> tuple[str, str]:
@@ -639,8 +630,18 @@ async def chat_message(req: ChatMessageRequest,
     user_context = {}
     
     
+    # Lab verilerini helper fonksiyon ile al
+    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    
     # Lab ve quiz verilerini user message için hazırla
     lab_info, quiz_info = get_user_context_for_message(user_context, user_analyses)
+    
+    # Helper'dan gelen lab verilerini de ekle
+    if lab_tests:
+        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
+        for test in lab_tests[:2]:  # İlk 2 test
+            lab_info += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
+        lab_info += "\n"
     
     # Lab ve quiz bilgilerini user message'a ekle
     if lab_info or quiz_info:
