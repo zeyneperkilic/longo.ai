@@ -1466,7 +1466,7 @@ JSON formatında yanıt ver:
             response_payload=data,
             model_used="openrouter"
             )
-        except Exception as e:
+    except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
