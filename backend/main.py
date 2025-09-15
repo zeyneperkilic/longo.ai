@@ -679,7 +679,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -1469,7 +1469,7 @@ JSON formatında yanıt ver:
             response_payload=data,
             model_used="openrouter"
             )
-    except Exception as e:
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
