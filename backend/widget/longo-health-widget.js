@@ -6,6 +6,7 @@
     function initWidget() {
         // Test için değişkenler (Ideasoft'ta gerçek değerler gelecek)
         window.longoUserPlan = 'free'; // 'free', 'premium', 'premium_plus'
+        window.longoUserLevel = 0; // 0=free, 1=free, 2=premium, 3=premium_plus
         window.longoRealUserId = null; // Premium kullanıcılar için gerçek user ID
     
     // CSS Stillerini ekle
@@ -1182,7 +1183,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getUserIdForChat(),
-                    'x-user-plan': window.longoUserPlan || 'free',
+                    'x-user-level': window.longoUserLevel || 0,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({})
@@ -1241,7 +1242,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getUserIdForChat(),
-                    'x-user-plan': window.longoUserPlan || 'free',
+                    'x-user-level': window.longoUserLevel || 0,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
