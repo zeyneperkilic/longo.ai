@@ -550,7 +550,7 @@ def chat_history(conversation_id: int,
         return []  # Free kullanıcılar için geçmiş yok
     
     # Premium kullanıcılar için database-based history
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     # Sadece bu conversation'a ait chat mesajlarını al
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_MAX)
@@ -596,7 +596,7 @@ async def chat_message(req: ChatMessageRequest,
         return await handle_free_user_chat(req, x_user_id)
     
     # Premium kullanıcılar için database-based chat
-    user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
 
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
