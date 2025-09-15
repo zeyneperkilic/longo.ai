@@ -152,10 +152,13 @@ def get_user_context_for_message(user_context: dict, user_analyses: list) -> tup
         quiz_analyses = [a for a in user_analyses if a.message_type == "quiz"]
         if quiz_analyses:
             latest_quiz = quiz_analyses[0]  # En son quiz
-            if latest_quiz.response_payload and "supplement_recommendations" in latest_quiz.response_payload:
-                supplements = [s["name"] for s in latest_quiz.response_payload["supplement_recommendations"][:3]]
+            if latest_quiz.request_payload:
+                # Ham quiz cevaplarını al
                 quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
-                quiz_info += f"ÖNERİLEN SUPPLEMENTLER: {', '.join(supplements)}\n\n"
+                for key, value in latest_quiz.request_payload.items():
+                    if value and value != 'N/A':
+                        quiz_info += f"- {key}: {value}\n"
+                quiz_info += "\n"
     
     return lab_info, quiz_info
 
