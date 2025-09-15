@@ -463,7 +463,8 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         if xml_products:
             user_message += f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(xml_products)} ürün):\n"
             for i, product in enumerate(xml_products, 1):
-                user_message += f"{i}. {product['name']}\n"
+                category = product.get('category', 'Kategori Yok')
+                user_message += f"{i}. {product['name']} ({category})\n"
             user_message += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
             print(f"🔍 DEBUG: Free kullanıcı için {len(xml_products)} XML ürünü eklendi")
         
