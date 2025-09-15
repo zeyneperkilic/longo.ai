@@ -857,9 +857,9 @@
     
     // Chat için user ID seçimi (Free: Session ID, Premium: Real ID)
     function getUserIdForChat() {
-        const userPlan = window.longoUserPlan || 'free';
+        const userLevel = window.longoUserLevel || 0;
         
-        if (userPlan === 'free') {
+        if (userLevel === 0 || userLevel === 1) {
             return getSessionUserId(); // Session-based ID
         } else {
             return window.longoRealUserId; // Gerçek user ID
@@ -1334,10 +1334,4 @@
     
     // DOM hazır olunca widget'ı başlat
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initWidget);
-    } else {
-        // DOM zaten hazır
-        initWidget();
-    }
-    
-})();
+        document.addEventListener('DOMContentLoaded', initWid
