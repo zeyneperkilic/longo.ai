@@ -550,7 +550,7 @@ def chat_history(conversation_id: int,
         return []  # Free kullanıcılar için geçmiş yok
     
     # Premium kullanıcılar için database-based history
-    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # Sadece bu conversation'a ait chat mesajlarını al
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_MAX)
@@ -596,13 +596,12 @@ async def chat_message(req: ChatMessageRequest,
         return await handle_free_user_chat(req, x_user_id)
     
     # Premium kullanıcılar için database-based chat
-    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
+    user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
 
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
     if not conversation_id:
-        # Yeni conversation ID oluştur (timestamp-based)
-        conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)
+        raise HTTPException(400, "Conversation ID gerekli")
     
     # Conversation ID artık sadece referans için kullanılıyor
 
@@ -623,6 +622,8 @@ async def chat_message(req: ChatMessageRequest,
         return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
     
     # Hafıza soruları artık normal AI model ile yanıtlanıyor
+
+    
     
     # Selamlama sonrası özel yanıt kontrolü
     txt = message_text.lower().strip()
@@ -675,7 +676,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -692,7 +693,7 @@ async def chat_message(req: ChatMessageRequest,
     new_context = {}
     
     # Yeni mesajdan context çıkar
-    current_message_context = extract_user_context_hybrid(message_text, None) or {}
+    current_message_context = extract_user_context_hybrid(message_text, user.email) or {}
     for key, value in current_message_context.items():
         normalized_key = key.strip().lower()
         if normalized_key and value:
@@ -1464,8 +1465,8 @@ JSON formatında yanıt ver:
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
-    except Exception as e:
+            )
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
