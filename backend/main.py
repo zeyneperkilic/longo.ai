@@ -61,17 +61,30 @@ def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
         return True
 
 def get_xml_products():
-    """XML'den 74 ürünü çek - Free kullanıcılar için"""
+    """XML'den tüm ürünleri çek - ID, isim ve kategori ile"""
     try:
         response = requests.get('https://longopass.myideasoft.com/output/7995561125', timeout=XML_REQUEST_TIMEOUT)
         root = ET.fromstring(response.text)
         products = []
         for item in root.findall('.//item'):
+            # ID'yi al
+            id_elem = item.find('id')
+            product_id = id_elem.text.strip() if id_elem is not None and id_elem.text else None
+            
+            # Label'ı al (CDATA içeriğini temizle)
             label_elem = item.find('label')
-            if label_elem is not None and label_elem.text:
-                # CDATA içeriğini temizle
-                product_name = label_elem.text.strip()
-                products.append({'name': product_name})
+            product_name = label_elem.text.strip() if label_elem is not None and label_elem.text else None
+            
+            # Kategoriyi al (CDATA içeriğini temizle)
+            category_elem = item.find('mainCategory')
+            product_category = category_elem.text.strip() if category_elem is not None and category_elem.text else None
+            
+            if product_id and product_name:
+                products.append({
+                    'id': product_id,
+                    'name': product_name,
+                    'category': product_category or 'Genel'
+                })
         return products
     except Exception as e:
         return []
