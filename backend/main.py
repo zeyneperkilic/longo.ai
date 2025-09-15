@@ -1707,8 +1707,7 @@ async def premium_plus_lifestyle_recommendations(
     if not x_user_id:
         raise HTTPException(status_code=400, detail="User ID gerekli")
     
-    # Kullanıcıyı bul/oluştur
-    user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     # Quiz geçmişini al
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
