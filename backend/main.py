@@ -601,7 +601,8 @@ async def chat_message(req: ChatMessageRequest,
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
     if not conversation_id:
-        raise HTTPException(400, "Conversation ID gerekli")
+        # Yeni conversation ID oluştur (timestamp-based)
+        conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)
     
     # Conversation ID artık sadece referans için kullanılıyor
 
