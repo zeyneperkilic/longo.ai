@@ -1184,7 +1184,7 @@ def analyze_single_session(body: SingleSessionRequest,
     if not validate_chat_user_id(x_user_id or "", user_plan):
         raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
     
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     tests_dict = []
@@ -1254,7 +1254,7 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
     if not validate_chat_user_id(x_user_id or "", user_plan):
         raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
     
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     new_tests_dict = []
