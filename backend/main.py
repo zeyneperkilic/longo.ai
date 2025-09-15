@@ -63,7 +63,7 @@ def validate_chat_user_id(user_id: str, user_plan: str) -> bool:
 def get_xml_products():
     """XML'den 74 ürünü çek - Free kullanıcılar için"""
     try:
-        response = requests.get('https://s2.digitalfikirler.com/longopass/Longopass-DF-quiz-urunler.xml', timeout=XML_REQUEST_TIMEOUT)
+        response = requests.get('https://longopass.myideasoft.com/output/7995561125', timeout=XML_REQUEST_TIMEOUT)
         root = ET.fromstring(response.text)
         products = []
         for item in root.findall('.//item'):
