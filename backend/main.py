@@ -1469,7 +1469,7 @@ JSON formatında yanıt ver:
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-            )
+        )
     except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
