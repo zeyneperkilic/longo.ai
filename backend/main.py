@@ -697,7 +697,7 @@ async def chat_message(req: ChatMessageRequest,
     new_context = {}
     
     # Yeni mesajdan context çıkar
-    current_message_context = extract_user_context_hybrid(message_text, user.email) or {}
+    current_message_context = extract_user_context_hybrid(message_text, x_user_id) or {}
     for key, value in current_message_context.items():
         normalized_key = key.strip().lower()
         if normalized_key and value:
