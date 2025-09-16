@@ -276,8 +276,34 @@ class TestRecommendationResponse(BaseModel):
 
 # Metabolik Yaş Testi - Premium Plus
 class MetabolicAgeTestRequest(BaseModel):
-    """Metabolik yaş testi isteği"""
-    pass  # Tüm veriler header'lardan ve veritabanından alınacak
+    """Metabolik yaş testi isteği - Flexible data structure"""
+    # Temel bilgiler (zorunlu)
+    chronological_age: int = Field(description="Kronolojik yaş")
+    
+    # Diğer tüm alanlar optional - hangi veriler gelirse gelsin
+    gender: Optional[str] = Field(default=None, description="Cinsiyet")
+    height: Optional[float] = Field(default=None, description="Boy (cm)")
+    weight: Optional[float] = Field(default=None, description="Kilo (kg)")
+    body_fat_percentage: Optional[float] = Field(default=None, description="Vücut yağ oranı (%)")
+    muscle_mass: Optional[float] = Field(default=None, description="Kas kütlesi (kg)")
+    resting_heart_rate: Optional[int] = Field(default=None, description="Dinlenme kalp atışı (bpm)")
+    blood_pressure_systolic: Optional[int] = Field(default=None, description="Sistolik tansiyon (mmHg)")
+    blood_pressure_diastolic: Optional[int] = Field(default=None, description="Diyastolik tansiyon (mmHg)")
+    sleep_hours: Optional[float] = Field(default=None, description="Günlük uyku saati")
+    exercise_frequency: Optional[str] = Field(default=None, description="Egzersiz sıklığı")
+    stress_level: Optional[str] = Field(default=None, description="Stres seviyesi")
+    diet_quality: Optional[str] = Field(default=None, description="Beslenme kalitesi")
+    smoking_status: Optional[str] = Field(default=None, description="Sigara durumu")
+    alcohol_consumption: Optional[str] = Field(default=None, description="Alkol tüketimi")
+    family_longevity: Optional[str] = Field(default=None, description="Aile uzun yaşam öyküsü")
+    chronic_conditions: Optional[List[str]] = Field(default=[], description="Kronik hastalıklar")
+    medications: Optional[List[str]] = Field(default=[], description="Kullanılan ilaçlar")
+    
+    # Ek flexible alanlar için
+    additional_data: Optional[Dict[str, Any]] = Field(default={}, description="Ek veriler")
+    
+    class Config:
+        extra = "allow"  # Ek alanlara izin ver
 
 class LongevityFactor(BaseModel):
     """Uzun yaşam faktörü"""

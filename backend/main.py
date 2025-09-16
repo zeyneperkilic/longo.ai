@@ -2529,11 +2529,28 @@ async def metabolic_age_test(
     # Lab verilerini al
     lab_tests = get_standardized_lab_data(db, x_user_id, limit=QUIZ_LAB_ANALYSES_LIMIT)
     
-    # AI context oluştur
+    # AI context oluştur - Flexible data
     ai_context = f"""
-KULLANICI BİLGİLERİ:
-- Kronolojik Yaş: {chronological_age}
-- Cinsiyet: {quiz_data.get('gender', 'N/A')}
+METABOLİK YAŞ TESTİ VERİLERİ:
+- Kronolojik Yaş: {req.chronological_age}
+"""
+    
+    # Sadece gelen verileri ekle
+    test_data = req.model_dump(exclude_none=True)
+    for key, value in test_data.items():
+        if key != 'chronological_age' and key != 'additional_data' and value is not None:
+            if isinstance(value, list) and value:
+                ai_context += f"- {key.replace('_', ' ').title()}: {', '.join(map(str, value))}\n"
+            elif not isinstance(value, list):
+                ai_context += f"- {key.replace('_', ' ').title()}: {value}\n"
+    
+    # Ek veriler varsa ekle
+    if req.additional_data:
+        ai_context += "\nEK VERİLER:\n"
+        for key, value in req.additional_data.items():
+            ai_context += f"- {key}: {value}\n"
+
+QUIZ VERİLERİ (Sağlık Profili):
 - Sağlık Hedefleri: {quiz_data.get('health_goals', 'N/A')}
 - Aile Öyküsü: {quiz_data.get('family_history', 'N/A')}
 - Mevcut İlaçlar: {quiz_data.get('current_medications', 'N/A')}
@@ -2543,7 +2560,7 @@ KULLANICI BİLGİLERİ:
 - Stres Seviyesi: {quiz_data.get('stress_level', 'N/A')}
 - Egzersiz Sıklığı: {quiz_data.get('exercise_frequency', 'N/A')}
 
-LAB TEST SONUÇLARI:
+LAB TEST SONUÇLARI (Biyokimyasal Durum):
 """
     
     if lab_tests:
