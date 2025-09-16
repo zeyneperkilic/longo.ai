@@ -206,7 +206,9 @@ def build_chat_system_prompt() -> str:
 - Geçmiş sağlık quizprofili/lab verileri varsa, bunları kullanarak kişiselleştirilmiş yanıt ver
 - Sürekli bilgi isteme
 - Sohbetin devamını sağla, her mesajda yeni konuşma başlatma
-- Kullanıcının önceki mesajlarına referans ver ve bağlantı kur"""
+- Kullanıcının önceki mesajlarına referans ver ve bağlantı kur
+- Önceki mesajlarda ne konuştuğunu hatırla ve devam et
+- Aynı konuyu tekrar tekrar sorma, önceki cevapları kullan"""
 
 def add_user_context_to_prompt(system_prompt: str, user_context: dict) -> str:
     """Kullanıcı bilgilerini system prompt'a ekle"""
@@ -1884,7 +1886,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
     
     # Quiz geçmişini ekle
     if quiz_messages:
-        user_message += f"\n📋 SON SAĞLIK QUIZPROFİLİ:\n"
+        user_message += f"\n📋 SON SAĞLIK QUIZ PROFİLİ:\n"
         for msg in quiz_messages[-1:]:  # En son quiz
             if msg.request_payload:
                 user_message += f"- Quiz verileri: {msg.request_payload}\n"
