@@ -2495,7 +2495,7 @@ JSON formatında yanıt ver:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Test önerisi oluşturulurken hata: {str(e)}")
 
-# Metabolik Yaş Testi - Premium Plus
+# Metabolik Yaş Testi - Premium Plus (Test sonucu analizi)
 @app.post("/ai/premium-plus/metabolic-age-test", response_model=MetabolicAgeTestResponse)
 async def metabolic_age_test(
     req: MetabolicAgeTestRequest,
