@@ -348,6 +348,41 @@ def check_ip_daily_limit(client_ip: str) -> tuple[bool, int]:
     
     return True, remaining
 
+def check_user_daily_limit(user_id: str, client_ip: str) -> tuple[bool, int]:
+    """Free kullanıcılar için User ID + IP kombinasyonu ile günlük limit kontrolü"""
+    import time
+    current_time = time.time()
+    
+    # User ID + IP kombinasyonu için unique key
+    user_ip_key = f"{user_id}_{client_ip}"
+    
+    # 24 saat = 86400 saniye
+    daily_reset_seconds = 86400
+    
+    if user_ip_key not in ip_daily_limits:
+        # İlk kez gelen User ID + IP kombinasyonu
+        ip_daily_limits[user_ip_key] = {
+            "count": 0,
+            "reset_time": current_time + daily_reset_seconds
+        }
+    
+    user_ip_data = ip_daily_limits[user_ip_key]
+    
+    # 24 saat geçmişse reset et
+    if current_time >= user_ip_data["reset_time"]:
+        user_ip_data["count"] = 0
+        user_ip_data["reset_time"] = current_time + daily_reset_seconds
+    
+    # Limit kontrolü
+    if user_ip_data["count"] >= FREE_QUESTION_LIMIT:
+        return False, 0  # Limit aşıldı
+    
+    # Limit artır
+    user_ip_data["count"] += 1
+    remaining = FREE_QUESTION_LIMIT - user_ip_data["count"]
+    
+    return True, remaining
+
 async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     """Free kullanıcılar için session-based chat handler"""
     from backend.cache_utils import get_session_question_count, increment_session_question_count
@@ -626,10 +661,18 @@ async def chat_message(req: ChatMessageRequest,
     
     is_premium = user_plan in ["premium", "premium_plus"]
     
-    # Guest kullanıcılar için IP-based limiting
-    if not x_user_level:  # Guest (no account)
-        client_ip = request.client.host if request else "unknown"
+    # Guest ve Free kullanıcılar için limiting
+    client_ip = request.client.host if request else "unknown"
+    
+    if not x_user_level or x_user_level == 0:  # Guest (null/undefined/0)
         can_chat, remaining = check_ip_daily_limit(client_ip)
+        if not can_chat:
+            raise HTTPException(
+                status_code=429, 
+                detail=f"Günlük soru limitiniz aşıldı. 24 saat sonra tekrar deneyin. (Kalan: {remaining})"
+            )
+    elif x_user_level == 1:  # Free (hesap var)
+        can_chat, remaining = check_user_daily_limit(x_user_id, client_ip)
         if not can_chat:
             raise HTTPException(
                 status_code=429, 
