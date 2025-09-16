@@ -4,9 +4,10 @@
     
     // DOM hazır olunca widget'ı başlat
     function initWidget() {
-        // Test için değişkenler (Ideasoft'ta gerçek değerler gelecek)
-        window.longoUserLevel = 0; // 0=free, 1=free, 2=premium, 3=premium_plus
-        window.longoRealUserId = null; // Premium kullanıcılar için gerçek user ID
+        // Siteden userLevel gelip gelmediğini kontrol et
+        // Ideasoft'ta gerçek değerler gelecek, yoksa guest (0) olarak ayarla
+        window.longoUserLevel = window.longoUserLevel || 0; // Siteden gelmezse 0 (guest)
+        window.longoRealUserId = window.longoRealUserId || null; // Premium kullanıcılar için gerçek user ID
         
         // User plan'ı user level'a göre otomatik belirle
         if (window.longoUserLevel === 0 || window.longoUserLevel === 1) {
