@@ -2517,16 +2517,14 @@ async def metabolic_age_test(
     if not x_user_id:
         raise HTTPException(status_code=400, detail="x-user-id gerekli")
     
-    # Quiz verilerini al
+    # Quiz verilerini al (sadece ek bilgi için)
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_ANALYSES_LIMIT)
     quiz_data = {}
-    chronological_age = 35  # Default
     
     if quiz_messages and quiz_messages[0].request_payload:
         quiz_data = quiz_messages[0].request_payload
-        chronological_age = int(quiz_data.get('age', 35))
     
-    # Lab verilerini al
+    # Lab verilerini al (sadece ek bilgi için)
     lab_tests = get_standardized_lab_data(db, x_user_id, limit=QUIZ_LAB_ANALYSES_LIMIT)
     
     # AI context oluştur - Flexible data
@@ -2578,7 +2576,7 @@ GÖREV: Bu kullanıcı için metabolik yaş analizi yap ve longevity raporu olu�
 Aşağıdaki JSON formatında yanıt ver:
 
 {{
-    "chronological_age": {chronological_age},
+    "chronological_age": {req.chronological_age},
     "metabolic_age": [hesaplanan metabolik yaş],
     "age_difference": [metabolik yaş - kronolojik yaş],
     "biological_age_status": "[genç/yaşlı/normal]",
@@ -2633,8 +2631,8 @@ Aşağıdaki JSON formatında yanıt ver:
             print(f"AI Response: {ai_response}")
             # Fallback response
             result = {
-                "chronological_age": chronological_age,
-                "metabolic_age": chronological_age + 2,
+                "chronological_age": req.chronological_age,
+                "metabolic_age": req.chronological_age + 2,
                 "age_difference": 2,
                 "biological_age_status": "normal",
                 "longevity_score": 75,
@@ -2657,8 +2655,8 @@ Aşağıdaki JSON formatında yanıt ver:
         response_data = {
             "success": True,
             "message": "Metabolik yaş analizi tamamlandı",
-            "chronological_age": result.get("chronological_age", chronological_age),
-            "metabolic_age": result.get("metabolic_age", chronological_age),
+            "chronological_age": result.get("chronological_age", req.chronological_age),
+            "metabolic_age": result.get("metabolic_age", req.chronological_age),
             "age_difference": result.get("age_difference", 0),
             "biological_age_status": result.get("biological_age_status", "normal"),
             "longevity_score": result.get("longevity_score", 75),
