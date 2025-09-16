@@ -528,7 +528,7 @@ def chat_start(body: ChatStartRequest = None,
         return ChatStartResponse(conversation_id=1)  # Her zaman 1, session'da takip edilir
     
     # Premium kullanıcılar için yeni conversation ID oluştur
-    # User tablosu kullanılmıyor - sadece conversation ID oluşturuyoruz
+    user = get_or_create_user(db, x_user_id, user_plan)
     
     # Yeni conversation ID oluştur (timestamp-based)
     new_conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)  # Millisecond timestamp
@@ -599,7 +599,7 @@ async def chat_message(req: ChatMessageRequest,
         return await handle_free_user_chat(req, x_user_id)
     
     # Premium kullanıcılar için database-based chat
-    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
+    user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
 
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
@@ -696,7 +696,7 @@ async def chat_message(req: ChatMessageRequest,
     new_context = {}
     
     # Yeni mesajdan context çıkar
-    current_message_context = extract_user_context_hybrid(message_text, x_user_id) or {}
+    current_message_context = extract_user_context_hybrid(message_text, user.email) or {}
     for key, value in current_message_context.items():
         normalized_key = key.strip().lower()
         if normalized_key and value:
@@ -1462,13 +1462,13 @@ JSON formatında yanıt ver:
     # Log to ai_messages
     try:
         create_ai_message(
-            db=db,
+                db=db,
             external_user_id=x_user_id,
             message_type="lab_summary",
             request_payload=body.dict(),
             response_payload=data,
             model_used="openrouter"
-        )
+            )
     except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
