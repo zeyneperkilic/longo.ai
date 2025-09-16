@@ -991,6 +991,8 @@ JSON formatında yanıt ver:
                     user_message=ai_context
                 )
                 
+                print(f"🔍 DEBUG: Quiz AI response: {ai_response}")
+                
                 # AI response'unu parse et
                 import json
                 try:
