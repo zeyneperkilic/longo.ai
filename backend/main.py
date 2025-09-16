@@ -992,6 +992,8 @@ JSON formatında yanıt ver:
                 )
                 
                 print(f"🔍 DEBUG: Quiz AI response: {ai_response}")
+                print(f"🔍 DEBUG: Quiz AI response type: {type(ai_response)}")
+                print(f"🔍 DEBUG: Quiz AI response length: {len(ai_response) if ai_response else 0}")
                 
                 # AI response'unu parse et
                 import json
@@ -1035,9 +1037,13 @@ JSON formatında yanıt ver:
                         data["test_recommendations"] = test_rec_response
                 except Exception as parse_error:
                     print(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
+                    print(f"🔍 DEBUG: Parse error type: {type(parse_error)}")
+                    print(f"🔍 DEBUG: Cleaned response: {cleaned_response if 'cleaned_response' in locals() else 'Not defined'}")
                     
         except Exception as e:
             print(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
+            print(f"🔍 DEBUG: Exception type: {type(e)}")
+            print(f"🔍 DEBUG: Exception args: {e.args}")
     
     # Return quiz response
     return data
