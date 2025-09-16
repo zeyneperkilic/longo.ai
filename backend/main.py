@@ -501,11 +501,10 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 @app.post("/ai/chat/start", response_model=ChatStartResponse)
 def chat_start(body: ChatStartRequest = None,
                db: Session = Depends(get_db),
-               x_user_id: str | None = Header(default=None),
-               x_user_level: int | None = Header(default=None)):
+               x_user_id: str | None = Header(default=None)):
     
     # Plan kontrolü
-    user_plan = get_user_plan_from_headers(x_user_level)
+    user_plan = "free"  # Free chat için sabit
     is_premium = user_plan in ["premium", "premium_plus"]
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
@@ -991,10 +990,6 @@ JSON formatında yanıt ver:
                     user_message=ai_context
                 )
                 
-                print(f"🔍 DEBUG: Quiz AI response: {ai_response}")
-                print(f"🔍 DEBUG: Quiz AI response type: {type(ai_response)}")
-                print(f"🔍 DEBUG: Quiz AI response length: {len(ai_response) if ai_response else 0}")
-                
                 # AI response'unu parse et
                 import json
                 try:
@@ -1037,13 +1032,9 @@ JSON formatında yanıt ver:
                         data["test_recommendations"] = test_rec_response
                 except Exception as parse_error:
                     print(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
-                    print(f"🔍 DEBUG: Parse error type: {type(parse_error)}")
-                    print(f"🔍 DEBUG: Cleaned response: {cleaned_response if 'cleaned_response' in locals() else 'Not defined'}")
                     
         except Exception as e:
             print(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
-            print(f"🔍 DEBUG: Exception type: {type(e)}")
-            print(f"🔍 DEBUG: Exception args: {e.args}")
     
     # Return quiz response
     return data
