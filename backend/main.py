@@ -2527,24 +2527,20 @@ async def metabolic_age_test(
     # Lab verilerini al (sadece ek bilgi için)
     lab_tests = get_standardized_lab_data(db, x_user_id, limit=QUIZ_LAB_ANALYSES_LIMIT)
     
-    # AI context oluştur - Flexible data
+    # AI context oluştur - Metabolik yaş testi sonucu + quiz + lab
     ai_context = f"""
-METABOLİK YAŞ TESTİ VERİLERİ:
+METABOLİK YAŞ TESTİ SONUCU:
 - Kronolojik Yaş: {req.chronological_age}
+- Metabolik Yaş: {req.metabolic_age}
+- Yaş Farkı: {req.metabolic_age - req.chronological_age} yaş
+- Test Tarihi: {req.test_date or 'Belirtilmemiş'}
+- Test Yöntemi: {req.test_method or 'Belirtilmemiş'}
+- Test Notları: {req.test_notes or 'Yok'}
 """
-    
-    # Sadece gelen verileri ekle
-    test_data = req.model_dump(exclude_none=True)
-    for key, value in test_data.items():
-        if key != 'chronological_age' and key != 'additional_data' and value is not None:
-            if isinstance(value, list) and value:
-                ai_context += f"- {key.replace('_', ' ').title()}: {', '.join(map(str, value))}\n"
-            elif not isinstance(value, list):
-                ai_context += f"- {key.replace('_', ' ').title()}: {value}\n"
     
     # Ek veriler varsa ekle
     if req.additional_data:
-        ai_context += "\nEK VERİLER:\n"
+        ai_context += "\nEK TEST VERİLERİ:\n"
         for key, value in req.additional_data.items():
             ai_context += f"- {key}: {value}\n"
 
@@ -2571,14 +2567,14 @@ LAB TEST SONUÇLARI (Biyokimyasal Durum):
     
     ai_context += f"""
 
-GÖREV: Bu kullanıcı için metabolik yaş analizi yap ve longevity raporu oluştur.
+GÖREV: Bu kullanıcının metabolik yaş testi sonucunu analiz et ve longevity raporu oluştur.
 
 Aşağıdaki JSON formatında yanıt ver:
 
 {{
     "chronological_age": {req.chronological_age},
-    "metabolic_age": [hesaplanan metabolik yaş],
-    "age_difference": [metabolik yaş - kronolojik yaş],
+    "metabolic_age": {req.metabolic_age},
+    "age_difference": {req.metabolic_age - req.chronological_age},
     "biological_age_status": "[genç/yaşlı/normal]",
     "longevity_score": [0-100 arası skor],
     "health_span_prediction": "[sağlıklı yaşam süresi tahmini]",
@@ -2597,8 +2593,8 @@ Aşağıdaki JSON formatında yanıt ver:
 }}
 
 ÖNEMLİ:
-- Metabolik yaşı quiz ve lab verilerine göre hesapla
-- Longevity skorunu 0-100 arasında ver
+- Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) analiz et
+- Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
 - Risk ve koruyucu faktörleri belirle
 - Kişiselleştirilmiş öneriler ver
 - Gelecek sağlık durumunu tahmin et
