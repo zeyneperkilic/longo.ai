@@ -2148,6 +2148,7 @@ KURALLAR:
 - Yaş/cinsiyet risk faktörlerini değerlendir
 - Sadece gerekli testleri öner
 
+
 ÖNEMLİ: 
 - Ailede diyabet varsa HbA1c, açlık kan şekeri testleri öner
 - Ailede kalp hastalığı varsa lipid profili, kardiyovasküler testler öner
@@ -2226,4 +2227,259 @@ JSON formatında yanıt ver:
                     if "recommended_tests" in parsed_response:
                         recommended_tests = parsed_response["recommended_tests"][:max_recommendations]
                     else:
-                        raise ValueError("Temizlenmiş AI response format hatası"
+                        raise ValueError("Temizlenmiş AI response format hatası")
+                except:
+                    raise ValueError("AI response parse edilemedi")
+                
+        except Exception as e:
+            print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
+            return None
+        
+        # Response oluştur
+        response_data = {
+            "title": "Test Önerileri",
+            "recommended_tests": recommended_tests,
+            "analysis_summary": analysis_summary or "Kullanıcı verisi bulunamadı",
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+        }
+        
+        return response_data
+        
+    except Exception as e:
+        print(f"🔍 DEBUG: Test recommendations internal hatası: {e}")
+        return None
+
+@app.post("/ai/test-recommendations", response_model=TestRecommendationResponse)
+async def get_test_recommendations(body: TestRecommendationRequest,
+                                 current_user: str = Depends(get_current_user),
+                                 db: Session = Depends(get_db),
+                                 x_user_id: str | None = Header(default=None),
+                                 x_user_level: int | None = Header(default=None),
+                                 source: str = Query(description="Data source: quiz or lab")):
+    """Premium/Premium Plus kullanıcılar için kişiselleştirilmiş test önerileri"""
+    
+    # Source validation
+    if source not in ["quiz", "lab"]:
+        raise HTTPException(status_code=400, detail="Source must be 'quiz' or 'lab'")
+    
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level)
+    
+    # Free kullanıcı engeli - Test önerileri premium özellik
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Test önerileri premium özelliktir")
+    
+    # User ID validasyonu
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
+    
+    user = get_or_create_user(db, x_user_id, user_plan)
+    
+    try:
+        # 1. Source'a göre veri toplama
+        user_context = {}
+        analysis_summary = ""
+        
+        if source == "quiz":
+            # Sadece quiz verisi al
+            quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
+            print(f"🔍 DEBUG: Quiz messages found: {len(quiz_messages) if quiz_messages else 0}")
+            if quiz_messages:
+                user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
+                analysis_summary = "Quiz verilerine göre analiz tamamlandı."
+                print(f"🔍 DEBUG: Quiz data: {user_context['quiz_data']}")
+        
+        elif source == "lab":
+            # Sadece lab verisi al
+            lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+            if lab_tests:
+                user_context["lab_data"] = {
+                    "tests": lab_tests
+                }
+                analysis_summary = "Lab verilerine göre analiz tamamlandı."
+        
+        # 2. Daha önce baktırılan testleri AI'ya bildir
+        taken_test_names = []
+        if body.exclude_taken_tests and "lab_data" in user_context and "tests" in user_context["lab_data"]:
+            # Lab testlerinden test isimlerini çıkar
+            for test in user_context["lab_data"]["tests"]:
+                if "name" in test:
+                    test_name = test["name"]
+                    taken_test_names.append(test_name)
+        
+        # 3. Tüm testleri AI'ya ver (filtreleme yapma)
+        available_tests = AVAILABLE_TESTS
+        
+        # 4. AI ile kişiselleştirilmiş öneri sistemi
+        recommended_tests = []
+        
+        # AI'ya gönderilecek context'i hazırla
+        quiz_count = len(user_context.get("quiz_data", [])) if "quiz_data" in user_context else 0
+        lab_count = len(user_context.get("lab_data", {}).get("tests", [])) if "lab_data" in user_context else 0
+        
+        # Quiz verisi flexible olarak AI'ya gönder
+        user_info = ""
+        if "quiz_data" in user_context and user_context["quiz_data"]:
+            quiz = user_context["quiz_data"][0]  # Son quiz
+            # Quiz verisini flexible olarak formatla
+            quiz_info_parts = []
+            for key, value in quiz.items():
+                if isinstance(value, list):
+                    quiz_info_parts.append(f"{key}: {', '.join(map(str, value))}")
+                else:
+                    quiz_info_parts.append(f"{key}: {value}")
+            user_info = f"Quiz verileri: {', '.join(quiz_info_parts)}\n"
+        
+        lab_info = ""
+        if "lab_data" in user_context and user_context["lab_data"].get("tests"):
+            lab_info = "Lab testleri:\n"
+            for test in user_context["lab_data"]["tests"][:2]:
+                if "name" in test:
+                    lab_info += f"- {test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
+        
+        # Daha önce yapılan testleri ekle
+        taken_tests_info = ""
+        if taken_test_names:
+            taken_tests_info = f"\nDaha önce yapılan testler: {', '.join(taken_test_names)}\nBu testleri önerme!\n"
+        
+        # Source'a göre AI context hazırla
+        if source == "quiz":
+            print(f"🔍 DEBUG: Quiz user_info: {user_info}")
+            print(f"🔍 DEBUG: Quiz taken_tests_info: {taken_tests_info}")
+            
+            ai_context = f"""
+KULLANICI QUIZ CEVAPLARI:
+{user_info}
+
+{taken_tests_info}
+
+GÖREV: Quiz cevaplarına göre test öner. Maksimum 3 test öner.
+
+KURALLAR:
+- Aile hastalık geçmişi varsa ilgili testleri öner
+- Yaş/cinsiyet risk faktörlerini değerlendir
+- Sadece gerekli testleri öner
+
+ÖNEMLİ: 
+- Ailede diyabet varsa HbA1c, açlık kan şekeri testleri öner
+- Ailede kalp hastalığı varsa lipid profili, kardiyovasküler testler öner
+- Yaş 40+ ise genel sağlık taraması testleri öner
+- Yaş 50+ ise kanser tarama testleri öner
+- Sadece gerçekten gerekli olan testleri öner
+
+JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Neden önerildiği", "benefit": "Faydası"}}]}}
+"""
+        
+        elif source == "lab":
+            ai_context = f"""
+MEVCUT LAB SONUÇLARI:
+{lab_info}
+
+{taken_tests_info}
+
+GÖREV: Lab sonuçlarına göre test öner. Maksimum 3 test öner.
+
+KURALLAR:
+- Sadece anormal değerler için test öner
+- Mevcut değerleri referans al
+- Normal değerlere gereksiz test önerme
+
+JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Faydası"}}]}}
+"""
+        
+        try:
+            from backend.openrouter_client import get_ai_response
+            
+            # AI'ya gönder
+            ai_response = await get_ai_response(
+                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+                user_message=ai_context
+            )
+            
+            print(f"🔍 DEBUG: AI Response for {source}: {ai_response}")
+            
+            # AI response'unu parse et
+            import json
+            try:
+                # JSON parse etmeyi dene
+                parsed_response = json.loads(ai_response)
+                if "recommended_tests" in parsed_response:
+                    recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
+                    print(f"🔍 DEBUG: AI önerileri başarılı: {len(recommended_tests)} adet")
+                else:
+                    raise ValueError("AI response format hatası")
+            except (json.JSONDecodeError, ValueError, KeyError) as parse_error:
+                print(f"🔍 DEBUG: JSON parse hatası: {parse_error}")
+                print(f"🔍 DEBUG: Raw response: {ai_response}")
+                
+                # AI response'u temizle ve tekrar dene
+                cleaned_response = ai_response.strip()
+                if cleaned_response.startswith('```json'):
+                    # ```json ile başlayan kısmı çıkar
+                    json_start = cleaned_response.find('```json') + 7
+                    json_end = cleaned_response.find('```', json_start)
+                    if json_end != -1:
+                        cleaned_response = cleaned_response[json_start:json_end].strip()
+                    else:
+                        cleaned_response = cleaned_response[json_start:].strip()
+                elif cleaned_response.startswith('```'):
+                    # Sadece ``` ile başlayan kısmı çıkar
+                    json_start = cleaned_response.find('```') + 3
+                    json_end = cleaned_response.find('```', json_start)
+                    if json_end != -1:
+                        cleaned_response = cleaned_response[json_start:json_end].strip()
+                    else:
+                        cleaned_response = cleaned_response[json_start:].strip()
+                
+                try:
+                    # JSON'u daha agresif temizle
+                    cleaned_response = cleaned_response.replace('\n', ' ').replace('\r', '')
+                    
+                    # Eğer JSON kesilmişse, son kısmı tamamla
+                    if not cleaned_response.strip().endswith('}'):
+                        last_brace = cleaned_response.rfind('}')
+                        if last_brace != -1:
+                            cleaned_response = cleaned_response[:last_brace + 1]
+                        else:
+                            # Hiç } yoksa, basit bir response oluştur
+                            cleaned_response = '{"recommended_tests": []}'
+                    
+                    parsed_response = json.loads(cleaned_response)
+                    if "recommended_tests" in parsed_response:
+                        recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
+                        print(f"🔍 DEBUG: Temizlenmiş AI önerileri başarılı: {len(recommended_tests)} adet")
+                    else:
+                        raise ValueError("Temizlenmiş AI response format hatası")
+                except:
+                    # Son çare: AI response parse edilemezse fallback
+                    raise ValueError("AI response parse edilemedi")
+                
+        except Exception as e:
+            print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
+            # Fallback kaldırıldı - AI çalışmazsa hata ver
+            raise HTTPException(status_code=500, detail=f"AI test önerisi oluşturulamadı: {str(e)}")
+        
+        # 5. Response oluştur
+        response_data = {
+            "title": "Test Önerileri",
+            "recommended_tests": recommended_tests,
+            "analysis_summary": analysis_summary or "Kullanıcı verisi bulunamadı",
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+        }
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="test_recommendations",
+            request_payload=body.model_dump(),
+            response_payload=response_data,
+            model_used="test_recommendations_ai"
+        )
+        
+        return response_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Test önerisi oluşturulurken hata: {str(e)}")

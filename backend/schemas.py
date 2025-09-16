@@ -250,4 +250,27 @@ class AnalyzeResponse(BaseModel):
 
 # Test Önerisi Schemas
 class TestRecommendationRequest(BaseModel):
-    user_analysis: bool = Field(default
+    user_analysis: bool = Field(default=True, description="Kullanıcı analizi yap")
+    exclude_taken_tests: bool = Field(default=True, description="Baktırılan testleri çıkar")
+    max_recommendations: int = Field(default=3, description="Maksimum öneri sayısı")
+    
+    class Config:
+        extra = "allow"
+
+class TestRecommendation(BaseModel):
+    test_name: str = Field(description="Test adı")
+    reason: str = Field(description="Neden önerildiği")
+    benefit: str = Field(description="Kullanıcıya sağlayacağı fayda")
+    
+    class Config:
+        extra = "allow"
+
+class TestRecommendationResponse(BaseModel):
+    title: str = "Test Önerileri"
+    recommended_tests: List[TestRecommendation]
+    analysis_summary: str = Field(description="Kullanıcı analiz özeti")
+    disclaimer: str = "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+    
+    class Config:
+        extra = "allow"
+
