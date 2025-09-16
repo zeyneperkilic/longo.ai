@@ -734,12 +734,12 @@ async def chat_message(req: ChatMessageRequest,
     # Chat history'yi ai_messages'tan al (Message tablosu yerine)
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_LIMIT)
     
-    # ai_messages formatını history formatına çevir
+    # ai_messages formatını history formatına çevir - sadece bu conversation'a ait
     rows = []
     for msg in chat_messages:
-        if msg.request_payload and "message" in msg.request_payload:
+        if msg.request_payload and "message" in msg.request_payload and msg.request_payload.get("conversation_id") == conversation_id:
             rows.append({"role": "user", "content": msg.request_payload["message"], "created_at": msg.created_at})
-        if msg.response_payload and "reply" in msg.response_payload:
+        if msg.response_payload and "reply" in msg.response_payload and msg.request_payload and msg.request_payload.get("conversation_id") == conversation_id:
             rows.append({"role": "assistant", "content": msg.response_payload["reply"], "created_at": msg.created_at})
     
     # Get user's previous analyses for context (CACHE THIS!)
