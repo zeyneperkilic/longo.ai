@@ -313,6 +313,41 @@ def longo_image():
 # Global free user conversation memory (basit dict)
 free_user_conversations = {}
 
+# IP-based limiting for guest users (no account)
+ip_daily_limits = {}  # {ip: {"count": int, "reset_time": timestamp}}
+
+def check_ip_daily_limit(client_ip: str) -> tuple[bool, int]:
+    """Guest kullanıcılar için IP-based günlük limit kontrolü"""
+    import time
+    current_time = time.time()
+    
+    # 24 saat = 86400 saniye
+    daily_reset_seconds = 86400
+    
+    if client_ip not in ip_daily_limits:
+        # İlk kez gelen IP
+        ip_daily_limits[client_ip] = {
+            "count": 0,
+            "reset_time": current_time + daily_reset_seconds
+        }
+    
+    ip_data = ip_daily_limits[client_ip]
+    
+    # 24 saat geçmişse reset et
+    if current_time >= ip_data["reset_time"]:
+        ip_data["count"] = 0
+        ip_data["reset_time"] = current_time + daily_reset_seconds
+    
+    # Limit kontrolü
+    if ip_data["count"] >= FREE_QUESTION_LIMIT:
+        return False, 0  # Limit aşıldı
+    
+    # Limit artır
+    ip_data["count"] += 1
+    remaining = FREE_QUESTION_LIMIT - ip_data["count"]
+    
+    return True, remaining
+
 async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     """Free kullanıcılar için session-based chat handler"""
     from backend.cache_utils import get_session_question_count, increment_session_question_count
@@ -583,12 +618,23 @@ async def chat_message(req: ChatMessageRequest,
                   current_user: str = Depends(get_current_user),
                   db: Session = Depends(get_db),
                   x_user_id: str | None = Header(default=None),
-                  x_user_level: int | None = Header(default=None)):
+                  x_user_level: int | None = Header(default=None),
+                  request: Request = None):
     
     # Plan kontrolü
     user_plan = get_user_plan_from_headers(x_user_level)
     
     is_premium = user_plan in ["premium", "premium_plus"]
+    
+    # Guest kullanıcılar için IP-based limiting
+    if not x_user_level:  # Guest (no account)
+        client_ip = request.client.host if request else "unknown"
+        can_chat, remaining = check_ip_daily_limit(client_ip)
+        if not can_chat:
+            raise HTTPException(
+                status_code=429, 
+                detail=f"Günlük soru limitiniz aşıldı. 24 saat sonra tekrar deneyin. (Kalan: {remaining})"
+            )
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
     if not validate_chat_user_id(x_user_id or "", user_plan):
