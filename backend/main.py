@@ -154,7 +154,7 @@ def get_user_context_for_message(user_context: dict, user_analyses: list) -> tup
             latest_quiz = quiz_analyses[0]  # En son quiz
             if latest_quiz.request_payload:
                 # Ham quiz cevaplarını al
-                quiz_info = f"🚨 QUIZ SONUÇLARI (KULLANICI VERİSİ):\n"
+                quiz_info = f"🚨 SAĞLIK QUIZ PROFİLİ (KULLANICI VERİSİ):\n"
                 for key, value in latest_quiz.request_payload.items():
                     if value and value != 'N/A':
                         quiz_info += f"- {key}: {value}\n"
@@ -181,7 +181,7 @@ def build_chat_system_prompt() -> str:
     """Chat için system prompt oluştur"""
     return """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!
 
-🚨 ÇOK ÖNEMLİ: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 QUIZ SONUÇLARI" ile başlayan bölümler var. Bu bilgiler kullanıcının yazdığı DEĞİL! Bunlar senin hafızanda olan geçmiş veriler! Kullanıcı sadece son cümlesini yazdı, diğer bilgiler senin hafızandan.
+🚨 ÇOK ÖNEMLİ: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler var. Bu bilgiler kullanıcının yazdığı DEĞİL! Bunlar senin hafızanda olan geçmiş veriler! Kullanıcı sadece son cümlesini yazdı, diğer bilgiler senin hafızandan.
 
 ❌ YANLIŞ İFADELER KULLANMA:
 - "paylaştığın için teşekkür ederim" 
@@ -203,7 +203,7 @@ def build_chat_system_prompt() -> str:
 - Kullanıcı sadece selamladıysa, önce selamlaş, sonra geçmiş verilerini hatırladığını göster
 - Öneri istemediği sürece agresif supplement önerisi yapma
 - Doğal ve akıcı konuş
-- Geçmiş quiz/lab verileri varsa, bunları kullanarak kişiselleştirilmiş yanıt ver
+- Geçmiş sağlık quizprofili/lab verileri varsa, bunları kullanarak kişiselleştirilmiş yanıt ver
 - Sürekli bilgi isteme
 - Sohbetin devamını sağla, her mesajda yeni konuşma başlatma
 - Kullanıcının önceki mesajlarına referans ver ve bağlantı kur"""
@@ -1828,7 +1828,7 @@ async def premium_plus_lifestyle_recommendations(
     # System prompt - Premium Plus özel
     system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
 
-🎯 GÖREVİN: Kullanıcının quiz sonuçları ve lab verilerine göre kişiselleştirilmiş beslenme, spor ve egzersiz önerileri ver.
+🎯 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş beslenme, spor ve egzersiz önerileri ver.
 
 📊 KULLANICI VERİLERİ:
 {str(user_context)}
@@ -1884,7 +1884,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
     
     # Quiz geçmişini ekle
     if quiz_messages:
-        user_message += f"\n📋 SON QUIZ SONUÇLARI:\n"
+        user_message += f"\n📋 SON SAĞLIK QUIZPROFİLİ:\n"
         for msg in quiz_messages[-1:]:  # En son quiz
             if msg.request_payload:
                 user_message += f"- Quiz verileri: {msg.request_payload}\n"
