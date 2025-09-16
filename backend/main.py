@@ -744,6 +744,9 @@ async def chat_message(req: ChatMessageRequest,
         if msg.response_payload and "reply" in msg.response_payload and msg.request_payload and str(msg.request_payload.get("conversation_id")) == str(conversation_id):
             rows.append({"role": "assistant", "content": msg.response_payload["reply"], "created_at": msg.created_at})
     
+    # Conversation history'yi tarih sırasına göre sırala
+    rows.sort(key=lambda x: x["created_at"])
+    
     # Get user's previous analyses for context (CACHE THIS!)
     user_analyses = get_user_ai_messages(db, x_user_id, limit=USER_ANALYSES_LIMIT)
     
