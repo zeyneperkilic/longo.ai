@@ -951,6 +951,10 @@ async def analyze_quiz(body: QuizRequest,
     
     # Test recommendations ekle (sadece premium+ kullanıcılar için)
     if user_plan in ["premium", "premium_plus"]:
+        # User context ve analyses tanımla (test önerileri için)
+        user_context = {}
+        user_analyses = []
+        
         try:
             # Quiz verisini al (yeni gönderilen veri)
             if quiz_dict:
