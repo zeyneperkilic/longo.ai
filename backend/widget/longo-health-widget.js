@@ -5,9 +5,19 @@
     // DOM hazır olunca widget'ı başlat
     function initWidget() {
         // Test için değişkenler (Ideasoft'ta gerçek değerler gelecek)
-        window.longoUserPlan = 'free'; // 'free', 'premium', 'premium_plus'
         window.longoUserLevel = 0; // 0=free, 1=free, 2=premium, 3=premium_plus
         window.longoRealUserId = null; // Premium kullanıcılar için gerçek user ID
+        
+        // User plan'ı user level'a göre otomatik belirle
+        if (window.longoUserLevel === 0 || window.longoUserLevel === 1) {
+            window.longoUserPlan = 'free';
+        } else if (window.longoUserLevel === 2) {
+            window.longoUserPlan = 'premium';
+        } else if (window.longoUserLevel === 3) {
+            window.longoUserPlan = 'premium_plus';
+        } else {
+            window.longoUserPlan = 'free'; // Default fallback
+        }
     
     // CSS Stillerini ekle
     const widgetStyles = `
