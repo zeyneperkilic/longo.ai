@@ -737,11 +737,11 @@ async def chat_message(req: ChatMessageRequest,
     # ai_messages formatını history formatına çevir - sadece bu conversation'a ait
     rows = []
     for msg in chat_messages:
-        # User message - conversation_id kontrolü
-        if msg.request_payload and "message" in msg.request_payload and msg.request_payload.get("conversation_id") == conversation_id:
+        # User message - conversation_id kontrolü (string/int karşılaştırması)
+        if msg.request_payload and "message" in msg.request_payload and str(msg.request_payload.get("conversation_id")) == str(conversation_id):
             rows.append({"role": "user", "content": msg.request_payload["message"], "created_at": msg.created_at})
         # Assistant message - aynı conversation_id'ye ait olmalı
-        if msg.response_payload and "reply" in msg.response_payload and msg.request_payload and msg.request_payload.get("conversation_id") == conversation_id:
+        if msg.response_payload and "reply" in msg.response_payload and msg.request_payload and str(msg.request_payload.get("conversation_id")) == str(conversation_id):
             rows.append({"role": "assistant", "content": msg.response_payload["reply"], "created_at": msg.created_at})
     
     # Get user's previous analyses for context (CACHE THIS!)
