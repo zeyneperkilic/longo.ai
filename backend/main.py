@@ -2550,6 +2550,8 @@ METABOLİK YAŞ TESTİ VERİLERİ:
         for key, value in req.additional_data.items():
             ai_context += f"- {key}: {value}\n"
 
+    ai_context += f"""
+
 QUIZ VERİLERİ (Sağlık Profili):
 - Sağlık Hedefleri: {quiz_data.get('health_goals', 'N/A')}
 - Aile Öyküsü: {quiz_data.get('family_history', 'N/A')}
