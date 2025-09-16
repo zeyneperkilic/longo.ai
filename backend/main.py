@@ -2589,7 +2589,11 @@ Aşağıdaki JSON formatında yanıt ver:
     
     # AI çağrısı
     try:
-        ai_response = get_ai_response(ai_context, "metabolic_age_analysis")
+        from backend.openrouter_client import get_ai_response
+        ai_response = await get_ai_response(
+            system_prompt="Sen bir longevity uzmanısın. Kullanıcının verilerine göre metabolik yaş analizi yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+            user_message=ai_context
+        )
         
         # JSON parse et
         try:
