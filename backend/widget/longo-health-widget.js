@@ -1263,6 +1263,14 @@
             });
             
             if (!response.ok) {
+                // 429 Too Many Requests hatası için özel handling
+                if (response.status === 429) {
+                    const errorData = await response.json();
+                    longoRemoveTypingIndicator();
+                    longoAddMessage('assistant', 'Günlük soru limitiniz doldu. 24 saat sonra tekrar deneyin.');
+                    showLimitPopup();
+                    return;
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
