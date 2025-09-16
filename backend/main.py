@@ -880,8 +880,9 @@ async def chat_message(req: ChatMessageRequest,
     if lab_info:
         history.append({"role": "user", "content": lab_info})
     
-    # Supplement listesi user message olarak ekle
-    history.append({"role": "user", "content": supplements_info})
+    # Supplement listesi sadece supplement önerisi istenirse ekle
+    if any(keyword in message_text.lower() for keyword in ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin"]):
+        history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
@@ -906,6 +907,9 @@ async def chat_message(req: ChatMessageRequest,
     # Chat history
     for r in rows[-(CHAT_HISTORY_MAX-1):]:
         history.append({"role": r["role"], "content": r["content"]})
+    
+    # Kullanıcının güncel mesajını ekle
+    history.append({"role": "user", "content": message_text})
 
     # parallel chat with synthesis
     start = time.time()
