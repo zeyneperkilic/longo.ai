@@ -2602,7 +2602,6 @@ Aşağıdaki JSON formatında yanıt ver:
 - Risk ve koruyucu faktörleri belirle
 - Kişiselleştirilmiş öneriler ver
 - Gelecek sağlık durumunu tahmin et
-"""
     
     # AI çağrısı
     try:
