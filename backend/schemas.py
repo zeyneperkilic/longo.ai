@@ -274,3 +274,47 @@ class TestRecommendationResponse(BaseModel):
     class Config:
         extra = "allow"
 
+# Metabolik Yaş Testi - Premium Plus
+class MetabolicAgeTestRequest(BaseModel):
+    """Metabolik yaş testi isteği"""
+    pass  # Tüm veriler header'lardan ve veritabanından alınacak
+
+class LongevityFactor(BaseModel):
+    """Uzun yaşam faktörü"""
+    factor_name: str = Field(description="Faktör adı")
+    current_status: str = Field(description="Mevcut durum")
+    impact_score: int = Field(description="Etki skoru (1-10)")
+    recommendation: str = Field(description="Öneri")
+    
+    class Config:
+        extra = "allow"
+
+class MetabolicAgeTestResponse(BaseModel):
+    """Metabolik yaş testi yanıtı"""
+    success: bool = True
+    message: str = "Metabolik yaş analizi tamamlandı"
+    
+    # Temel bilgiler
+    chronological_age: int = Field(description="Kronolojik yaş")
+    metabolic_age: int = Field(description="Hesaplanan metabolik yaş")
+    age_difference: int = Field(description="Yaş farkı (metabolik - kronolojik)")
+    biological_age_status: str = Field(description="Biyolojik yaş durumu")
+    
+    # Analiz sonuçları
+    longevity_score: int = Field(description="Uzun yaşam skoru (0-100)")
+    health_span_prediction: str = Field(description="Sağlıklı yaşam süresi tahmini")
+    risk_factors: List[str] = Field(description="Risk faktörleri")
+    protective_factors: List[str] = Field(description="Koruyucu faktörler")
+    
+    # Detaylı analiz
+    longevity_factors: List[LongevityFactor] = Field(description="Uzun yaşam faktörleri")
+    personalized_recommendations: List[str] = Field(description="Kişiselleştirilmiş öneriler")
+    
+    # Gelecek projeksiyonu
+    future_health_outlook: str = Field(description="Gelecek sağlık durumu")
+    
+    disclaimer: str = "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+    
+    class Config:
+        extra = "allow"
+

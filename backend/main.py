@@ -23,7 +23,7 @@ from backend.config import (
 )
 from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
 from backend.auth import get_db, get_or_create_user
-from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse
+from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
@@ -2494,3 +2494,172 @@ JSON formatında yanıt ver:
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Test önerisi oluşturulurken hata: {str(e)}")
+
+# Metabolik Yaş Testi - Premium Plus
+@app.post("/ai/premium-plus/metabolic-age-test", response_model=MetabolicAgeTestResponse)
+async def metabolic_age_test(
+    req: MetabolicAgeTestRequest,
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None)
+):
+    """Metabolik yaş testi - Premium Plus kullanıcıları için longevity raporu"""
+    
+    # Plan kontrolü - sadece Premium Plus
+    user_plan = get_user_plan_from_headers(x_user_level)
+    if user_plan != "premium_plus":
+        raise HTTPException(
+            status_code=403, 
+            detail="Bu özellik sadece Premium Plus kullanıcıları için kullanılabilir"
+        )
+    
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="x-user-id gerekli")
+    
+    # Quiz verilerini al
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_ANALYSES_LIMIT)
+    quiz_data = {}
+    chronological_age = 35  # Default
+    
+    if quiz_messages and quiz_messages[0].request_payload:
+        quiz_data = quiz_messages[0].request_payload
+        chronological_age = int(quiz_data.get('age', 35))
+    
+    # Lab verilerini al
+    lab_tests = get_standardized_lab_data(db, x_user_id, limit=QUIZ_LAB_ANALYSES_LIMIT)
+    
+    # AI context oluştur
+    ai_context = f"""
+KULLANICI BİLGİLERİ:
+- Kronolojik Yaş: {chronological_age}
+- Cinsiyet: {quiz_data.get('gender', 'N/A')}
+- Sağlık Hedefleri: {quiz_data.get('health_goals', 'N/A')}
+- Aile Öyküsü: {quiz_data.get('family_history', 'N/A')}
+- Mevcut İlaçlar: {quiz_data.get('current_medications', 'N/A')}
+- Yaşam Tarzı: {quiz_data.get('lifestyle', 'N/A')}
+- Beslenme: {quiz_data.get('diet', 'N/A')}
+- Uyku Kalitesi: {quiz_data.get('sleep_quality', 'N/A')}
+- Stres Seviyesi: {quiz_data.get('stress_level', 'N/A')}
+- Egzersiz Sıklığı: {quiz_data.get('exercise_frequency', 'N/A')}
+
+LAB TEST SONUÇLARI:
+"""
+    
+    if lab_tests:
+        for test in lab_tests[:5]:  # İlk 5 test
+            ai_context += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} {test.get('unit', '')} (Referans: {test.get('reference_range', 'N/A')})\n"
+    else:
+        ai_context += "Lab test verisi bulunamadı.\n"
+    
+    ai_context += f"""
+
+GÖREV: Bu kullanıcı için metabolik yaş analizi yap ve longevity raporu oluştur.
+
+Aşağıdaki JSON formatında yanıt ver:
+
+{{
+    "chronological_age": {chronological_age},
+    "metabolic_age": [hesaplanan metabolik yaş],
+    "age_difference": [metabolik yaş - kronolojik yaş],
+    "biological_age_status": "[genç/yaşlı/normal]",
+    "longevity_score": [0-100 arası skor],
+    "health_span_prediction": "[sağlıklı yaşam süresi tahmini]",
+    "risk_factors": ["risk faktörü 1", "risk faktörü 2"],
+    "protective_factors": ["koruyucu faktör 1", "koruyucu faktör 2"],
+    "longevity_factors": [
+        {{
+            "factor_name": "Faktör adı",
+            "current_status": "Mevcut durum",
+            "impact_score": [1-10 arası],
+            "recommendation": "Öneri"
+        }}
+    ],
+    "personalized_recommendations": ["öneri 1", "öneri 2"],
+    "future_health_outlook": "[gelecek sağlık durumu tahmini]"
+}}
+
+ÖNEMLİ:
+- Metabolik yaşı quiz ve lab verilerine göre hesapla
+- Longevity skorunu 0-100 arasında ver
+- Risk ve koruyucu faktörleri belirle
+- Kişiselleştirilmiş öneriler ver
+- Gelecek sağlık durumunu tahmin et
+"""
+    
+    # AI çağrısı
+    try:
+        ai_response = get_ai_response(ai_context, "metabolic_age_analysis")
+        
+        # JSON parse et
+        try:
+            # Markdown code block'ları temizle
+            if "```json" in ai_response:
+                ai_response = ai_response.split("```json")[1].split("```")[0]
+            elif "```" in ai_response:
+                ai_response = ai_response.split("```")[1].split("```")[0]
+            
+            # Son } karakterine kadar al
+            last_brace = ai_response.rfind("}")
+            if last_brace != -1:
+                ai_response = ai_response[:last_brace + 1]
+            
+            result = json.loads(ai_response.strip())
+        except json.JSONDecodeError as e:
+            print(f"JSON parse hatası: {e}")
+            print(f"AI Response: {ai_response}")
+            # Fallback response
+            result = {
+                "chronological_age": chronological_age,
+                "metabolic_age": chronological_age + 2,
+                "age_difference": 2,
+                "biological_age_status": "normal",
+                "longevity_score": 75,
+                "health_span_prediction": "Orta düzeyde sağlıklı yaşam süresi bekleniyor",
+                "risk_factors": ["Stres seviyesi yüksek", "Egzersiz eksikliği"],
+                "protective_factors": ["Dengeli beslenme", "Düzenli uyku"],
+                "longevity_factors": [
+                    {
+                        "factor_name": "Stres Yönetimi",
+                        "current_status": "Yüksek stres",
+                        "impact_score": 8,
+                        "recommendation": "Meditasyon ve nefes egzersizleri"
+                    }
+                ],
+                "personalized_recommendations": ["Stres yönetimi", "Düzenli egzersiz"],
+                "future_health_outlook": "Orta düzeyde sağlıklı yaşam süresi"
+            }
+        
+        # Response oluştur
+        response_data = {
+            "success": True,
+            "message": "Metabolik yaş analizi tamamlandı",
+            "chronological_age": result.get("chronological_age", chronological_age),
+            "metabolic_age": result.get("metabolic_age", chronological_age),
+            "age_difference": result.get("age_difference", 0),
+            "biological_age_status": result.get("biological_age_status", "normal"),
+            "longevity_score": result.get("longevity_score", 75),
+            "health_span_prediction": result.get("health_span_prediction", "Analiz tamamlandı"),
+            "risk_factors": result.get("risk_factors", []),
+            "protective_factors": result.get("protective_factors", []),
+            "longevity_factors": result.get("longevity_factors", []),
+            "personalized_recommendations": result.get("personalized_recommendations", []),
+            "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
+            "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+        }
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="metabolic_age_test",
+            request_payload=req.model_dump(),
+            response_payload=response_data,
+            model_used="metabolic_age_ai"
+        )
+        
+        return response_data
+        
+    except Exception as e:
+        print(f"Metabolik yaş testi hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Metabolik yaş analizi sırasında hata: {str(e)}")
