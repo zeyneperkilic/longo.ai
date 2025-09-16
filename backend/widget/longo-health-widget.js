@@ -5,7 +5,6 @@
     // DOM hazır olunca widget'ı başlat
     function initWidget() {
         // Test için değişkenler (Ideasoft'ta gerçek değerler gelecek)
-        window.longoUserPlan = 'free'; // 'free', 'premium', 'premium_plus'
         window.longoUserLevel = 0; // 0=free, 1=free, 2=premium, 3=premium_plus
         window.longoRealUserId = null; // Premium kullanıcılar için gerçek user ID
     
@@ -858,11 +857,11 @@
     
     // Chat için user ID seçimi (Free: Session ID, Premium: Real ID)
     function getUserIdForChat() {
-        const userPlan = window.longoUserPlan || 'free';
+        const userLevel = window.longoUserLevel || 0;
         
-        if (userPlan === 'free') {
+        if (userLevel <= 1) { // 0=free, 1=free
             return getSessionUserId(); // Session-based ID
-        } else {
+        } else { // 2=premium, 3=premium_plus
             return window.longoRealUserId; // Gerçek user ID
         }
     }
@@ -925,7 +924,9 @@
         startPulseAnimation();
         
         // Plan bilgisini güncelle
-        updatePlanDisplay(window.longoUserPlan || 'free');
+        const userLevel = window.longoUserLevel || 0;
+        const userPlan = userLevel <= 1 ? 'free' : (userLevel === 2 ? 'premium' : 'premium_plus');
+        updatePlanDisplay(userPlan);
     }
     
     // Pulse animasyonu
@@ -941,8 +942,8 @@
     // Chat toggle
     window.longoToggleChat = function() {
         // Kullanıcı planını kontrol et (Ideasoft'tan gelecek)
-        const userPlan = window.longoUserPlan || 'free';
-        const isPremium = userPlan === 'premium' || userPlan === 'premium_plus';
+        const userLevel = window.longoUserLevel || 0;
+        const isPremium = userLevel >= 2; // 2=premium, 3=premium_plus
         
         const chatWindow = document.getElementById('longo-chat-window');
         const isVisible = chatWindow.style.display === 'block';
@@ -1031,7 +1032,8 @@
         keepChatButtonVisible();
         
         // Free kullanıcılar için session history'yi yükle
-        if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+        const userLevel = window.longoUserLevel || 0;
+        if (userLevel <= 1) { // 0=free, 1=free
             loadSessionChatHistory();
         }
         
@@ -1310,7 +1312,8 @@
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
         
         // Session history'ye ekle (free kullanıcılar için)
-        if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+        const userLevel = window.longoUserLevel || 0;
+        if (userLevel <= 1) { // 0=free, 1=free
             addToSessionChatHistory(role, content);
         }
     }
