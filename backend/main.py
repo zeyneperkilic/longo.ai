@@ -1818,6 +1818,16 @@ async def premium_plus_diet_recommendations(
     # Lab analizlerini al - Helper fonksiyon kullan
     lab_tests = get_standardized_lab_data(db, x_user_id, 5)
     
+    # Veri kontrolü - En az bir veri kaynağı olmalı
+    has_quiz_data = quiz_messages and any(msg.request_payload for msg in quiz_messages)
+    has_lab_data = lab_tests and len(lab_tests) > 0
+    
+    if not has_quiz_data and not has_lab_data:
+        raise HTTPException(
+            status_code=400, 
+            detail="Kişiselleştirilmiş beslenme önerileri için önce quiz yapmanız veya lab sonuçlarınızı paylaşmanız gerekiyor. Lütfen önce sağlık quizini tamamlayın veya lab test sonuçlarınızı girin."
+        )
+    
     # AI'ya gönderilecek context'i hazırla
     user_context = {}
     
@@ -2008,6 +2018,16 @@ async def premium_plus_exercise_recommendations(
     
     # Lab analizlerini al - Helper fonksiyon kullan
     lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    
+    # Veri kontrolü - En az bir veri kaynağı olmalı
+    has_quiz_data = quiz_messages and any(msg.request_payload for msg in quiz_messages)
+    has_lab_data = lab_tests and len(lab_tests) > 0
+    
+    if not has_quiz_data and not has_lab_data:
+        raise HTTPException(
+            status_code=400, 
+            detail="Kişiselleştirilmiş egzersiz önerileri için önce quiz yapmanız veya lab sonuçlarınızı paylaşmanız gerekiyor. Lütfen önce sağlık quizini tamamlayın veya lab test sonuçlarınızı girin."
+        )
     
     # AI'ya gönderilecek context'i hazırla
     user_context = {}
