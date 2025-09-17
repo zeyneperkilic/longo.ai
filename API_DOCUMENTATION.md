@@ -146,6 +146,23 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
       "type": "personalized"
     }
   ],
+  "test_recommendations": {
+    "title": "Test Önerileri",
+    "recommended_tests": [
+      {
+        "test_name": "Vitamin B12 ve Metilmalonik Asit (MMA) Testi",
+        "reason": "Vegan beslenme nedeniyle B12 eksikliği riski yüksek",
+        "benefit": "B12 eksikliğinin erken tespiti ve sinir sistemi sağlığının korunması"
+      },
+      {
+        "test_name": "25-OH D Vitamini Testi",
+        "reason": "D vitamini eksikliği yaygın ve kemik sağlığı için kritik",
+        "benefit": "Kemik yoğunluğu ve bağışıklık sistemi sağlığının değerlendirilmesi"
+      }
+    ],
+    "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
+    "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+  },
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
 }
 ```
@@ -239,6 +256,23 @@ Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
       "priority": "low"
     }
   ],
+  "test_recommendations": {
+    "title": "Test Önerileri",
+    "recommended_tests": [
+      {
+        "test_name": "25-OH D Vitamini Tekrar Testi",
+        "reason": "D vitamini seviyeniz ciddi düşük (18; normal 30-100)",
+        "benefit": "Kemik sağlığı, bağışıklık ve metabolizma için eksikliği teyit ederek takviye planına yön verir"
+      },
+      {
+        "test_name": "Kalsiyum ve Fosfor Testi",
+        "reason": "D vitamini eksikliği kalsiyum emilimini etkileyebilir",
+        "benefit": "Kemik sağlığı için kalsiyum-fosfor dengesinin değerlendirilmesi"
+      }
+    ],
+    "analysis_summary": "Lab verilerine göre analiz tamamlandı",
+    "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+  },
   "disclaimer": "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun.",
   "test_count": 1,
   "overall_status": "analiz_tamamlandı"
@@ -698,6 +732,120 @@ const labData = {
 processLabResults(labData);
 ```
 
+---
 
+## 🧬 Metabolik Yaş Testi (Premium Plus)
+
+### **POST** `/ai/premium-plus/metabolic-age-test`
+
+Metabolik yaş testi sonucunu analiz eder ve longevity raporu oluşturur.
+
+**Sadece Premium Plus kullanıcıları için!**
+
+#### Request Body
+```json
+{
+  "chronological_age": 35,
+  "metabolic_age": 26,
+  "test_date": "2024-01-15",
+  "test_method": "Biyoimpedans analizi",
+  "test_notes": "Düşük vücut yağ oranı, yüksek kas kütlesi",
+  "additional_data": {
+    "body_fat_percentage": 18,
+    "muscle_mass": 48,
+    "fitness_level": "advanced"
+  }
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Metabolik yaş analizi tamamlandı",
+  "chronological_age": 35,
+  "metabolic_age": 26,
+  "age_difference": -9,
+  "biological_age_status": "genç",
+  "longevity_score": 88,
+  "health_span_prediction": "Ortalamanın üzerinde sağlıklı yaşam süresi",
+  "risk_factors": ["Objektif lab verilerinin olmaması"],
+  "protective_factors": ["Düşük vücut yağ oranı", "Yüksek kas kütlesi"],
+  "longevity_factors": [
+    {
+      "factor_name": "Vücut kompozisyonu",
+      "current_status": "Yaşa göre optimal",
+      "impact_score": 9,
+      "recommendation": "Kas kütlesini korumaya odaklan"
+    }
+  ],
+  "personalized_recommendations": [
+    "Kan tahlilleri ile metabolik risklerin düzenli takibini yap",
+    "Uyku, stres ve beslenme alışkanlıklarına dair günlük kayıt tut"
+  ],
+  "future_health_outlook": "Sağlıklı yaşlanma eğilimi güçlü",
+  "analysis_summary": "Metabolik yaşınız kronolojik yaşınızdan 9 yaş daha genç çıkmış. Bu durum, vücut kompozisyonunuzun yaşınıza göre çok iyi durumda olduğunu gösteriyor. Düşük vücut yağ oranı ve yüksek kas kütlesi, sağlıklı yaşlanma için güçlü bir temel oluşturuyor.",
+  "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+}
+```
+
+#### Özellikler
+- **Test sonucu analizi:** Kronolojik vs metabolik yaş karşılaştırması
+- **Quiz + Lab entegrasyonu:** Mevcut sağlık verilerini dikkate alır
+- **Longevity skoru:** 0-100 arası sağlık puanı
+- **Kişiselleştirilmiş öneriler:** Test sonucuna göre özel tavsiyeler
+- **Risk faktörleri:** Potansiyel sağlık riskleri
+- **Koruyucu faktörler:** Mevcut avantajlar
+- **Analiz paragrafı:** Genel değerlendirme ve özet
+
+#### cURL Örneği
+```bash
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/metabolic-age-test" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: user123" \
+  -H "x-user-level: 3" \
+  -d '{
+    "chronological_age": 35,
+    "metabolic_age": 26,
+    "test_date": "2024-01-15",
+    "test_method": "Biyoimpedans analizi",
+    "test_notes": "Düşük vücut yağ oranı, yüksek kas kütlesi",
+    "additional_data": {
+      "body_fat_percentage": 18,
+      "muscle_mass": 48,
+      "fitness_level": "advanced"
+    }
+  }'
+```
+
+---
+
+## 🔄 Güncellemeler
+
+- **v1.0.0** - İlk sürüm (Quiz, Lab, Chat)
+- **v1.1.0** - Test önerileri eklendi
+- **v1.2.0** - Lifestyle önerileri eklendi
+- **v1.3.0** - Metabolik yaş testi eklendi
+- **v1.4.0** - Chat conversation memory iyileştirildi
+- **v1.5.0** - IP-based rate limiting eklendi
+
+---
+
+## ⚠️ Önemli Notlar
+
+1. **Rate Limiting:** Free kullanıcılar günde 10 soru sınırına sahiptir
+2. **Premium Özellikler:** Lab analizi ve gelişmiş öneriler sadece Premium+ kullanıcılar için
+3. **Metabolik Yaş Testi:** Sadece Premium Plus (x-user-level: 3) kullanıcıları için
+4. **Data Privacy:** Tüm veriler güvenli şekilde saklanır ve işlenir
+5. **Error Handling:** Hata durumlarında detaylı mesajlar döner
+6. **Response Time:** Ortalama yanıt süresi 2-5 saniye arasındadır
+
+---
+
+## 📞 Destek
+
+Herhangi bir sorun veya öneri için: [GitHub Issues](https://github.com/your-repo/issues)
 
 

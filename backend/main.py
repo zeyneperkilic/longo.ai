@@ -882,7 +882,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Supplement listesi sadece supplement önerisi istenirse ekle
     if any(keyword in message_text.lower() for keyword in ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin"]):
-        history.append({"role": "user", "content": supplements_info})
+    history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
@@ -2589,7 +2589,8 @@ Aşağıdaki JSON formatında yanıt ver:
         }}
     ],
     "personalized_recommendations": ["öneri 1", "öneri 2"],
-    "future_health_outlook": "[gelecek sağlık durumu tahmini]"
+    "future_health_outlook": "[gelecek sağlık durumu tahmini]",
+    "analysis_summary": "[genel analiz özeti paragrafı]"
 }}
 
 ÖNEMLİ:
@@ -2644,7 +2645,8 @@ Aşağıdaki JSON formatında yanıt ver:
                     }
                 ],
                 "personalized_recommendations": ["Stres yönetimi", "Düzenli egzersiz"],
-                "future_health_outlook": "Orta düzeyde sağlıklı yaşam süresi"
+                "future_health_outlook": "Orta düzeyde sağlıklı yaşam süresi",
+                "analysis_summary": "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi."
             }
         
         # Response oluştur
@@ -2662,6 +2664,7 @@ Aşağıdaki JSON formatında yanıt ver:
             "longevity_factors": result.get("longevity_factors", []),
             "personalized_recommendations": result.get("personalized_recommendations", []),
             "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
+            "analysis_summary": result.get("analysis_summary", "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi."),
             "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
         }
         

@@ -326,6 +326,9 @@ class MetabolicAgeTestResponse(BaseModel):
     # Gelecek projeksiyonu
     future_health_outlook: str = Field(description="Gelecek sağlık durumu")
     
+    # Analiz paragrafı
+    analysis_summary: str = Field(description="Genel analiz özeti")
+    
     disclaimer: str = "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
     
     class Config:
