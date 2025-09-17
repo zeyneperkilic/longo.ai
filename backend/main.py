@@ -1837,74 +1837,81 @@ async def premium_plus_diet_recommendations(
     # System prompt - Sadece beslenme odaklı
     system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme danışmanısın.
 
-🎯 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI beslenme önerileri ver.
+GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI beslenme önerileri ver.
 
-📊 KULLANICI VERİLERİ:
+KULLANICI VERİLERİ:
 {str(user_context)}
 
-📊 VERİ ANALİZİ:
+VERİ ANALİZİ:
 - Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi
 - Lab sonuçlarından vitamin/mineral eksiklikleri, sağlık durumu
 - Bu verileri birleştirerek holistik beslenme yaklaşımı
 
-🥗 DETAYLI BESLENME ÖNERİLERİ:
-- Lab sonuçlarına göre eksik vitamin/mineraller için spesifik besin önerileri
-- Quiz'deki hedeflere uygun makro besin dağılımı (karbonhidrat, protein, yağ)
-- Öğün planlama ve porsiyon önerileri (gram cinsinden)
-- Supplement ile beslenme dengesi
-- Su tüketimi ve hidrasyon stratejileri
-- Besin kombinasyonları ve emilim ipuçları
+YANIT FORMATI:
+1. MEVCUT DURUM ANALİZİ
+   - Kullanıcının quiz verilerinden çıkarılan sağlık profili
+   - Lab sonuçlarından tespit edilen eksiklikler/riskler
+   - Genel sağlık durumu değerlendirmesi
 
-🍽️ ÖĞÜN PLANLAMA:
-- Kahvaltı, öğle, akşam yemeği önerileri
-- Ara öğün stratejileri
-- Egzersiz öncesi/sonrası beslenme
-- Haftalık menü önerileri
+2. DETAYLI BESLENME ÖNERİLERİ
+   - Her öneri için NEDEN açıkla
+   - Lab sonuçlarına göre eksik vitamin/mineraller için spesifik besin önerileri
+   - Quiz'deki hedeflere uygun makro besin dağılımı (karbonhidrat, protein, yağ)
+   - Öğün planlama ve porsiyon önerileri (gram cinsinden)
+   - Supplement ile beslenme dengesi
+   - Su tüketimi ve hidrasyon stratejileri
+   - Besin kombinasyonları ve emilim ipuçları
 
-⚡ PERFORMANS BESLENMESİ:
-- Enerji seviyelerini optimize eden besinler
-- Kas gelişimi için protein kaynakları
-- Anti-inflamatuar besinler
-- Bağışıklık güçlendirici besinler
+3. ÖĞÜN PLANLAMA
+   - Kahvaltı, öğle, akşam yemeği önerileri
+   - Ara öğün stratejileri
+   - Egzersiz öncesi/sonrası beslenme
+   - Haftalık menü önerileri
 
-🚫 KISITLAMALAR:
+4. PERFORMANS BESLENMESİ
+   - Enerji seviyelerini optimize eden besinler
+   - Kas gelişimi için protein kaynakları
+   - Anti-inflamatuar besinler
+   - Bağışıklık güçlendirici besinler
+
+5. HAFTALIK MENÜ ÖNERİSİ
+   - Detaylı menü planı
+   - Porsiyon miktarları
+
+6. SUPPLEMENT ÖNERİLERİ
+   - Hangi supplement'lerin neden gerekli olduğu
+   - Dozaj önerileri
+
+KISITLAMALAR:
 - Sadece genel öneriler, tıbbi tavsiye değil
 - Diyetisyen yerine geçmez
 - Güvenlik öncelikli yaklaşım
-
-💡 YANIT FORMATI:
-1. 📊 MEVCUT DURUM ANALİZİ
-2. 🥗 DETAYLI BESLENME ÖNERİLERİ
-3. 🍽️ ÖĞÜN PLANLAMA
-4. ⚡ PERFORMANS BESLENMESİ
-5. 📅 HAFTALIK MENÜ ÖNERİSİ
-6. 💊 SUPPLEMENT ÖNERİLERİ
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
 
     # User message'ı hazırla
     user_message = f"""Kullanıcının mevcut durumu:
 
-📊 KULLANICI BİLGİLERİ:
+KULLANICI BİLGİLERİ:
 """
     
     # Quiz verilerini ekle
     if user_context:
-        user_message += f"\n📋 QUIZ VERİLERİ:\n"
+        user_message += f"\nQUIZ VERİLERİ:\n"
         for key, value in user_context.items():
             if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
                 user_message += f"- {key.upper()}: {value}\n"
     
     # Quiz geçmişini ekle
     if quiz_messages:
-        user_message += f"\n📋 SON SAĞLIK QUIZ PROFİLİ:\n"
+        user_message += f"\nSON SAĞLIK QUIZ PROFİLİ:\n"
         for msg in quiz_messages[-1:]:  # En son quiz
             if msg.request_payload:
                 user_message += f"- Quiz verileri: {msg.request_payload}\n"
     
     # Lab analizlerini ekle
     if lab_tests:
-        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        user_message += f"\nLAB ANALİZLERİ:\n"
         for test in lab_tests[:2]:  # İlk 2 test
             user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
     
@@ -1916,7 +1923,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
         for key in quiz_keys:
             if key in user_context and user_context[key]:
                 if not quiz_data_found:
-                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
                     quiz_data_found = True
                 user_message += f"- {key.upper()}: {user_context[key]}\n"
         
@@ -1926,7 +1933,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
         for key in lab_keys:
             if key in user_context and user_context[key]:
                 if not lab_data_found:
-                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    user_message += f"\nGLOBAL LAB VERİLERİ:\n"
                     lab_data_found = True
                 user_message += f"- {key.upper()}: {user_context[key]}\n"
     
@@ -2021,86 +2028,89 @@ async def premium_plus_exercise_recommendations(
     # System prompt - Sadece egzersiz odaklı
     system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel egzersiz danışmanısın.
 
-🎯 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI egzersiz önerileri ver.
+GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI egzersiz önerileri ver.
 
-📊 KULLANICI VERİLERİ:
+KULLANICI VERİLERİ:
 {str(user_context)}
 
-📊 VERİ ANALİZİ:
+VERİ ANALİZİ:
 - Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi
 - Lab sonuçlarından sağlık durumu ve performans göstergeleri
 - Bu verileri birleştirerek güvenli ve etkili egzersiz planı
 
-🏃‍♂️ DETAYLI EGZERSİZ ÖNERİLERİ:
-- Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
-- Haftalık program önerisi (kaç gün, ne kadar süre)
-- Kardiyovasküler, güç antrenmanı, esneklik dengesi
-- Başlangıç seviyesi için güvenli ve sürdürülebilir
-- Spesifik egzersiz hareketleri ve set/tekrar sayıları
+YANIT FORMATI:
+1. MEVCUT DURUM ANALİZİ
+   - Kullanıcının quiz verilerinden çıkarılan fitness profili
+   - Lab sonuçlarından tespit edilen sağlık durumu
+   - Mevcut kondisyon seviyesi değerlendirmesi
+   - Egzersiz hedefleri ve kısıtlamalar
 
-💪 GÜÇ ANTRENMANI:
-- Vücut ağırlığı ve ağırlık antrenmanları
-- Kas gruplarına göre egzersiz dağılımı
-- Progresyon stratejileri
-- Form ve teknik önerileri
+2. DETAYLI EGZERSİZ PROGRAMI
+   - Her öneri için NEDEN açıkla
+   - Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
+   - Haftalık program önerisi (kaç gün, ne kadar süre)
+   - Kardiyovasküler, güç antrenmanı, esneklik dengesi
+   - Başlangıç seviyesi için güvenli ve sürdürülebilir
+   - Spesifik egzersiz hareketleri ve set/tekrar sayıları
 
-🏃‍♀️ KARDİYOVASKÜLER:
-- Koşu, yürüyüş, bisiklet önerileri
-- HIIT ve steady-state kardio dengesi
-- Kalp atış hızı hedefleri
-- Sürdürülebilir kardio programı
+3. GÜÇ ANTRENMANI
+   - Vücut ağırlığı ve ağırlık antrenmanları
+   - Kas gruplarına göre egzersiz dağılımı
+   - Progresyon stratejileri
+   - Form ve teknik önerileri
 
-🧘‍♀️ ESNEKLİK VE MOBİLİTE:
-- Stretching ve yoga önerileri
-- Günlük mobilite rutinleri
-- Recovery ve rahatlama egzersizleri
-- Postür düzeltme egzersizleri
+4. KARDİYOVASKÜLER
+   - Koşu, yürüyüş, bisiklet önerileri
+   - HIIT ve steady-state kardio dengesi
+   - Kalp atış hızı hedefleri
+   - Sürdürülebilir kardio programı
 
-⚡ PERFORMANS VE RECOVERY:
-- Egzersiz öncesi/sonrası rutinler
-- Uyku ve recovery önerileri
-- Sakatlanma önleme stratejileri
-- Motivasyon ve sürdürülebilirlik ipuçları
+5. ESNEKLİK VE MOBİLİTE
+   - Stretching ve yoga önerileri
+   - Günlük mobilite rutinleri
+   - Recovery ve rahatlama egzersizleri
+   - Postür düzeltme egzersizleri
 
-🚫 KISITLAMALAR:
+6. PERFORMANS VE RECOVERY
+   - Egzersiz öncesi/sonrası rutinler
+   - Uyku ve recovery önerileri
+   - Sakatlanma önleme stratejileri
+   - Motivasyon ve sürdürülebilirlik ipuçları
+
+7. HAFTALIK PROGRAM ÖNERİSİ
+   - Detaylı haftalık program
+   - Günlük egzersiz planı
+
+KISITLAMALAR:
 - Sadece genel öneriler, tıbbi tavsiye değil
 - Kişisel antrenör yerine geçmez
 - Güvenlik öncelikli yaklaşım
-
-💡 YANIT FORMATI:
-1. 📊 MEVCUT DURUM ANALİZİ
-2. 🏃‍♂️ DETAYLI EGZERSİZ PROGRAMI
-3. 💪 GÜÇ ANTRENMANI
-4. 🏃‍♀️ KARDİYOVASKÜLER
-5. 🧘‍♀️ ESNEKLİK VE MOBİLİTE
-6. ⚡ PERFORMANS VE RECOVERY
-7. 📅 HAFTALIK PROGRAM ÖNERİSİ
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
 
     # User message'ı hazırla
     user_message = f"""Kullanıcının mevcut durumu:
 
-📊 KULLANICI BİLGİLERİ:
+KULLANICI BİLGİLERİ:
 """
     
     # Quiz verilerini ekle
     if user_context:
-        user_message += f"\n📋 QUIZ VERİLERİ:\n"
+        user_message += f"\nQUIZ VERİLERİ:\n"
         for key, value in user_context.items():
             if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
                 user_message += f"- {key.upper()}: {value}\n"
     
     # Quiz geçmişini ekle
     if quiz_messages:
-        user_message += f"\n📋 SON SAĞLIK QUIZ PROFİLİ:\n"
+        user_message += f"\nSON SAĞLIK QUIZ PROFİLİ:\n"
         for msg in quiz_messages[-1:]:  # En son quiz
             if msg.request_payload:
                 user_message += f"- Quiz verileri: {msg.request_payload}\n"
     
     # Lab analizlerini ekle
     if lab_tests:
-        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        user_message += f"\nLAB ANALİZLERİ:\n"
         for test in lab_tests[:2]:  # İlk 2 test
             user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
     
@@ -2112,7 +2122,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
         for key in quiz_keys:
             if key in user_context and user_context[key]:
                 if not quiz_data_found:
-                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
                     quiz_data_found = True
                 user_message += f"- {key.upper()}: {user_context[key]}\n"
         
@@ -2122,7 +2132,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
         for key in lab_keys:
             if key in user_context and user_context[key]:
                 if not lab_data_found:
-                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    user_message += f"\nGLOBAL LAB VERİLERİ:\n"
                     lab_data_found = True
                 user_message += f"- {key.upper()}: {user_context[key]}\n"
     
@@ -2263,26 +2273,26 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
     # User message'ı hazırla
     user_message = f"""Kullanıcının mevcut durumu:
 
-📊 KULLANICI BİLGİLERİ:
+KULLANICI BİLGİLERİ:
 """
     
     # Quiz verilerini ekle
     if user_context:
-        user_message += f"\n📋 QUIZ VERİLERİ:\n"
+        user_message += f"\nQUIZ VERİLERİ:\n"
         for key, value in user_context.items():
             if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
                 user_message += f"- {key.upper()}: {value}\n"
     
     # Quiz geçmişini ekle
     if quiz_messages:
-        user_message += f"\n📋 SON SAĞLIK QUIZ PROFİLİ:\n"
+        user_message += f"\nSON SAĞLIK QUIZ PROFİLİ:\n"
         for msg in quiz_messages[-1:]:  # En son quiz
             if msg.request_payload:
                 user_message += f"- Quiz verileri: {msg.request_payload}\n"
     
     # Lab analizlerini ekle
     if lab_tests:
-        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        user_message += f"\nLAB ANALİZLERİ:\n"
         for test in lab_tests[:2]:  # İlk 2 test
             user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
     
@@ -2294,7 +2304,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
         for key in quiz_keys:
             if key in user_context and user_context[key]:
                 if not quiz_data_found:
-                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
                     quiz_data_found = True
                 user_message += f"- {key.upper()}: {user_context[key]}\n"
         
@@ -2304,7 +2314,7 @@ DİL: SADECE TÜRKÇE YANIT VER!"""
         for key in lab_keys:
             if key in user_context and user_context[key]:
                 if not lab_data_found:
-                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    user_message += f"\nGLOBAL LAB VERİLERİ:\n"
                     lab_data_found = True
                 user_message += f"- {key.upper()}: {user_context[key]}\n"
     

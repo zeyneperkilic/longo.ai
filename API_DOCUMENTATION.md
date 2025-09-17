@@ -439,11 +439,93 @@ Chat mesajı gönderir ve AI hafızasını kullanır.
 
 ---
 
-## 🏆 Premium Plus Endpoint
+## 🏆 Premium Plus Endpoints
 
-### **POST** `/ai/premium-plus/lifestyle-recommendations`
+### **POST** `/ai/premium-plus/diet-recommendations`
 
-Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egzersiz önerileri. Kullanıcının quiz ve lab verilerini kullanır.
+Premium Plus kullanıcıları için detaylı beslenme önerileri. **Kullanıcının quiz ve lab verilerine göre kişiselleştirilmiş** öneriler verir.
+
+#### Request Body
+```json
+{}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Beslenme önerileri hazırlandı",
+  "recommendations": "## 1. 📊 MEVCUT DURUM ANALİZİ\n- Hedefler: Enerji dengesini sağlama, yağ oranını kontrol etme...\n\n## 2. 🥗 DETAYLI BESLENME ÖNERİLERİ\n- Karbonhidrat: %45 – Tam tahıllar, kinoa...\n- Protein: %25 – Tavuk, hindi, balık...\n- Yağ: %30 – Zeytinyağı, avokado...\n\n## 3. 🍽️ ÖĞÜN PLANLAMA\n- Kahvaltı: Yulaf ezmesi (50 g)...\n- Öğle: Izgara tavuk 150 g...\n\n## 4. ⚡ PERFORMANS BESLENMESİ\n- Egzersiz öncesi: Muz + yulaf...\n- Egzersiz sonrası: Whey protein...",
+  "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+}
+```
+
+#### Özellikler
+- **Kişiselleştirilmiş öneriler:** Quiz ve lab verilerine göre özelleştirilmiş beslenme planı
+- **Detaylı beslenme önerileri:** Lab sonuçlarına göre eksik vitamin/mineraller için spesifik besin önerileri
+- **Makro besin dağılımı:** Karbonhidrat, protein, yağ oranları
+- **Öğün planlama:** Kahvaltı, öğle, akşam yemeği önerileri
+- **Performans beslenmesi:** Egzersiz öncesi/sonrası beslenme
+- **Haftalık menü:** Detaylı menü önerileri
+- **Supplement önerileri:** Beslenme ile birlikte takviye önerileri
+
+#### cURL Örneği
+```bash
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/diet-recommendations" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: user123" \
+  -H "x-user-level: 3" \
+  -d '{}'
+```
+
+---
+
+### **POST** `/ai/premium-plus/exercise-recommendations`
+
+Premium Plus kullanıcıları için detaylı egzersiz önerileri. **Kullanıcının quiz ve lab verilerine göre kişiselleştirilmiş** öneriler verir.
+
+#### Request Body
+```json
+{}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Egzersiz önerileri hazırlandı",
+  "recommendations": "## 1. 📊 MEVCUT DURUM ANALİZİ\n- Hedef: Genel kondisyon geliştirme...\n\n## 2. 🏃‍♂️ DETAYLI EGZERSİZ PROGRAMI\n- Haftada 4-5 gün, 45-60 dakika...\n- 2 gün kuvvet ağırlıklı\n- 2 gün kardiyo ağırlıklı\n\n## 3. 💪 GÜÇ ANTRENMANI\n- Şınav (3x8-12)\n- Squat (3x10-12)\n- Plank (3x30-45 sn)\n\n## 4. 🏃‍♀️ KARDİYOVASKÜLER\n- Steady-State Kardiyo (30-40 dk)\n- HIIT (20 dk)\n\n## 5. 🧘‍♀️ ESNEKLİK VE MOBİLİTE\n- Stretching ve yoga önerileri...",
+  "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+}
+```
+
+#### Özellikler
+- **Kişiselleştirilmiş öneriler:** Quiz ve lab verilerine göre özelleştirilmiş egzersiz planı
+- **Detaylı egzersiz programı:** Haftalık program önerisi (kaç gün, ne kadar süre)
+- **Güç antrenmanı:** Vücut ağırlığı ve ağırlık antrenmanları
+- **Kardiyovasküler:** Koşu, yürüyüş, bisiklet önerileri
+- **Esneklik ve mobilite:** Stretching ve yoga önerileri
+- **Performans ve recovery:** Egzersiz öncesi/sonrası rutinler
+- **Progresyon stratejileri:** Set/tekrar sayıları ve ilerleme planı
+
+#### cURL Örneği
+```bash
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendations" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: user123" \
+  -H "x-user-level: 3" \
+  -d '{}'
+```
+
+### **POST** `/ai/premium-plus/lifestyle-recommendations` (Deprecated)
+
+**⚠️ Bu endpoint artık kullanılmıyor!** Lütfen yukarıdaki 2 ayrı endpoint'i kullanın:
+- **Beslenme için:** `/ai/premium-plus/diet-recommendations`
+- **Egzersiz için:** `/ai/premium-plus/exercise-recommendations`
 
 #### Request Body
 ```json
@@ -454,21 +536,20 @@ Premium Plus kullanıcıları için kişiselleştirilmiş beslenme, spor ve egze
 #### Response
 ```json
 {
-  "status": "success",
-  "nutrition_plan": "Günlük beslenmende dengeli makro dağılımını hedefle: %40 kompleks karbonhidrat (tam tahıllar, kinoa, yulaf), %30 kaliteli protein (balık, tavuk, baklagiller, yumurta), %30 sağlıklı yağ (zeytinyağı, avokado, fındık). Vitamin/mineral desteği için koyu yeşil yapraklı sebzeler (ıspanak, brokoli), demir açısından kırmızı et veya mercimek, C vitamini için turunçgiller ve biber ekle.",
-  "exercise_plan": "Haftada en az 4 gün egzersiz: 2 gün kuvvet antrenmanı (tam vücut odaklı: squat, plank, şınav, direnç lastiği çalışmaları), 2 gün kardiyo (tempolu yürüyüş, bisiklet, yüzme). Başlangıçta 30-40 dk yeterli; kondisyon arttıkça süreyi 45-60 dk'ya çıkar.",
-  "lifestyle_tips": "Günde en az 2-2.5 litre su iç, özellikle antrenman günlerinde extra 500 ml ekle. Uyku kalitesini artırmak için her gün aynı saatte yat-kalk düzeni oluştur, 7-8 saat uyumayı hedefle. Stres yönetimi için nefes egzersizi veya kısa meditasyon önerilir.",
-  "quiz_count": 1,
-  "lab_count": 1
+  "success": true,
+  "message": "Lifestyle önerileri hazırlandı",
+  "recommendations": "## 1. 📊 MEVCUT DURUM ANALİZİ\n- Hedefler: Enerji dengesini sağlama, yağ oranını kontrol etme...\n\n## 2. 🥗 BESLENME ÖNERİLERİ\n- Karbonhidrat: %45 – Tam tahıllar, kinoa...\n- Protein: %25 – Tavuk, hindi, balık...\n- Yağ: %30 – Zeytinyağı, avokado...\n\n## 3. 🏃‍♂️ EGZERSİZ ÖNERİLERİ\n- Haftada 4-5 gün, 45-60 dakika...\n- 2 gün kuvvet ağırlıklı\n- 2 gün kardiyo ağırlıklı\n\n## 4. ⚡ YAŞAM TARZI İPUÇLARI\n- Su tüketimi ve hidrasyon...\n- Uyku kalitesi...\n- Stres yönetimi...",
+  "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
 }
 ```
 
-#### Özellik
+#### Özellikler
 - **AI Hafızası**: Quiz ve lab sonuçlarını hatırlar
 - **Kişiselleştirilmiş Öneriler**: Geçmiş verileri kullanarak beslenme, spor ve egzersiz planı verir
-- **3 Ayrı Bölüm**: `nutrition_plan`, `exercise_plan`, `lifestyle_tips` olarak ayrılmış
+- **Birleşik Response**: Beslenme, egzersiz ve yaşam tarzı önerileri tek response'da
 - **Premium Plus Only**: Sadece `x-user-level: 3` kullanıcıları erişebilir
 - **Temiz Response**: User context dahil edilmez, sadece öneriler
+- **⚠️ Deprecated**: Bu endpoint artık kullanılmıyor, ayrı endpoint'leri kullanın
 
 ---
 
@@ -569,8 +650,8 @@ const response = await fetch('https://longo-ai.onrender.com/ai/quiz', {
 const data = await response.json();
 console.log(data.supplement_recommendations);
 
-// Premium Plus endpoint (Request body boş!)
-const premiumResponse = await fetch('https://longo-ai.onrender.com/ai/premium-plus/lifestyle-recommendations', {
+// Premium Plus endpoints (Request body boş!)
+const dietResponse = await fetch('https://longo-ai.onrender.com/ai/premium-plus/diet-recommendations', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',  // ZORUNLU!
@@ -582,10 +663,22 @@ const premiumResponse = await fetch('https://longo-ai.onrender.com/ai/premium-pl
   body: JSON.stringify({})               // BOŞ OBJECT!
 });
 
-const premiumData = await premiumResponse.json();
-console.log(premiumData.nutrition_plan);
-console.log(premiumData.exercise_plan);
-console.log(premiumData.lifestyle_tips);
+const exerciseResponse = await fetch('https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendations', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',  // ZORUNLU!
+    'username': 'longopass',             // ZORUNLU!
+    'password': '123456',                // ZORUNLU!
+    'x-user-id': 'user123',              // ZORUNLU!
+    'x-user-level': 3                    // ZORUNLU! (Premium Plus için)
+  },
+  body: JSON.stringify({})               // BOŞ OBJECT!
+});
+
+const dietData = await dietResponse.json();
+const exerciseData = await exerciseResponse.json();
+console.log(dietData.recommendations);
+console.log(exerciseData.recommendations);
 
 // Test Recommendations endpoint (Premium ve Premium Plus)
 const testRecResponse = await fetch('https://longo-ai.onrender.com/ai/test-recommendations', {
@@ -627,8 +720,18 @@ curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
     }
   }'
 
-# Premium Plus endpoint (Request body boş!)
-curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/lifestyle-recommendations" \
+# Premium Plus endpoints (Request body boş!)
+# Beslenme önerileri
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/diet-recommendations" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-level: 3" \                   # ZORUNLU! (3=Premium Plus)
+  -d '{}'                                  # BOŞ OBJECT!
+
+# Egzersiz önerileri
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendations" \
   -H "Content-Type: application/json" \    # ZORUNLU!
   -H "username: longopass" \               # ZORUNLU!
   -H "password: 123456" \                  # ZORUNLU!
@@ -820,32 +923,5 @@ curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/metabolic-age-test" 
   }'
 ```
 
----
-
-## 🔄 Güncellemeler
-
-- **v1.0.0** - İlk sürüm (Quiz, Lab, Chat)
-- **v1.1.0** - Test önerileri eklendi
-- **v1.2.0** - Lifestyle önerileri eklendi
-- **v1.3.0** - Metabolik yaş testi eklendi
-- **v1.4.0** - Chat conversation memory iyileştirildi
-- **v1.5.0** - IP-based rate limiting eklendi
-
----
-
-## ⚠️ Önemli Notlar
-
-1. **Rate Limiting:** Free kullanıcılar günde 10 soru sınırına sahiptir
-2. **Premium Özellikler:** Lab analizi ve gelişmiş öneriler sadece Premium+ kullanıcılar için
-3. **Metabolik Yaş Testi:** Sadece Premium Plus (x-user-level: 3) kullanıcıları için
-4. **Data Privacy:** Tüm veriler güvenli şekilde saklanır ve işlenir
-5. **Error Handling:** Hata durumlarında detaylı mesajlar döner
-6. **Response Time:** Ortalama yanıt süresi 2-5 saniye arasındadır
-
----
-
-## 📞 Destek
-
-Herhangi bir sorun veya öneri için: [GitHub Issues](https://github.com/your-repo/issues)
 
 
