@@ -755,7 +755,7 @@ async def chat_message(req: ChatMessageRequest,
     
     
     # Lab verilerini helper fonksiyon ile al
-    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    lab_tests = get_standardized_lab_data(db, x_user_id, 20)
     
     # Lab ve quiz verilerini user message için hazırla
     lab_info, quiz_info = get_user_context_for_message(user_context, user_analyses)
@@ -1816,7 +1816,7 @@ async def premium_plus_diet_recommendations(
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
     
     # Lab analizlerini al - Helper fonksiyon kullan
-    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    lab_tests = get_standardized_lab_data(db, x_user_id, 20)
     
     # Veri kontrolü - En az bir veri kaynağı olmalı
     has_quiz_data = quiz_messages and any(msg.request_payload for msg in quiz_messages)
@@ -2017,7 +2017,7 @@ async def premium_plus_exercise_recommendations(
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
     
     # Lab analizlerini al - Helper fonksiyon kullan
-    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    lab_tests = get_standardized_lab_data(db, x_user_id, 20)
     
     # Veri kontrolü - En az bir veri kaynağı olmalı
     has_quiz_data = quiz_messages and any(msg.request_payload for msg in quiz_messages)
@@ -2228,7 +2228,7 @@ async def premium_plus_lifestyle_recommendations(
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
     
     # Lab analizlerini al - Helper fonksiyon kullan
-    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    lab_tests = get_standardized_lab_data(db, x_user_id, 20)
     
     # AI'ya gönderilecek context'i hazırla
     user_context = {}
@@ -2503,7 +2503,7 @@ async def get_test_recommendations_internal(
         
         elif source == "lab":
             # Sadece lab verisi al
-            lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+            lab_tests = get_standardized_lab_data(db, x_user_id, 20)
             if lab_tests:
                 user_context["lab_data"] = {
                     "tests": lab_tests
@@ -2712,7 +2712,7 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         
         elif source == "lab":
             # Sadece lab verisi al
-            lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+            lab_tests = get_standardized_lab_data(db, x_user_id, 20)
             if lab_tests:
                 user_context["lab_data"] = {
                     "tests": lab_tests
@@ -2935,7 +2935,7 @@ async def metabolic_age_test(
         quiz_data = quiz_messages[0].request_payload
     
     # Lab verilerini al (sadece ek bilgi için)
-    lab_tests = get_standardized_lab_data(db, x_user_id, limit=QUIZ_LAB_ANALYSES_LIMIT)
+    lab_tests = get_standardized_lab_data(db, x_user_id, limit=20)
     
     # AI context oluştur - Metabolik yaş testi sonucu + quiz + lab
     ai_context = f"""
