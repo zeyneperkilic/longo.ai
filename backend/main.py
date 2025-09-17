@@ -1779,6 +1779,386 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # ---------- PREMIUM PLUS BESLENME/SPOR/EGZERSİZ ÖNERİLERİ ----------
 
+@app.post("/ai/premium-plus/diet-recommendations")
+async def premium_plus_diet_recommendations(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None)
+):
+    """Premium Plus kullanıcıları için detaylı beslenme önerileri"""
+    
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        user_plan = "free"
+    
+    if user_plan != "premium_plus":
+        raise HTTPException(
+            status_code=403, 
+            detail="Bu özellik sadece Premium Plus kullanıcıları için mevcuttur"
+        )
+    
+    # User ID validasyonu
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="User ID gerekli")
+    
+    # Quiz geçmişini al
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
+    
+    # Lab analizlerini al - Helper fonksiyon kullan
+    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    
+    # AI'ya gönderilecek context'i hazırla
+    user_context = {}
+    
+    # Quiz verilerini context'e ekle
+    if quiz_messages:
+        user_context["quiz_data"] = []
+        for msg in quiz_messages:
+            if msg.request_payload:
+                user_context["quiz_data"].append(msg.request_payload)
+    
+    # Lab verilerini context'e ekle
+    if lab_tests:
+        user_context["lab_data"] = {
+            "tests": lab_tests
+        }
+    
+    # System prompt - Sadece beslenme odaklı
+    system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme danışmanısın.
+
+🎯 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI beslenme önerileri ver.
+
+📊 KULLANICI VERİLERİ:
+{str(user_context)}
+
+📊 VERİ ANALİZİ:
+- Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi
+- Lab sonuçlarından vitamin/mineral eksiklikleri, sağlık durumu
+- Bu verileri birleştirerek holistik beslenme yaklaşımı
+
+🥗 DETAYLI BESLENME ÖNERİLERİ:
+- Lab sonuçlarına göre eksik vitamin/mineraller için spesifik besin önerileri
+- Quiz'deki hedeflere uygun makro besin dağılımı (karbonhidrat, protein, yağ)
+- Öğün planlama ve porsiyon önerileri (gram cinsinden)
+- Supplement ile beslenme dengesi
+- Su tüketimi ve hidrasyon stratejileri
+- Besin kombinasyonları ve emilim ipuçları
+
+🍽️ ÖĞÜN PLANLAMA:
+- Kahvaltı, öğle, akşam yemeği önerileri
+- Ara öğün stratejileri
+- Egzersiz öncesi/sonrası beslenme
+- Haftalık menü önerileri
+
+⚡ PERFORMANS BESLENMESİ:
+- Enerji seviyelerini optimize eden besinler
+- Kas gelişimi için protein kaynakları
+- Anti-inflamatuar besinler
+- Bağışıklık güçlendirici besinler
+
+🚫 KISITLAMALAR:
+- Sadece genel öneriler, tıbbi tavsiye değil
+- Diyetisyen yerine geçmez
+- Güvenlik öncelikli yaklaşım
+
+💡 YANIT FORMATI:
+1. 📊 MEVCUT DURUM ANALİZİ
+2. 🥗 DETAYLI BESLENME ÖNERİLERİ
+3. 🍽️ ÖĞÜN PLANLAMA
+4. ⚡ PERFORMANS BESLENMESİ
+5. 📅 HAFTALIK MENÜ ÖNERİSİ
+6. 💊 SUPPLEMENT ÖNERİLERİ
+
+DİL: SADECE TÜRKÇE YANIT VER!"""
+
+    # User message'ı hazırla
+    user_message = f"""Kullanıcının mevcut durumu:
+
+📊 KULLANICI BİLGİLERİ:
+"""
+    
+    # Quiz verilerini ekle
+    if user_context:
+        user_message += f"\n📋 QUIZ VERİLERİ:\n"
+        for key, value in user_context.items():
+            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
+                user_message += f"- {key.upper()}: {value}\n"
+    
+    # Quiz geçmişini ekle
+    if quiz_messages:
+        user_message += f"\n📋 SON SAĞLIK QUIZ PROFİLİ:\n"
+        for msg in quiz_messages[-1:]:  # En son quiz
+            if msg.request_payload:
+                user_message += f"- Quiz verileri: {msg.request_payload}\n"
+    
+    # Lab analizlerini ekle
+    if lab_tests:
+        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        for test in lab_tests[:2]:  # İlk 2 test
+            user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
+    
+    # Global context'ten tüm verileri ekle
+    if user_context:
+        # Quiz verilerini ekle
+        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        quiz_data_found = False
+        for key in quiz_keys:
+            if key in user_context and user_context[key]:
+                if not quiz_data_found:
+                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    quiz_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+        
+        # Lab verilerini ekle
+        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        lab_data_found = False
+        for key in lab_keys:
+            if key in user_context and user_context[key]:
+                if not lab_data_found:
+                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    lab_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+    
+    user_message += f"""
+
+Lütfen bu kullanıcı için DETAYLI beslenme önerileri hazırla. Sadece beslenme odaklı, kapsamlı ve uygulanabilir öneriler ver."""
+
+    # AI çağrısı
+    try:
+        from backend.openrouter_client import get_ai_response
+        ai_response = await get_ai_response(
+            system_prompt=system_prompt,
+            user_message=user_message
+        )
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="diet_recommendations",
+            request_payload={},
+            response_payload={"recommendations": ai_response},
+            model_used="openrouter"
+        )
+        
+        return {
+            "success": True,
+            "message": "Beslenme önerileri hazırlandı",
+            "recommendations": ai_response,
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+        }
+        
+    except Exception as e:
+        print(f"🔍 DEBUG: Diet recommendations hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Beslenme önerileri hazırlanırken hata: {str(e)}")
+
+@app.post("/ai/premium-plus/exercise-recommendations")
+async def premium_plus_exercise_recommendations(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None)
+):
+    """Premium Plus kullanıcıları için detaylı egzersiz önerileri"""
+    
+    # Plan kontrolü - Yeni sistem: userLevel bazlı
+    if x_user_level is not None:
+        if x_user_level == 0 or x_user_level == 1:
+            user_plan = "free"
+        elif x_user_level == 2:
+            user_plan = "premium"
+        elif x_user_level == 3:
+            user_plan = "premium_plus"
+        else:
+            user_plan = "free"  # Default fallback
+    else:
+        # Eski sistem fallback
+        user_plan = "free"
+    
+    if user_plan != "premium_plus":
+        raise HTTPException(
+            status_code=403, 
+            detail="Bu özellik sadece Premium Plus kullanıcıları için mevcuttur"
+        )
+    
+    # User ID validasyonu
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="User ID gerekli")
+    
+    # Quiz geçmişini al
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
+    
+    # Lab analizlerini al - Helper fonksiyon kullan
+    lab_tests = get_standardized_lab_data(db, x_user_id, 5)
+    
+    # AI'ya gönderilecek context'i hazırla
+    user_context = {}
+    
+    # Quiz verilerini context'e ekle
+    if quiz_messages:
+        user_context["quiz_data"] = []
+        for msg in quiz_messages:
+            if msg.request_payload:
+                user_context["quiz_data"].append(msg.request_payload)
+    
+    # Lab verilerini context'e ekle
+    if lab_tests:
+        user_context["lab_data"] = {
+            "tests": lab_tests
+        }
+    
+    # System prompt - Sadece egzersiz odaklı
+    system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel egzersiz danışmanısın.
+
+🎯 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI egzersiz önerileri ver.
+
+📊 KULLANICI VERİLERİ:
+{str(user_context)}
+
+📊 VERİ ANALİZİ:
+- Quiz sonuçlarından yaş, cinsiyet, sağlık hedefleri, aktivite seviyesi
+- Lab sonuçlarından sağlık durumu ve performans göstergeleri
+- Bu verileri birleştirerek güvenli ve etkili egzersiz planı
+
+🏃‍♂️ DETAYLI EGZERSİZ ÖNERİLERİ:
+- Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
+- Haftalık program önerisi (kaç gün, ne kadar süre)
+- Kardiyovasküler, güç antrenmanı, esneklik dengesi
+- Başlangıç seviyesi için güvenli ve sürdürülebilir
+- Spesifik egzersiz hareketleri ve set/tekrar sayıları
+
+💪 GÜÇ ANTRENMANI:
+- Vücut ağırlığı ve ağırlık antrenmanları
+- Kas gruplarına göre egzersiz dağılımı
+- Progresyon stratejileri
+- Form ve teknik önerileri
+
+🏃‍♀️ KARDİYOVASKÜLER:
+- Koşu, yürüyüş, bisiklet önerileri
+- HIIT ve steady-state kardio dengesi
+- Kalp atış hızı hedefleri
+- Sürdürülebilir kardio programı
+
+🧘‍♀️ ESNEKLİK VE MOBİLİTE:
+- Stretching ve yoga önerileri
+- Günlük mobilite rutinleri
+- Recovery ve rahatlama egzersizleri
+- Postür düzeltme egzersizleri
+
+⚡ PERFORMANS VE RECOVERY:
+- Egzersiz öncesi/sonrası rutinler
+- Uyku ve recovery önerileri
+- Sakatlanma önleme stratejileri
+- Motivasyon ve sürdürülebilirlik ipuçları
+
+🚫 KISITLAMALAR:
+- Sadece genel öneriler, tıbbi tavsiye değil
+- Kişisel antrenör yerine geçmez
+- Güvenlik öncelikli yaklaşım
+
+💡 YANIT FORMATI:
+1. 📊 MEVCUT DURUM ANALİZİ
+2. 🏃‍♂️ DETAYLI EGZERSİZ PROGRAMI
+3. 💪 GÜÇ ANTRENMANI
+4. 🏃‍♀️ KARDİYOVASKÜLER
+5. 🧘‍♀️ ESNEKLİK VE MOBİLİTE
+6. ⚡ PERFORMANS VE RECOVERY
+7. 📅 HAFTALIK PROGRAM ÖNERİSİ
+
+DİL: SADECE TÜRKÇE YANIT VER!"""
+
+    # User message'ı hazırla
+    user_message = f"""Kullanıcının mevcut durumu:
+
+📊 KULLANICI BİLGİLERİ:
+"""
+    
+    # Quiz verilerini ekle
+    if user_context:
+        user_message += f"\n📋 QUIZ VERİLERİ:\n"
+        for key, value in user_context.items():
+            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
+                user_message += f"- {key.upper()}: {value}\n"
+    
+    # Quiz geçmişini ekle
+    if quiz_messages:
+        user_message += f"\n📋 SON SAĞLIK QUIZ PROFİLİ:\n"
+        for msg in quiz_messages[-1:]:  # En son quiz
+            if msg.request_payload:
+                user_message += f"- Quiz verileri: {msg.request_payload}\n"
+    
+    # Lab analizlerini ekle
+    if lab_tests:
+        user_message += f"\n🧪 LAB ANALİZLERİ:\n"
+        for test in lab_tests[:2]:  # İlk 2 test
+            user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
+    
+    # Global context'ten tüm verileri ekle
+    if user_context:
+        # Quiz verilerini ekle
+        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        quiz_data_found = False
+        for key in quiz_keys:
+            if key in user_context and user_context[key]:
+                if not quiz_data_found:
+                    user_message += f"\n📋 GLOBAL QUIZ VERİLERİ:\n"
+                    quiz_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+        
+        # Lab verilerini ekle
+        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        lab_data_found = False
+        for key in lab_keys:
+            if key in user_context and user_context[key]:
+                if not lab_data_found:
+                    user_message += f"\n🧪 GLOBAL LAB VERİLERİ:\n"
+                    lab_data_found = True
+                user_message += f"- {key.upper()}: {user_context[key]}\n"
+    
+    user_message += f"""
+
+Lütfen bu kullanıcı için DETAYLI egzersiz önerileri hazırla. Sadece egzersiz odaklı, kapsamlı ve uygulanabilir öneriler ver."""
+
+    # AI çağrısı
+    try:
+        from backend.openrouter_client import get_ai_response
+        ai_response = await get_ai_response(
+            system_prompt=system_prompt,
+            user_message=user_message
+        )
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="exercise_recommendations",
+            request_payload={},
+            response_payload={"recommendations": ai_response},
+            model_used="openrouter"
+        )
+        
+        return {
+            "success": True,
+            "message": "Egzersiz önerileri hazırlandı",
+            "recommendations": ai_response,
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+        }
+        
+    except Exception as e:
+        print(f"🔍 DEBUG: Exercise recommendations hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Egzersiz önerileri hazırlanırken hata: {str(e)}")
+
 @app.post("/ai/premium-plus/lifestyle-recommendations")
 async def premium_plus_lifestyle_recommendations(
     current_user: str = Depends(get_current_user),
