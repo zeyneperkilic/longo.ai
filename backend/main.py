@@ -1049,9 +1049,11 @@ async def analyze_quiz(body: QuizRequest,
         pass  # Silent fail for production
     
     # Test recommendations ekle (sadece premium+ kullanıcılar için)
+    logger.info(f"🔍 DEBUG: User plan: {user_plan}")
     if user_plan in ["premium", "premium_plus"]:
         try:
             # Quiz verisini al (yeni gönderilen veri)
+            logger.info(f"🔍 DEBUG: Quiz dict: {quiz_dict}")
             if quiz_dict:
                 # Quiz verisini AI'ya gönder
                 quiz_info_parts = []
