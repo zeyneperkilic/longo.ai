@@ -1179,20 +1179,45 @@ JSON formatında yanıt ver:
                             cleaned_response = '{"recommended_tests": []}'
                     
                     parsed_response = json.loads(cleaned_response)
-                    recommended_tests = parsed_response.get("recommended_tests", [])[:3]
-                    # Response'u her durumda üret (boş liste de olabilir)
-                    test_rec_response = {
+                    if "recommended_tests" in parsed_response:
+                        recommended_tests = parsed_response["recommended_tests"][:3]
+                        
+                        # Response oluştur
+                        test_rec_response = {
+                            "title": "Test Önerileri",
+                            "recommended_tests": recommended_tests,
+                            "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
+                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+                        }
+                        
+                        data["test_recommendations"] = test_rec_response
+                    else:
+                        # Fallback: boş test recommendations
+                        data["test_recommendations"] = {
+                            "title": "Test Önerileri",
+                            "recommended_tests": [],
+                            "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
+                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+                        }
+                except Exception as parse_error:
+                    print(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
+                    # Fallback: boş test recommendations
+                    data["test_recommendations"] = {
                         "title": "Test Önerileri",
-                        "recommended_tests": recommended_tests,
+                        "recommended_tests": [],
                         "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
                         "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
                     }
-                    data["test_recommendations"] = test_rec_response
-                except Exception as parse_error:
-                    print(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
                     
         except Exception as e:
             print(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
+            # Fallback: boş test recommendations
+            data["test_recommendations"] = {
+                "title": "Test Önerileri",
+                "recommended_tests": [],
+                "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
+                "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+            }
     
     # Return quiz response
     return data
