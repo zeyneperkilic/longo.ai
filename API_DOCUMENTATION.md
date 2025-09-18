@@ -654,4 +654,274 @@ console.log(data.supplement_recommendations);
 const dietResponse = await fetch('https://longo-ai.onrender.com/ai/premium-plus/diet-recommendations', {
   method: 'POST',
   headers: {
-    'Content-Type': 'ap
+    'Content-Type': 'application/json',  // ZORUNLU!
+    'username': 'longopass',             // ZORUNLU!
+    'password': '123456',                // ZORUNLU!
+    'x-user-id': 'user123',              // ZORUNLU!
+    'x-user-level': 3                    // ZORUNLU! (Premium Plus için)
+  },
+  body: JSON.stringify({})               // BOŞ OBJECT!
+});
+
+const exerciseResponse = await fetch('https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendations', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',  // ZORUNLU!
+    'username': 'longopass',             // ZORUNLU!
+    'password': '123456',                // ZORUNLU!
+    'x-user-id': 'user123',              // ZORUNLU!
+    'x-user-level': 3                    // ZORUNLU! (Premium Plus için)
+  },
+  body: JSON.stringify({})               // BOŞ OBJECT!
+});
+
+const dietData = await dietResponse.json();
+const exerciseData = await exerciseResponse.json();
+console.log(dietData.recommendations);
+console.log(exerciseData.recommendations);
+
+// Test Recommendations endpoint (Premium ve Premium Plus)
+const testRecResponse = await fetch('https://longo-ai.onrender.com/ai/test-recommendations', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',  // ZORUNLU!
+    'username': 'longopass',             // ZORUNLU!
+    'password': '123456',                // ZORUNLU!
+    'x-user-id': 'user123',              // ZORUNLU!
+    'x-user-level': 2                    // ZORUNLU! (2=Premium, 3=Premium Plus)
+  },
+  body: JSON.stringify({
+    user_analysis: true,
+    exclude_taken_tests: true,
+    max_recommendations: 10
+  })
+});
+
+const testRecData = await testRecResponse.json();
+console.log(testRecData.recommended_tests);
+```
+
+### cURL Example
+```bash
+# Quiz endpoint
+curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-level: 2" \                   # Opsiyonel (2=Premium)
+  -d '{
+    "quiz_data": {
+      "age": 30,
+      "gender": "female",
+      "health_conditions": [],
+      "current_supplements": [],
+      "goals": ["energy", "immunity"]
+    }
+  }'
+
+# Premium Plus endpoints (Request body boş!)
+# Beslenme önerileri
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/diet-recommendations" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-level: 3" \                   # ZORUNLU! (3=Premium Plus)
+  -d '{}'                                  # BOŞ OBJECT!
+
+# Egzersiz önerileri
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendations" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-level: 3" \                   # ZORUNLU! (3=Premium Plus)
+  -d '{}'                                  # BOŞ OBJECT!
+
+# Test Recommendations endpoint (Premium ve Premium Plus)
+curl -X POST "https://longo-ai.onrender.com/ai/test-recommendations" \
+  -H "Content-Type: application/json" \    # ZORUNLU!
+  -H "username: longopass" \               # ZORUNLU!
+  -H "password: 123456" \                  # ZORUNLU!
+  -H "x-user-id: test123" \                # ZORUNLU!
+  -H "x-user-level: 2" \                   # ZORUNLU! (2=Premium, 3=Premium Plus)
+  -d '{
+    "user_analysis": true,
+    "exclude_taken_tests": true,
+    "max_recommendations": 10
+  }'
+```
+
+---
+
+## 🔄 Lab Test Entegrasyonu - Asıl Site Tarafında
+
+### 📋 Genel Yaklaşım
+
+Lab test sonuçları girildikten sonra **otomatik olarak 3 endpoint'e** istek atılmalıdır:
+
+1. **Lab Single** - Her test için ayrı ayrı analiz
+2. **Lab Session** - Tüm testler bir seans olarak analiz  
+3. **Lab Summary** - Tüm testlerin genel analizi
+
+### 💻 JavaScript Entegrasyon Örneği
+
+```javascript
+// Lab test sonuçları girildikten sonra otomatik çalışacak fonksiyon
+async function processLabResults(labData) {
+  const userId = getCurrentUserId();
+  const userLevel = getCurrentUserLevel();
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    'username': 'longopass',
+    'password': '123456',
+    'x-user-id': userId,
+    'x-user-level': userLevel  // 0=Free, 1=Free, 2=Premium, 3=Premium Plus
+  };
+
+  try {
+    // 1. Her test için Lab Single analizi
+    for (const test of labData.tests) {
+      await fetch('/ai/lab/single', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          test: test
+        })
+      });
+    }
+
+    // 2. Tüm testler için Lab Session analizi
+    await fetch('/ai/lab/session', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        session_tests: labData.tests,
+        session_date: labData.session_date,
+        laboratory: labData.laboratory
+      })
+    });
+
+    // 3. Tüm testler için Lab Summary analizi
+    await fetch('/ai/lab/summary', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        tests: labData.tests,
+        total_test_sessions: 1
+      })
+    });
+
+    console.log('Lab analizleri tamamlandı');
+  } catch (error) {
+    console.error('Lab analizi hatası:', error);
+  }
+}
+
+// Kullanım örneği
+const labData = {
+  tests: [
+    {name: "Hemoglobin", value: "15.2", unit: "g/dL", reference_range: "12-16 g/dL"},
+    {name: "Glukoz", value: "95", unit: "mg/dL", reference_range: "70-100 mg/dL"},
+    {name: "Kolesterol", value: "180", unit: "mg/dL", reference_range: "<200 mg/dL"}
+  ],
+  session_date: "2024-01-15",
+  laboratory: "Acıbadem Lab"
+};
+
+// Lab data girildikten sonra otomatik çalıştır
+processLabResults(labData);
+```
+
+---
+
+## 🧬 Metabolik Yaş Testi (Premium Plus)
+
+### **POST** `/ai/premium-plus/metabolic-age-test`
+
+Metabolik yaş testi sonucunu analiz eder ve longevity raporu oluşturur.
+
+**Sadece Premium Plus kullanıcıları için!**
+
+#### Request Body
+```json
+{
+  "chronological_age": 35,
+  "metabolic_age": 26,
+  "test_date": "2024-01-15",
+  "test_method": "Biyoimpedans analizi",
+  "test_notes": "Düşük vücut yağ oranı, yüksek kas kütlesi",
+  "additional_data": {
+    "body_fat_percentage": 18,
+    "muscle_mass": 48,
+    "fitness_level": "advanced"
+  }
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Metabolik yaş analizi tamamlandı",
+  "chronological_age": 35,
+  "metabolic_age": 26,
+  "age_difference": -9,
+  "biological_age_status": "genç",
+  "longevity_score": 88,
+  "health_span_prediction": "Ortalamanın üzerinde sağlıklı yaşam süresi",
+  "risk_factors": ["Objektif lab verilerinin olmaması"],
+  "protective_factors": ["Düşük vücut yağ oranı", "Yüksek kas kütlesi"],
+  "longevity_factors": [
+    {
+      "factor_name": "Vücut kompozisyonu",
+      "current_status": "Yaşa göre optimal",
+      "impact_score": 9,
+      "recommendation": "Kas kütlesini korumaya odaklan"
+    }
+  ],
+  "personalized_recommendations": [
+    "Kan tahlilleri ile metabolik risklerin düzenli takibini yap",
+    "Uyku, stres ve beslenme alışkanlıklarına dair günlük kayıt tut"
+  ],
+  "future_health_outlook": "Sağlıklı yaşlanma eğilimi güçlü",
+  "analysis_summary": "Metabolik yaşınız kronolojik yaşınızdan 9 yaş daha genç çıkmış. Bu durum, vücut kompozisyonunuzun yaşınıza göre çok iyi durumda olduğunu gösteriyor. Düşük vücut yağ oranı ve yüksek kas kütlesi, sağlıklı yaşlanma için güçlü bir temel oluşturuyor.",
+  "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+}
+```
+
+#### Özellikler
+- **Test sonucu analizi:** Kronolojik vs metabolik yaş karşılaştırması
+- **Quiz + Lab entegrasyonu:** Mevcut sağlık verilerini dikkate alır
+- **Longevity skoru:** 0-100 arası sağlık puanı
+- **Kişiselleştirilmiş öneriler:** Test sonucuna göre özel tavsiyeler
+- **Risk faktörleri:** Potansiyel sağlık riskleri
+- **Koruyucu faktörler:** Mevcut avantajlar
+- **Analiz paragrafı:** Genel değerlendirme ve özet
+
+#### cURL Örneği
+```bash
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/metabolic-age-test" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: user123" \
+  -H "x-user-level: 3" \
+  -d '{
+    "chronological_age": 35,
+    "metabolic_age": 26,
+    "test_date": "2024-01-15",
+    "test_method": "Biyoimpedans analizi",
+    "test_notes": "Düşük vücut yağ oranı, yüksek kas kütlesi",
+    "additional_data": {
+      "body_fat_percentage": 18,
+      "muscle_mass": 48,
+      "fitness_level": "advanced"
+    }
+  }'
+```
+
+
+
