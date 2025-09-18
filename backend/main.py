@@ -573,10 +573,11 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 @app.post("/ai/chat/start", response_model=ChatStartResponse)
 def chat_start(body: ChatStartRequest = None,
                db: Session = Depends(get_db),
-               x_user_id: str | None = Header(default=None)):
+               x_user_id: str | None = Header(default=None),
+               x_user_level: int | None = Header(default=None)):
     
     # Plan kontrolü
-    user_plan = "free"  # Free chat için sabit
+    user_plan = get_user_plan_from_headers(x_user_level)
     is_premium = user_plan in ["premium", "premium_plus"]
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
