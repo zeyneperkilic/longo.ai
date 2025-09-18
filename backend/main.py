@@ -600,7 +600,7 @@ def chat_start(body: ChatStartRequest = None,
         return ChatStartResponse(conversation_id=1)  # Her zaman 1, session'da takip edilir
     
     # Premium kullanıcılar için yeni conversation ID oluştur
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     # Yeni conversation ID oluştur (timestamp-based)
     new_conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)  # Millisecond timestamp
@@ -625,7 +625,7 @@ def chat_history(conversation_id: int,
         return []  # Free kullanıcılar için geçmiş yok
     
     # Premium kullanıcılar için database-based history
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     # Sadece bu conversation'a ait chat mesajlarını al
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_MAX)
@@ -690,7 +690,7 @@ async def chat_message(req: ChatMessageRequest,
         return await handle_free_user_chat(req, x_user_id)
     
     # Premium kullanıcılar için database-based chat
-    user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
 
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
@@ -792,7 +792,7 @@ async def chat_message(req: ChatMessageRequest,
     new_context = {}
     
     # Yeni mesajdan context çıkar
-    current_message_context = extract_user_context_hybrid(message_text, user.email) or {}
+    current_message_context = extract_user_context_hybrid(message_text, x_user_id) or {}
     for key, value in current_message_context.items():
         normalized_key = key.strip().lower()
         if normalized_key and value:
