@@ -1102,8 +1102,8 @@ async def analyze_quiz(body: QuizRequest,
     except Exception as e:
         pass  # Silent fail for production
     
-    # Test recommendations ekle (sadece premium+ kullanıcılar için)
-    if user_plan in ["premium", "premium_plus"]:
+    # Test recommendations ekle (hesabı olan tüm kullanıcılar için)
+    if user_plan in ["free", "premium", "premium_plus"]:
         try:
             # Quiz verisini al (yeni gönderilen veri)
             if quiz_dict:
