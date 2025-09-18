@@ -1090,6 +1090,12 @@ JSON formatında yanıt ver:
                     user_message=ai_context
                 )
                 
+                # Debug: AI response'u log et
+                import logging
+                logging.basicConfig(level=logging.INFO)
+                logger = logging.getLogger(__name__)
+                logger.info(f"🔍 DEBUG: Quiz AI response: {ai_response}")
+                
                 # AI response'unu parse et
                 import json
                 try:
@@ -1131,10 +1137,10 @@ JSON formatında yanıt ver:
                         
                         data["test_recommendations"] = test_rec_response
                 except Exception as parse_error:
-                    print(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
+                    logger.error(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
                     
         except Exception as e:
-            print(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
+            logger.error(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
     
     # Return quiz response
     return data
