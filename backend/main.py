@@ -2337,9 +2337,11 @@ async def premium_plus_lifestyle_recommendations(
 5. 📅 HAFTALIK PLAN ÖNERİSİ
 
 ÖNEMLİ KURALLAR:
-- Link verme, sadece metin içeriği ver
-- Kaynak gösterme, sadece öneriler ver
+- KESINLIKLE link verme, sadece metin içeriği ver
+- KESINLIKLE kaynak gösterme, sadece öneriler ver
+- KESINLIKLE URL, web sitesi, kaynak belirtme
 - Temiz ve okunabilir format kullan
+- Sadece egzersiz önerileri ve programları ver
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
 
