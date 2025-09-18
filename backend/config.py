@@ -19,11 +19,6 @@ PARALLEL_MODELS = [
     "openai/gpt-5-chat:online"
 ]
 
-# FALLBACK MODELLER (Ana model hata verirse)
-FALLBACK_MODELS = [
-    "openai/gpt-oss-20b:free"
-]
-
 
 
 PARALLEL_TIMEOUT_MS = 15000  # 15 saniye (ücretli modeller için - hızlı)
@@ -351,5 +346,4 @@ AVAILABLE_TESTS = [
         "priority": "high"
     }
 ]
-
 

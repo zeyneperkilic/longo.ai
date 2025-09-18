@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from backend.config import PARALLEL_MODELS, FALLBACK_MODELS
+from backend.config import PARALLEL_MODELS
 from backend.openrouter_client import call_chat_model
 from backend.utils import is_valid_chat, parse_json_safe
 import time
@@ -54,37 +54,19 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
             msg for msg in messages if msg["role"] != "system"
         ]
         
-        # Step 1: Ana model çağır (GPT-5)
+        # Step 1: Single model call (optimized for GPT-5)
         responses = []
-        main_model_success = False
-        
-        try:
-            result = call_chat_model(PARALLEL_MODELS[0], updated_messages, 0.6, 800)
-            if is_valid_chat(result["content"]):
-                responses.append({
-                    "model": PARALLEL_MODELS[0],
-                    "response": result["content"]
-                })
-                main_model_success = True
-                print(f"✅ Ana model {PARALLEL_MODELS[0]} başarılı")
-        except Exception as e:
-            print(f"❌ Ana model {PARALLEL_MODELS[0]} hata: {e}")
-        
-        # Step 2: Ana model başarısızsa fallback model çağır
-        if not main_model_success and FALLBACK_MODELS:
-            print(f"🔄 Fallback model deneniyor: {FALLBACK_MODELS[0]}")
+        if len(PARALLEL_MODELS) == 1:
+            # Tek model - direkt çağır, ThreadPool gereksiz
             try:
-                result = call_chat_model(FALLBACK_MODELS[0], updated_messages, 0.6, 800)
+                result = call_chat_model(PARALLEL_MODELS[0], updated_messages, 0.6, 800)
                 if is_valid_chat(result["content"]):
                     responses.append({
-                        "model": FALLBACK_MODELS[0],
+                        "model": PARALLEL_MODELS[0],
                         "response": result["content"]
                     })
-                    print(f"✅ Fallback model {FALLBACK_MODELS[0]} başarılı")
-                else:
-                    print(f"❌ Fallback model {FALLBACK_MODELS[0]} geçersiz response")
             except Exception as e:
-                print(f"❌ Fallback model {FALLBACK_MODELS[0]} hata: {e}")
+                print(f"Chat model {PARALLEL_MODELS[0]} failed: {e}")
         else:
             # Çoklu model - paralel çağır
             with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
@@ -469,35 +451,19 @@ def parallel_quiz_analyze(quiz_answers: Dict[str, Any], available_supplements: L
     try:
         messages = build_quiz_prompt(quiz_answers, available_supplements)
         
-        # Step 1: Ana model çağır (GPT-5)
+        # Step 1: Single/multiple model call (optimized)
         responses = []
-        main_model_success = False
-        
-        try:
-            result = call_chat_model(PARALLEL_MODELS[0], messages, 0.2, 4000)
-            if result and result.get("content"):
-                responses.append({
-                    "model": PARALLEL_MODELS[0],
-                    "response": result["content"]
-                })
-                main_model_success = True
-                print(f"✅ Quiz ana model {PARALLEL_MODELS[0]} başarılı")
-        except Exception as e:
-            print(f"❌ Quiz ana model {PARALLEL_MODELS[0]} hata: {e}")
-        
-        # Step 2: Ana model başarısızsa fallback model çağır
-        if not main_model_success and FALLBACK_MODELS:
-            print(f"🔄 Quiz fallback model deneniyor: {FALLBACK_MODELS[0]}")
+        if len(PARALLEL_MODELS) == 1:
+            # Tek model - direkt çağır
             try:
-                result = call_chat_model(FALLBACK_MODELS[0], messages, 0.2, 4000)
+                result = call_chat_model(PARALLEL_MODELS[0], messages, 0.2, 4000)
                 if result and result.get("content"):
                     responses.append({
-                        "model": FALLBACK_MODELS[0],
+                        "model": PARALLEL_MODELS[0],
                         "response": result["content"]
                     })
-                    print(f"✅ Quiz fallback model {FALLBACK_MODELS[0]} başarılı")
             except Exception as e:
-                print(f"❌ Quiz fallback model {FALLBACK_MODELS[0]} hata: {e}")
+                print(f"Quiz model {PARALLEL_MODELS[0]} failed: {e}")
         else:
             # Çoklu model - paralel çağır
             with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
@@ -933,42 +899,13 @@ def parallel_single_lab_analyze(test_data: Dict[str, Any], historical_results: L
     try:
         messages = build_single_lab_prompt(test_data, historical_results)
         
-        # Ana model çağır (GPT-5)
+        # Parallel analysis
         responses = []
-        main_model_success = False
-        
-        try:
-            result = call_chat_model(PARALLEL_MODELS[0], messages, 0.3, 1200)
-            if result and result.get("content"):
-                responses.append({
-                    "model": PARALLEL_MODELS[0],
-                    "response": result["content"]
-                })
-                main_model_success = True
-                print(f"✅ Lab single ana model {PARALLEL_MODELS[0]} başarılı")
-        except Exception as e:
-            print(f"❌ Lab single ana model {PARALLEL_MODELS[0]} hata: {e}")
-        
-        # Ana model başarısızsa fallback model çağır
-        if not main_model_success and FALLBACK_MODELS:
-            print(f"🔄 Lab single fallback model deneniyor: {FALLBACK_MODELS[0]}")
-            try:
-                result = call_chat_model(FALLBACK_MODELS[0], messages, 0.3, 1200)
-                if result and result.get("content"):
-                    responses.append({
-                        "model": FALLBACK_MODELS[0],
-                        "response": result["content"]
-                    })
-                    print(f"✅ Lab single fallback model {FALLBACK_MODELS[0]} başarılı")
-            except Exception as e:
-                print(f"❌ Lab single fallback model {FALLBACK_MODELS[0]} hata: {e}")
-        else:
-            # Çoklu model - paralel çağır (eski kod)
-            with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
-                future_to_model = {
-                    executor.submit(call_chat_model, model, messages, 0.3, 1200): model 
-                    for model in PARALLEL_MODELS
-                }
+        with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
+            future_to_model = {
+                executor.submit(call_chat_model, model, messages, 0.3, 1200): model 
+                for model in PARALLEL_MODELS
+            }
             
             for future in as_completed(future_to_model):
                 model = future_to_model[future]
@@ -1008,37 +945,23 @@ def parallel_single_session_analyze(session_tests: List[Dict[str, Any]], session
     try:
         messages = build_single_session_prompt(session_tests, session_date, laboratory)
         
-        # Ana model çağır (GPT-5)
+        # Single model analysis (optimized for GPT-5)
         responses = []
-        main_model_success = False
-        
-        try:
-            result = call_chat_model(PARALLEL_MODELS[0], messages, 0.3, 1500)
-            if result and result.get("content") and result["content"].strip():
-                responses.append({
-                    "model": PARALLEL_MODELS[0],
-                    "response": result["content"]
-                })
-                main_model_success = True
-                print(f"✅ Lab session ana model {PARALLEL_MODELS[0]} başarılı")
-        except Exception as e:
-            print(f"❌ Lab session ana model {PARALLEL_MODELS[0]} hata: {e}")
-        
-        # Ana model başarısızsa fallback model çağır
-        if not main_model_success and FALLBACK_MODELS:
-            print(f"🔄 Lab session fallback model deneniyor: {FALLBACK_MODELS[0]}")
+        if len(PARALLEL_MODELS) == 1:
+            # Tek model - direkt çağır
             try:
-                result = call_chat_model(FALLBACK_MODELS[0], messages, 0.3, 1500)
+                result = call_chat_model(PARALLEL_MODELS[0], messages, 0.3, 1500)
+                
                 if result and result.get("content") and result["content"].strip():
                     responses.append({
-                        "model": FALLBACK_MODELS[0],
+                        "model": PARALLEL_MODELS[0],
                         "response": result["content"]
                     })
-                    print(f"✅ Lab session fallback model {FALLBACK_MODELS[0]} başarılı")
             except Exception as e:
-                print(f"❌ Lab session fallback model {FALLBACK_MODELS[0]} hata: {e}")
+                # Production'da log yerine fallback kullan
+                pass
         else:
-            # Çoklu model - paralel çağır (eski kod)
+            # Çoklu model - paralel çağır
             with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
                 future_to_model = {
                     executor.submit(call_chat_model, model, messages, 0.3, 1500): model 
@@ -1134,42 +1057,13 @@ def parallel_multiple_lab_analyze(tests_data: List[Dict[str, Any]], session_coun
     try:
         messages = build_multiple_lab_prompt(tests_data, session_count, available_supplements, user_profile)
         
-        # Ana model çağır (GPT-5)
+        # Parallel analysis
         responses = []
-        main_model_success = False
-        
-        try:
-            result = call_chat_model(PARALLEL_MODELS[0], messages, 0.3, 2000)
-            if result and result.get("content") and result["content"].strip():
-                responses.append({
-                    "model": PARALLEL_MODELS[0],
-                    "response": result["content"]
-                })
-                main_model_success = True
-                print(f"✅ Lab multiple ana model {PARALLEL_MODELS[0]} başarılı")
-        except Exception as e:
-            print(f"❌ Lab multiple ana model {PARALLEL_MODELS[0]} hata: {e}")
-        
-        # Ana model başarısızsa fallback model çağır
-        if not main_model_success and FALLBACK_MODELS:
-            print(f"🔄 Lab multiple fallback model deneniyor: {FALLBACK_MODELS[0]}")
-            try:
-                result = call_chat_model(FALLBACK_MODELS[0], messages, 0.3, 2000)
-                if result and result.get("content") and result["content"].strip():
-                    responses.append({
-                        "model": FALLBACK_MODELS[0],
-                        "response": result["content"]
-                    })
-                    print(f"✅ Lab multiple fallback model {FALLBACK_MODELS[0]} başarılı")
-            except Exception as e:
-                print(f"❌ Lab multiple fallback model {FALLBACK_MODELS[0]} hata: {e}")
-        else:
-            # Çoklu model - paralel çağır (eski kod)
-            with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
-                future_to_model = {
-                    executor.submit(call_chat_model, model, messages, 0.3, 2000): model 
-                    for model in PARALLEL_MODELS
-                }
+        with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
+            future_to_model = {
+                executor.submit(call_chat_model, model, messages, 0.3, 2000): model 
+                for model in PARALLEL_MODELS
+            }
             
             for future in as_completed(future_to_model):
                 model = future_to_model[future]
