@@ -1080,22 +1080,33 @@ async def analyze_quiz(body: QuizRequest,
                         quiz_info_parts.append(f"{key}: {value}")
                 user_info = f"Quiz verileri: {', '.join(quiz_info_parts)}\n"
                 
+                # Mevcut test listesini al
+                from backend.config import AVAILABLE_TESTS
+                available_tests_info = "\n".join([
+                    f"- {test['test_name']} ({test['category']}): {test['description']}"
+                    for test in AVAILABLE_TESTS
+                ])
+                
                 ai_context = f"""
 KULLANICI QUIZ CEVAPLARI:
 {user_info}
 
-GÖREV: Quiz cevaplarına göre test öner. Maksimum 3 test öner.
+MEVCUT TEST LİSTESİ (Sadece bunlardan seç):
+{available_tests_info}
+
+GÖREV: Quiz cevaplarına göre yukarıdaki listeden test öner. Maksimum 3 test öner.
 
 KURALLAR:
 - Aile hastalık geçmişi varsa ilgili testleri öner
 - Yaş/cinsiyet risk faktörlerini değerlendir
 - Sadece gerekli testleri öner
+- Sadece yukarıdaki listeden seç
 
 ÖNEMLİ: 
-- Ailede diyabet varsa HbA1c, açlık kan şekeri testleri öner
-- Ailede kalp hastalığı varsa lipid profili, kardiyovasküler testler öner
-- Yaş 40+ ise genel sağlık taraması testleri öner
-- Yaş 50+ ise kanser tarama testleri öner
+- Ailede diyabet varsa Şeker ve Diyabet Testi öner
+- Ailede kalp hastalığı varsa Lipid ve Kolesterol Testi öner
+- Yaş 40+ ise Vitamin ve Mineral Seviyeleri Testi öner
+- Yaş 50+ ise Tümör Belirteçleri Testi öner
 - Sadece gerçekten gerekli olan testleri öner
 
 JSON formatında yanıt ver:
@@ -1505,21 +1516,32 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
                         lab_info_parts.append(f"{test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})")
                 lab_info = f"Lab verileri: {', '.join(lab_info_parts)}\n"
                 
+                # Mevcut test listesini al
+                from backend.config import AVAILABLE_TESTS
+                available_tests_info = "\n".join([
+                    f"- {test['test_name']} ({test['category']}): {test['description']}"
+                    for test in AVAILABLE_TESTS
+                ])
+                
                 ai_context = f"""
 KULLANICI LAB SONUÇLARI:
 {lab_info}
 
-GÖREV: Lab sonuçlarına göre test öner. Maksimum 3 test öner.
+MEVCUT TEST LİSTESİ (Sadece bunlardan seç):
+{available_tests_info}
+
+GÖREV: Lab sonuçlarına göre yukarıdaki listeden test öner. Maksimum 3 test öner.
 
 KURALLAR:
 - Sadece anormal değerler için test öner
 - Mevcut değerleri referans al
 - Normal değerlere gereksiz test önerme
+- Sadece yukarıdaki listeden seç
 
 ÖNEMLİ:
-- Düşük hemoglobin varsa demir, ferritin testleri öner
-- Yüksek glukoz varsa HbA1c, OGTT testleri öner
-- Anormal lipid değerleri varsa kardiyovasküler testler öner
+- Düşük hemoglobin varsa Vitamin ve Mineral Seviyeleri Testi öner
+- Yüksek glukoz varsa Şeker ve Diyabet Testi öner
+- Anormal lipid değerleri varsa Lipid ve Kolesterol Testi öner
 - Sadece gerçekten gerekli olan testleri öner
 
 JSON formatında yanıt ver:
