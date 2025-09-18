@@ -29,8 +29,36 @@ from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
 from backend.cache_utils import cache_supplements
 
+# Global user context storage (in-memory)
+user_contexts = {}  # {user_id: {context_data}}
 
+# Persistent user context storage (in-memory for now)
+persistent_user_contexts = {}  # {user_id: {persistent_context_data}}
 
+def save_persistent_user_context(user_id: str, context_data: dict):
+    """Önemli kullanıcı bilgilerini persistent context'e kaydet"""
+    if user_id not in persistent_user_contexts:
+        persistent_user_contexts[user_id] = {}
+    
+    # Mevcut context'i güncelle
+    for key, value in context_data.items():
+        if key in ["hastaliklar", "ilaclar", "alerjiler", "tercihler"] and isinstance(value, list):
+            # Liste alanları için mevcut listeyi genişlet
+            if key in persistent_user_contexts[user_id]:
+                existing = persistent_user_contexts[user_id][key]
+                if isinstance(existing, list):
+                    persistent_user_contexts[user_id][key] = list(set(existing + value))
+                else:
+                    persistent_user_contexts[user_id][key] = value
+            else:
+                persistent_user_contexts[user_id][key] = value
+        else:
+            # Diğer alanlar için direkt güncelle
+            persistent_user_contexts[user_id][key] = value
+
+def load_persistent_user_context(user_id: str) -> dict:
+    """Persistent context'ten önemli kullanıcı bilgilerini yükle"""
+    return persistent_user_contexts.get(user_id, {})
 
 # Basic Authentication
 def check_basic_auth(username: str, password: str):
@@ -754,6 +782,12 @@ async def chat_message(req: ChatMessageRequest,
     # Global + Local Context Sistemi - OPTIMIZED
     user_context = {}
     
+    # Persistent context'i yükle (önemli bilgiler)
+    if x_user_id:
+        persistent_context = load_persistent_user_context(x_user_id)
+        if persistent_context:
+            user_context.update(persistent_context)
+    
     
     # Lab verilerini helper fonksiyon ile al
     lab_tests = get_standardized_lab_data(db, x_user_id, 20)
@@ -810,6 +844,18 @@ async def chat_message(req: ChatMessageRequest,
                             for key, value in new_context.items())
         if context_changed:
             user_context.update(new_context)
+            
+            # ÖNEMLİ BİLGİLERİ PERSISTENT CONTEXT'E KAYDET
+            # Chat'te söylenen önemli bilgileri (ad, yaş, hastalık, ilaç) kaydet
+            important_keys = ["isim", "yas", "hastaliklar", "ilaclar", "alerjiler", "cinsiyet", "tercihler"]
+            persistent_info = {}
+            for key in important_keys:
+                if key in new_context and new_context[key]:
+                    persistent_info[key] = new_context[key]
+            
+            # Persistent context'i kaydet (veritabanına veya cache'e)
+            if persistent_info and x_user_id:
+                save_persistent_user_context(x_user_id, persistent_info)
     
     # Kullanıcı bilgilerini system prompt'a ekle
     system_prompt = add_user_context_to_prompt(system_prompt, user_context)
