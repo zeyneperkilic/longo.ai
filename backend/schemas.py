@@ -176,6 +176,7 @@ class QuizResponse(BaseModel):
     lifestyle_advice: Optional[Dict[str, Any]] = Field(default_factory=dict)
     general_warnings: Optional[Dict[str, Any]] = Field(default_factory=dict)
     supplement_recommendations: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    test_recommendations: Optional[TestRecommendations] = Field(default=None, description="Test önerileri (Premium+ kullanıcılar için)")
     disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
     
     class Config:
@@ -211,6 +212,7 @@ class GeneralLabSummaryResponse(BaseModel):
     genel_durum: Optional[str] = Field(default="Testlerin genel kapsamlı analizi varsa eski sonuçlarla karşılaştırma.")
     oneriler: Optional[List[str]] = Field(default_factory=list)
     urun_onerileri: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    test_recommendations: Optional[TestRecommendations] = Field(default=None, description="Test önerileri (Premium+ kullanıcılar için)")
     disclaimer: str = "Bu içerik bilgilendirme amaçlıdır; tıbbi tanı/tedavi için hekiminize başvurun."
     
     class Config:
