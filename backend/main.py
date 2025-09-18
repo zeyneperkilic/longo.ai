@@ -1102,125 +1102,6 @@ async def analyze_quiz(body: QuizRequest,
     except Exception as e:
         pass  # Silent fail for production
     
-    # Test recommendations ekle (hesabı olan tüm kullanıcılar için)
-    print(f"🔍 DEBUG: Quiz endpoint - user_plan: {user_plan}, x_user_level: {x_user_level}")
-    if user_plan in ["free", "premium", "premium_plus"]:
-        print(f"🔍 DEBUG: Quiz endpoint - User with account detected, generating test recommendations")
-        try:
-            # Quiz verisini al (yeni gönderilen veri)
-            print(f"🔍 DEBUG: Quiz endpoint - quiz_dict: {quiz_dict}")
-            if quiz_dict:
-                # Quiz verisini AI'ya gönder
-                quiz_info_parts = []
-                for key, value in quiz_dict.items():
-                    if isinstance(value, list):
-                        quiz_info_parts.append(f"{key}: {', '.join(map(str, value))}")
-                    else:
-                        quiz_info_parts.append(f"{key}: {value}")
-                user_info = f"Quiz verileri: {', '.join(quiz_info_parts)}\n"
-                
-                ai_context = f"""
-KULLANICI QUIZ CEVAPLARI:
-{user_info}
-
-GÖREV: Quiz cevaplarına göre test öner. Maksimum 3 test öner.
-
-KURALLAR:
-- Aile hastalık geçmişi varsa ilgili testleri öner
-- Yaş/cinsiyet risk faktörlerini değerlendir
-- Sadece gerekli testleri öner
-
-ÖNEMLİ: 
-- Ailede diyabet varsa HbA1c, açlık kan şekeri testleri öner
-- Ailede kalp hastalığı varsa lipid profili, kardiyovasküler testler öner
-- Yaş 40+ ise genel sağlık taraması testleri öner
-- Yaş 50+ ise kanser tarama testleri öner
-- Sadece gerçekten gerekli olan testleri öner
-
-JSON formatında yanıt ver:
-{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Neden önerildiği", "benefit": "Faydası"}}]}}
-"""
-                
-                from backend.openrouter_client import get_ai_response
-                ai_response = await get_ai_response(
-                    system_prompt=(
-                        "Sen bir sağlık test danışmanısısın. SADECE geçerli JSON döndür.\n"
-                        "Biçim KESİN ve ZORUNLU:\n"
-                        "{\"recommended_tests\":[{\"test_name\":\"...\",\"reason\":\"...\",\"benefit\":\"...\"}]}\n"
-                        "Kod bloğu, markdown, açıklayıcı metin YOK. Sadece JSON.\n"
-                        "Her durumda 'recommended_tests' anahtarı OLMALI. Öneri yoksa boş liste dön.\n"
-                        "Öncelik: aile geçmişi, yaş/cinsiyet, risk faktörleri. Gereksiz test önermeden kısa liste ver."
-                    ),
-                    user_message=ai_context
-                )
-                
-                # AI response'unu parse et
-                import json
-                try:
-                    cleaned_response = ai_response.strip()
-                    if cleaned_response.startswith('```json'):
-                        json_start = cleaned_response.find('```json') + 7
-                        json_end = cleaned_response.find('```', json_start)
-                        if json_end != -1:
-                            cleaned_response = cleaned_response[json_start:json_end].strip()
-                        else:
-                            cleaned_response = cleaned_response[json_start:].strip()
-                    elif cleaned_response.startswith('```'):
-                        json_start = cleaned_response.find('```') + 3
-                        json_end = cleaned_response.find('```', json_start)
-                        if json_end != -1:
-                            cleaned_response = cleaned_response[json_start:json_end].strip()
-                        else:
-                            cleaned_response = cleaned_response[json_start:].strip()
-                    
-                    cleaned_response = cleaned_response.replace('\n', ' ').replace('\r', '')
-                    if not cleaned_response.strip().endswith('}'):
-                        last_brace = cleaned_response.rfind('}')
-                        if last_brace != -1:
-                            cleaned_response = cleaned_response[:last_brace + 1]
-                        else:
-                            cleaned_response = '{"recommended_tests": []}'
-                    
-                    parsed_response = json.loads(cleaned_response)
-                    if "recommended_tests" in parsed_response:
-                        recommended_tests = parsed_response["recommended_tests"][:3]
-                        
-                        # Response oluştur
-                        test_rec_response = {
-                            "title": "Test Önerileri",
-                            "recommended_tests": recommended_tests,
-                            "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
-                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
-                        }
-                        
-                        data["test_recommendations"] = test_rec_response
-                    else:
-                        # Fallback: boş test recommendations
-                        data["test_recommendations"] = {
-                            "title": "Test Önerileri",
-                            "recommended_tests": [],
-                            "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
-                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
-                        }
-                except Exception as parse_error:
-                    print(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
-                    # Fallback: boş test recommendations
-                    data["test_recommendations"] = {
-                        "title": "Test Önerileri",
-                        "recommended_tests": [],
-                        "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
-                        "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
-                    }
-                    
-        except Exception as e:
-            print(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
-            # Fallback: boş test recommendations
-            data["test_recommendations"] = {
-                "title": "Test Önerileri",
-                "recommended_tests": [],
-                "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
-                "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
-            }
     
     # Return quiz response
     return data
@@ -1558,92 +1439,6 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
     
     # Database kaydı tamamlandı - Artık read-through sistemi çalışacak
     
-    # Test recommendations ekle (sadece premium+ kullanıcılar için)
-    if user_plan in ["premium", "premium_plus"]:
-        try:
-            # Lab verisini al (yeni gönderilen veri)
-            if all_tests_dict:
-                # Lab verisini AI'ya gönder
-                lab_info_parts = []
-                for test in all_tests_dict:
-                    if "name" in test:
-                        lab_info_parts.append(f"{test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})")
-                lab_info = f"Lab verileri: {', '.join(lab_info_parts)}\n"
-                
-                ai_context = f"""
-KULLANICI LAB SONUÇLARI:
-{lab_info}
-
-GÖREV: Lab sonuçlarına göre test öner. Maksimum 3 test öner.
-
-KURALLAR:
-- Sadece anormal değerler için test öner
-- Mevcut değerleri referans al
-- Normal değerlere gereksiz test önerme
-
-ÖNEMLİ:
-- Düşük hemoglobin varsa demir, ferritin testleri öner
-- Yüksek glukoz varsa HbA1c, OGTT testleri öner
-- Anormal lipid değerleri varsa kardiyovasküler testler öner
-- Sadece gerçekten gerekli olan testleri öner
-
-JSON formatında yanıt ver:
-{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Faydası"}}]}}
-"""
-                
-                from backend.openrouter_client import get_ai_response
-                
-                # AI'ya gönder
-                ai_response = await get_ai_response(
-                    system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
-                    user_message=ai_context
-                )
-                
-                # AI response'unu parse et
-                import json
-                try:
-                    cleaned_response = ai_response.strip()
-                    if cleaned_response.startswith('```json'):
-                        json_start = cleaned_response.find('```json') + 7
-                        json_end = cleaned_response.find('```', json_start)
-                        if json_end != -1:
-                            cleaned_response = cleaned_response[json_start:json_end].strip()
-                        else:
-                            cleaned_response = cleaned_response[json_start:].strip()
-                    elif cleaned_response.startswith('```'):
-                        json_start = cleaned_response.find('```') + 3
-                        json_end = cleaned_response.find('```', json_start)
-                        if json_end != -1:
-                            cleaned_response = cleaned_response[json_start:json_end].strip()
-                        else:
-                            cleaned_response = cleaned_response[json_start:].strip()
-                    
-                    cleaned_response = cleaned_response.replace('\n', ' ').replace('\r', '')
-                    if not cleaned_response.strip().endswith('}'):
-                        last_brace = cleaned_response.rfind('}')
-                        if last_brace != -1:
-                            cleaned_response = cleaned_response[:last_brace + 1]
-                        else:
-                            cleaned_response = '{"recommended_tests": []}'
-                    
-                    parsed_response = json.loads(cleaned_response)
-                    if "recommended_tests" in parsed_response:
-                        recommended_tests = parsed_response["recommended_tests"][:3]
-                        
-                        # Response oluştur
-                        test_rec_response = {
-                            "title": "Test Önerileri",
-                            "recommended_tests": recommended_tests,
-                            "analysis_summary": "Lab verilerine göre analiz tamamlandı",
-                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
-                        }
-                        
-                        data["test_recommendations"] = test_rec_response
-                except Exception as parse_error:
-                    print(f"🔍 DEBUG: Lab summary test recommendations parse hatası: {parse_error}")
-                    
-        except Exception as e:
-            print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
     
     # Log to ai_messages
     try:
@@ -2755,6 +2550,254 @@ JSON formatında yanıt ver:
     except Exception as e:
         print(f"🔍 DEBUG: Test recommendations internal hatası: {e}")
         return None
+
+@app.post("/ai/quiz/test-recommendations", response_model=TestRecommendationResponse)
+async def get_quiz_test_recommendations(current_user: str = Depends(get_current_user),
+                                       db: Session = Depends(get_db),
+                                       x_user_id: str | None = Header(default=None),
+                                       x_user_level: int | None = Header(default=None)):
+    """Quiz verilerine göre test önerileri - hesabı olan tüm kullanıcılar için"""
+    
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level)
+    
+    # Hesabı olan tüm kullanıcılar için
+    if user_plan not in ["free", "premium", "premium_plus"]:
+        raise HTTPException(status_code=403, detail="Bu özellik hesabı olan kullanıcılar için kullanılabilir")
+    
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="x-user-id gerekli")
+    
+    # Quiz verilerini al
+    quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_ANALYSES_LIMIT)
+    
+    if not quiz_messages or not quiz_messages[0].request_payload:
+        raise HTTPException(status_code=400, detail="Quiz verisi bulunamadı. Önce quiz doldurun.")
+    
+    quiz_data = quiz_messages[0].request_payload
+    
+    # AI context oluştur
+    quiz_info_parts = []
+    for key, value in quiz_data.items():
+        if isinstance(value, list):
+            quiz_info_parts.append(f"{key}: {', '.join(map(str, value))}")
+        else:
+            quiz_info_parts.append(f"{key}: {value}")
+    user_info = f"Quiz verileri: {', '.join(quiz_info_parts)}\n"
+    
+    ai_context = f"""
+KULLANICI QUIZ CEVAPLARI:
+{user_info}
+
+GÖREV: Quiz cevaplarına göre test öner. Maksimum 3 test öner.
+
+KURALLAR:
+- Aile hastalık geçmişi varsa ilgili testleri öner
+- Yaş/cinsiyet risk faktörlerini değerlendir
+- Sadece gerekli testleri öner
+
+ÖNEMLİ: 
+- Ailede diyabet varsa HbA1c, açlık kan şekeri testleri öner
+- Ailede kalp hastalığı varsa lipid profili, kardiyovasküler testler öner
+- Yaş 40+ ise genel sağlık taraması testleri öner
+- Yaş 50+ ise kanser tarama testleri öner
+- Sadece gerçekten gerekli olan testleri öner
+
+JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Neden önerildiği", "benefit": "Faydası"}}]}}
+"""
+    
+    # AI'ya gönder
+    from backend.openrouter_client import get_ai_response
+    ai_response = await get_ai_response(
+        system_prompt=(
+            "Sen bir sağlık test danışmanısın. SADECE geçerli JSON döndür.\n"
+            "Biçim KESİN ve ZORUNLU:\n"
+            "{\"recommended_tests\":[{\"test_name\":\"...\",\"reason\":\"...\",\"benefit\":\"...\"}]}\n"
+            "Kod bloğu, markdown, açıklayıcı metin YOK. Sadece JSON.\n"
+            "Her durumda 'recommended_tests' anahtarı OLMALI. Öneri yoksa boş liste dön.\n"
+            "Öncelik: aile geçmişi, yaş/cinsiyet, risk faktörleri. Gereksiz test önermeden kısa liste ver."
+        ),
+        user_message=ai_context
+    )
+    
+    # AI response'unu parse et
+    import json
+    try:
+        cleaned_response = ai_response.strip()
+        if cleaned_response.startswith('```json'):
+            json_start = cleaned_response.find('```json') + 7
+            json_end = cleaned_response.find('```', json_start)
+            if json_end != -1:
+                cleaned_response = cleaned_response[json_start:json_end].strip()
+            else:
+                cleaned_response = cleaned_response[json_start:].strip()
+        elif cleaned_response.startswith('```'):
+            json_start = cleaned_response.find('```') + 3
+            json_end = cleaned_response.find('```', json_start)
+            if json_end != -1:
+                cleaned_response = cleaned_response[json_start:json_end].strip()
+            else:
+                cleaned_response = cleaned_response[json_start:].strip()
+        
+        cleaned_response = cleaned_response.replace('\n', ' ').replace('\r', '')
+        if not cleaned_response.strip().endswith('}'):
+            last_brace = cleaned_response.rfind('}')
+            if last_brace != -1:
+                cleaned_response = cleaned_response[:last_brace + 1]
+            else:
+                cleaned_response = '{"recommended_tests": []}'
+        
+        parsed_response = json.loads(cleaned_response)
+        recommended_tests = parsed_response.get("recommended_tests", [])[:3]
+        
+        # Response oluştur
+        response_data = {
+            "title": "Test Önerileri",
+            "recommended_tests": recommended_tests,
+            "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+        }
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="test_recommendations_quiz",
+            request_payload={"source": "quiz", "quiz_data": quiz_data},
+            response_payload=response_data,
+            model_used="test_recommendations_ai"
+        )
+        
+        return response_data
+        
+    except Exception as e:
+        print(f"🔍 DEBUG: Quiz test recommendations hatası: {e}")
+        # Fallback response
+        return {
+            "title": "Test Önerileri",
+            "recommended_tests": [],
+            "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+        }
+
+@app.post("/ai/lab/test-recommendations", response_model=TestRecommendationResponse)
+async def get_lab_test_recommendations(current_user: str = Depends(get_current_user),
+                                      db: Session = Depends(get_db),
+                                      x_user_id: str | None = Header(default=None),
+                                      x_user_level: int | None = Header(default=None)):
+    """Lab verilerine göre test önerileri - premium+ kullanıcılar için"""
+    
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level)
+    
+    # Premium+ kullanıcılar için
+    if user_plan not in ["premium", "premium_plus"]:
+        raise HTTPException(status_code=403, detail="Bu özellik premium+ kullanıcılar için kullanılabilir")
+    
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="x-user-id gerekli")
+    
+    # Lab verilerini al
+    lab_tests = get_standardized_lab_data(db, x_user_id, limit=QUIZ_LAB_ANALYSES_LIMIT)
+    
+    if not lab_tests:
+        raise HTTPException(status_code=400, detail="Lab verisi bulunamadı. Önce lab testi yaptırın.")
+    
+    # AI context oluştur
+    lab_info_parts = []
+    for test in lab_tests:
+        if "name" in test:
+            lab_info_parts.append(f"{test['name']}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})")
+    lab_info = f"Lab verileri: {', '.join(lab_info_parts)}\n"
+    
+    ai_context = f"""
+KULLANICI LAB SONUÇLARI:
+{lab_info}
+
+GÖREV: Lab sonuçlarına göre test öner. Maksimum 3 test öner.
+
+KURALLAR:
+- Sadece anormal değerler için test öner
+- Mevcut değerleri referans al
+- Normal değerlere gereksiz test önerme
+
+ÖNEMLİ:
+- Düşük hemoglobin varsa demir, ferritin testleri öner
+- Yüksek glukoz varsa HbA1c, OGTT testleri öner
+- Anormal lipid değerleri varsa kardiyovasküler testler öner
+- Sadece gerçekten gerekli olan testleri öner
+
+JSON formatında yanıt ver:
+{{"recommended_tests": [{{"test_name": "Test Adı", "reason": "Mevcut değerlerinizle neden önerildiği", "benefit": "Faydası"}}]}}
+"""
+    
+    # AI'ya gönder
+    from backend.openrouter_client import get_ai_response
+    ai_response = await get_ai_response(
+        system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+        user_message=ai_context
+    )
+    
+    # AI response'unu parse et
+    import json
+    try:
+        cleaned_response = ai_response.strip()
+        if cleaned_response.startswith('```json'):
+            json_start = cleaned_response.find('```json') + 7
+            json_end = cleaned_response.find('```', json_start)
+            if json_end != -1:
+                cleaned_response = cleaned_response[json_start:json_end].strip()
+            else:
+                cleaned_response = cleaned_response[json_start:].strip()
+        elif cleaned_response.startswith('```'):
+            json_start = cleaned_response.find('```') + 3
+            json_end = cleaned_response.find('```', json_start)
+            if json_end != -1:
+                cleaned_response = cleaned_response[json_start:json_end].strip()
+            else:
+                cleaned_response = cleaned_response[json_start:].strip()
+        
+        cleaned_response = cleaned_response.replace('\n', ' ').replace('\r', '')
+        if not cleaned_response.strip().endswith('}'):
+            last_brace = cleaned_response.rfind('}')
+            if last_brace != -1:
+                cleaned_response = cleaned_response[:last_brace + 1]
+            else:
+                cleaned_response = '{"recommended_tests": []}'
+        
+        parsed_response = json.loads(cleaned_response)
+        recommended_tests = parsed_response.get("recommended_tests", [])[:3]
+        
+        # Response oluştur
+        response_data = {
+            "title": "Test Önerileri",
+            "recommended_tests": recommended_tests,
+            "analysis_summary": "Lab verilerine göre analiz tamamlandı",
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+        }
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="test_recommendations_lab",
+            request_payload={"source": "lab", "lab_data": lab_tests},
+            response_payload=response_data,
+            model_used="test_recommendations_ai"
+        )
+        
+        return response_data
+        
+    except Exception as e:
+        print(f"🔍 DEBUG: Lab test recommendations hatası: {e}")
+        # Fallback response
+        return {
+            "title": "Test Önerileri",
+            "recommended_tests": [],
+            "analysis_summary": "Lab verilerine göre analiz tamamlandı",
+            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+        }
 
 @app.post("/ai/test-recommendations", response_model=TestRecommendationResponse)
 async def get_test_recommendations(body: TestRecommendationRequest,
