@@ -599,8 +599,8 @@ def chat_start(body: ChatStartRequest = None,
         # Free kullanıcılar için session-based conversation ID
         return ChatStartResponse(conversation_id=1)  # Her zaman 1, session'da takip edilir
     
-    # Premium kullanıcılar için yeni conversation ID oluştur
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # Premium kullanıcılar için yeni conversation ID oluştur (users tablosuna bağımlılık kaldırıldı)
+    # Not: users tablosu kullanılmadan sadece zaman damgası ile conversation ID üretilir
     
     # Yeni conversation ID oluştur (timestamp-based)
     new_conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)  # Millisecond timestamp
@@ -722,7 +722,7 @@ async def chat_message(req: ChatMessageRequest,
     # Selamlama sonrası özel yanıt kontrolü
     txt = message_text.lower().strip()
     pure_greeting_keywords = [
-        "selam", "naber", "günaydın", "gunaydin",
+        "selam", "naber", "günaydın", "merhaba",
         "iyi akşamlar", "iyi aksamlar", "iyi geceler", "iyi günler", "iyi gunler"
     ]
     
