@@ -733,8 +733,7 @@ async def chat_message(req: ChatMessageRequest,
     if not is_premium:
         return await handle_free_user_chat(req, x_user_id)
     
-    # Premium kullanıcılar için database-based chat
-    user = get_or_create_user_by_external_id(db, x_user_id, user_plan)
+    # Premium kullanıcılar için users tablosu olmadan devam
 
     # FLEXIBLE INPUT HANDLING - Asıl site'dan herhangi bir format gelebilir
     conversation_id = req.conversation_id or req.conv_id
@@ -819,7 +818,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Kalıcı kullanıcı bağlamını yükle ve system prompt'a hazırla
@@ -937,7 +936,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Supplement listesi sadece supplement önerisi istenirse ekle
     if any(keyword in message_text.lower() for keyword in ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin"]):
-        history.append({"role": "user", "content": supplements_info})
+    history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
@@ -1624,7 +1623,7 @@ JSON formatında yanıt ver:
             response_payload=data,
             model_used="openrouter"
             )
-    except Exception as e:
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
@@ -2542,7 +2541,7 @@ async def get_test_recommendations_internal(
     if not validate_chat_user_id(x_user_id or "", user_plan):
         return None
     
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # users tablosu bağımlılığı kaldırıldı; sadece ai_messages kullanılacak
     
     try:
         # 1. Source'a göre veri toplama
