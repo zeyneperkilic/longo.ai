@@ -568,6 +568,56 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         free_user_conversations[x_user_id]["messages"].append({"role": "assistant", "content": reply})
         return ChatResponse(conversation_id=1, reply=reply, latency_ms=0)
 
+# ---------- USER PERSISTENT CONTEXT FUNCTIONS ----------
+
+def get_user_persistent_context(db: Session, user_id: str) -> str:
+    """Kullanıcının persistent context'ini al"""
+    try:
+        # ai_messages'dan kullanıcı context'ini al
+        context_messages = get_user_ai_messages_by_type(db, user_id, "user_context", limit=1)
+        if context_messages and context_messages[0].response_payload:
+            return context_messages[0].response_payload.get("context", "")
+        return ""
+    except Exception as e:
+        print(f"Context alma hatası: {e}")
+        return ""
+
+def save_user_persistent_context(db: Session, user_id: str, new_context: dict):
+    """Kullanıcının persistent context'ini kaydet"""
+    import json
+    try:
+        # Mevcut context'i al
+        current_context = get_user_persistent_context(db, user_id)
+        current_dict = {}
+        if current_context:
+            try:
+                current_dict = json.loads(current_context)
+            except:
+                current_dict = {}
+        
+        # Yeni context'i mevcut context ile birleştir
+        for key, value in new_context.items():
+            if key in current_dict:
+                if isinstance(value, list) and isinstance(current_dict[key], list):
+                    current_dict[key] = list(set(current_dict[key] + value))
+                else:
+                    current_dict[key] = value
+            else:
+                current_dict[key] = value
+        
+        # Context'i kaydet
+        context_text = json.dumps(current_dict, ensure_ascii=False)
+        create_ai_message(
+            db=db,
+            external_user_id=user_id,
+            message_type="user_context",
+            request_payload={"context": context_text},
+            response_payload={"context": context_text},
+            model_used="context_manager"
+        )
+    except Exception as e:
+        print(f"Context kaydetme hatası: {e}")
+
 # ---------- PREMIUM USER DATABASE-BASED CHAT ----------
 
 @app.post("/ai/chat/start", response_model=ChatStartResponse)
@@ -782,6 +832,12 @@ async def chat_message(req: ChatMessageRequest,
     # Build enhanced system prompt with user context
     system_prompt = build_chat_system_prompt()
     
+    # Kullanıcı bazında persistent context ekle (Premium/Premium Plus için)
+    if is_premium:
+        user_context = get_user_persistent_context(db, x_user_id)
+        if user_context:
+            system_prompt += f"\n\nKULLANICI BİLGİLERİ (Hatırla):\n{user_context}"
+    
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
     # Lab verileri hala context'te tutuluyor ama prompt'a eklenmiyor
@@ -799,10 +855,10 @@ async def chat_message(req: ChatMessageRequest,
         if normalized_key and value:
             if normalized_key not in new_context:
                 new_context[normalized_key] = value
-            elif isinstance(value, list) and isinstance(new_context[normalized_key], list):
-                new_context[normalized_key] = list(set(new_context[normalized_key] + value))
-            else:
-                new_context[normalized_key] = value
+    
+    # Kullanıcı context'ini güncelle (Premium/Premium Plus için)
+    if is_premium and new_context:
+        save_user_persistent_context(db, x_user_id, new_context)
     
     # Yeni context'i global context'e ekle
     if new_context and any(new_context.values()):
