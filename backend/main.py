@@ -775,7 +775,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -882,7 +882,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Supplement listesi sadece supplement önerisi istenirse ekle
     if any(keyword in message_text.lower() for keyword in ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin"]):
-        history.append({"role": "user", "content": supplements_info})
+    history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
@@ -962,6 +962,11 @@ async def analyze_quiz(body: QuizRequest,
                  x_user_id: str | None = Header(default=None),
                  x_user_level: int | None = Header(default=None)):
     """Quiz endpoint - Sadece AI model işlemi, asıl site entegrasyonu için optimize edildi"""
+    
+    # Logger tanımla
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
     
     # Plan kontrolü
     user_plan = get_user_plan_from_headers(x_user_level)
@@ -1093,9 +1098,6 @@ JSON formatında yanıt ver:
                 )
                 
                 # Debug: AI response'u log et
-                import logging
-                logging.basicConfig(level=logging.INFO)
-                logger = logging.getLogger(__name__)
                 logger.info(f"🔍 DEBUG: Quiz AI response: {ai_response}")
                 
                 # AI response'unu parse et
@@ -1577,7 +1579,7 @@ JSON formatında yanıt ver:
             response_payload=data,
             model_used="openrouter"
             )
-    except Exception as e:
+        except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
