@@ -1140,7 +1140,14 @@ JSON formatında yanıt ver:
                 
                 from backend.openrouter_client import get_ai_response
                 ai_response = await get_ai_response(
-                    system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+                    system_prompt=(
+                        "Sen bir sağlık test danışmanısısın. SADECE geçerli JSON döndür.\n"
+                        "Biçim KESİN ve ZORUNLU:\n"
+                        "{\"recommended_tests\":[{\"test_name\":\"...\",\"reason\":\"...\",\"benefit\":\"...\"}]}\n"
+                        "Kod bloğu, markdown, açıklayıcı metin YOK. Sadece JSON.\n"
+                        "Her durumda 'recommended_tests' anahtarı OLMALI. Öneri yoksa boş liste dön.\n"
+                        "Öncelik: aile geçmişi, yaş/cinsiyet, risk faktörleri. Gereksiz test önermeden kısa liste ver."
+                    ),
                     user_message=ai_context
                 )
                 
@@ -1172,18 +1179,15 @@ JSON formatında yanıt ver:
                             cleaned_response = '{"recommended_tests": []}'
                     
                     parsed_response = json.loads(cleaned_response)
-                    if "recommended_tests" in parsed_response:
-                        recommended_tests = parsed_response["recommended_tests"][:3]
-                        
-                        # Response oluştur
-                        test_rec_response = {
-                            "title": "Test Önerileri",
-                            "recommended_tests": recommended_tests,
-                            "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
-                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
-                        }
-                        
-                        data["test_recommendations"] = test_rec_response
+                    recommended_tests = parsed_response.get("recommended_tests", [])[:3]
+                    # Response'u her durumda üret (boş liste de olabilir)
+                    test_rec_response = {
+                        "title": "Test Önerileri",
+                        "recommended_tests": recommended_tests,
+                        "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
+                        "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
+                    }
+                    data["test_recommendations"] = test_rec_response
                 except Exception as parse_error:
                     print(f"🔍 DEBUG: Quiz test recommendations parse hatası: {parse_error}")
                     
