@@ -669,7 +669,7 @@ def chat_history(conversation_id: int,
         return []  # Free kullanıcılar için geçmiş yok
     
     # Premium kullanıcılar için database-based history
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # users tablosu bağımlılığı kaldırıldı; sadece ai_messages kullanılacak
     
     # Sadece bu conversation'a ait chat mesajlarını al
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_MAX)
