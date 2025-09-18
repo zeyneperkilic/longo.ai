@@ -2508,7 +2508,7 @@ async def get_test_recommendations_internal(
     if not validate_chat_user_id(x_user_id or "", user_plan):
         return None
     
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     try:
         # 1. Source'a göre veri toplama
@@ -2715,7 +2715,7 @@ async def get_test_recommendations(body: TestRecommendationRequest,
     if not validate_chat_user_id(x_user_id or "", user_plan):
         raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
     
-    user = get_or_create_user(db, x_user_id, user_plan)
+    # User tablosu kullanılmıyor - sadece ai_messages ile çalışıyor
     
     try:
         # 1. Source'a göre veri toplama
