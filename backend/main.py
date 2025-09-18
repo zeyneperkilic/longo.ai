@@ -572,11 +572,16 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 def get_user_persistent_context(db: Session, user_id: str) -> str:
     """Kullanıcının persistent context'ini al"""
+    import json
     try:
         # ai_messages'dan kullanıcı context'ini al
         context_messages = get_user_ai_messages_by_type(db, user_id, "user_context", limit=1)
         if context_messages and context_messages[0].response_payload:
-            return context_messages[0].response_payload.get("context", "")
+            context_data = context_messages[0].response_payload.get("context", "")
+            if isinstance(context_data, str):
+                return context_data
+            elif isinstance(context_data, dict):
+                return json.dumps(context_data, ensure_ascii=False)
         return ""
     except Exception as e:
         print(f"Context alma hatası: {e}")
