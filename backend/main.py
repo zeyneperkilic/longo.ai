@@ -114,6 +114,50 @@ def get_standardized_lab_data(db, user_id, limit=5):
     
     return tests
 
+def load_user_persistent_context(db: Session, external_user_id: str) -> dict:
+    """Kalıcı kullanıcı bağlamını ai_messages'tan yükle (user_context)."""
+    try:
+        msgs = get_user_ai_messages_by_type(db, external_user_id, "user_context", limit=1)
+        if msgs:
+            msg = msgs[0]
+            # response_payload öncelikli
+            if getattr(msg, "response_payload", None) and isinstance(msg.response_payload.get("context"), dict):
+                return msg.response_payload["context"]
+            if getattr(msg, "request_payload", None) and isinstance(msg.request_payload.get("context"), dict):
+                return msg.request_payload["context"]
+    except Exception:
+        pass
+    return {}
+
+def save_user_persistent_context(db: Session, external_user_id: str, partial_context: dict) -> dict:
+    """Kalıcı kullanıcı bağlamını birleştirerek kaydet (user_context)."""
+    if not partial_context:
+        return load_user_persistent_context(db, external_user_id)
+    existing = load_user_persistent_context(db, external_user_id) or {}
+    merged = {**existing}
+    # Basit merge ve küçük boyut kontrolü
+    for k, v in (partial_context or {}).items():
+        if v is None or v == "":
+            continue
+        if isinstance(v, str) and len(v) > 100:
+            v = v[:100]
+        if isinstance(v, list):
+            # Listeyi küçük tut, tekrarları kaldır
+            v = list(dict.fromkeys(v))[:10]
+        merged[k] = v
+    try:
+        create_ai_message(
+            db=db,
+            external_user_id=external_user_id,
+            message_type="user_context",
+            request_payload={"context": partial_context},
+            response_payload={"context": merged},
+            model_used="system"
+        )
+    except Exception:
+        pass
+    return merged
+
 def get_user_context_for_message(user_context: dict, user_analyses: list) -> tuple[str, str]:
     """Lab ve quiz verilerini user message için hazırla"""
     lab_info = ""
@@ -600,7 +644,7 @@ def chat_start(body: ChatStartRequest = None,
         # Free kullanıcılar için session-based conversation ID
         return ChatStartResponse(conversation_id=1)  # Her zaman 1, session'da takip edilir
     
-    # Premium kullanıcılar için yeni conversation ID oluştur (timestamp-based)
+    # Premium kullanıcılar için yeni conversation ID oluştur (timestamp-based)dd
     
     # Yeni conversation ID oluştur (timestamp-based)
     new_conversation_id = int(time.time() * MILLISECOND_MULTIPLIER)  # Millisecond timestamp
@@ -778,8 +822,13 @@ async def chat_message(req: ChatMessageRequest,
     else:
         user_message = message_text
     
-    # Build enhanced system prompt with user context
+    # Kalıcı kullanıcı bağlamını yükle ve system prompt'a hazırla
+    persistent_ctx = load_user_persistent_context(db, x_user_id)
     system_prompt = build_chat_system_prompt()
+    if persistent_ctx:
+        # İsim gibi küçük bir özet ekle (token korumalı)
+        name_line = f"KULLANICI İSMİ: {persistent_ctx.get('isim')}\n" if persistent_ctx.get('isim') else ""
+        system_prompt += ("\n\nKULLANICI KALICI BAĞLAM\n" + name_line)
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
@@ -791,8 +840,8 @@ async def chat_message(req: ChatMessageRequest,
     # recent_messages = rows[-(CHAT_HISTORY_MAX-1):] if len(rows) > 0 else []
     new_context = {}
     
-    # Yeni mesajdan context çıkar
-    current_message_context = extract_user_context_hybrid(message_text, user.email) or {}
+    # Yeni mesajdan context çıkar (x_user_id bazlı izolasyon)
+    current_message_context = extract_user_context_hybrid(message_text, x_user_id) or {}
     for key, value in current_message_context.items():
         normalized_key = key.strip().lower()
         if normalized_key and value:
@@ -809,6 +858,12 @@ async def chat_message(req: ChatMessageRequest,
                             for key, value in new_context.items())
         if context_changed:
             user_context.update(new_context)
+            # Kalıcı bağlamla birleştir ve kaydet (yalnızca küçük alanlar)
+            to_persist = {}
+            if 'isim' in new_context and isinstance(new_context['isim'], str):
+                to_persist['isim'] = new_context['isim']
+            if to_persist:
+                save_user_persistent_context(db, x_user_id, to_persist)
     
     # Kullanıcı bilgilerini system prompt'a ekle
     system_prompt = add_user_context_to_prompt(system_prompt, user_context)
