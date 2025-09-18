@@ -21,8 +21,8 @@ from backend.config import (
     QUIZ_LAB_ANALYSES_LIMIT, DEBUG_AI_MESSAGES_LIMIT, MILLISECOND_MULTIPLIER,
     MIN_LAB_TESTS_FOR_COMPARISON, AVAILABLE_TESTS
 )
-from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
-from backend.auth import get_db, get_or_create_user
+from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type
+from backend.auth import get_db
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
@@ -2470,36 +2470,7 @@ def validate_input_data(data: dict, required_fields: list = None) -> dict:
     # Pydantic schema'lar zaten extra = "allow" ile esnek
     return data
 
-@app.get("/debug/database")
-def debug_database(current_user: str = Depends(get_current_user),
-                   db: Session = Depends(get_db),
-                   x_user_id: str | None = Header(default=None)):
-    """Debug endpoint to check database contents"""
-    try:
-        from backend.db import get_or_create_user_by_external_id, get_ai_messages
-        
-        # User bilgilerini al
-        user = get_or_create_user_by_external_id(db, x_user_id, "free")
-        
-        # AI messages
-        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=DEBUG_AI_MESSAGES_LIMIT)
-        
-        return {
-            "user_id": user.id,
-            "external_user_id": user.external_user_id,
-            "plan": user.plan,
-            "ai_messages_count": len(ai_messages),
-            "ai_messages": [
-                {
-                    "id": msg.id,
-                    "message_type": msg.message_type,
-                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
-                    "model_used": msg.model_used
-                } for msg in ai_messages
-            ]
-        }
-    except Exception as e:
-        return {"error": str(e), "type": type(e).__name__}
+# Debug endpoint removed - production'da gerekli değil
 
 @app.get("/ai/messages")
 def get_ai_messages_endpoint(
