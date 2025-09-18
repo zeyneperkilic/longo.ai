@@ -1496,7 +1496,7 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # Test recommendations ekle (sadece premium+ kullanıcılar için)
     if user_plan in ["premium", "premium_plus"]:
         try:
-            # Lab verisini al (yeni gönderilen veri)
+            # Lab verisini al (tüm testler - geçmiş + yeni)
             if all_tests_dict:
                 # Lab verisini AI'ya gönder
                 lab_info_parts = []
