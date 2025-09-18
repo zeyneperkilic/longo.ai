@@ -1647,112 +1647,7 @@ JSON formatında yanıt ver:
 
 
 
-@app.get("/ai/progress/{user_id}")
-def get_user_progress(user_id: str, db: Session = Depends(get_db)):
-    """Get user's lab test progress and trends"""
-    
-    # Get lab test history from ai_messages
-    from backend.db import get_ai_messages, get_user_by_external_id
-    
-    # external_user_id ile kullanıcıyı bul
-    user = get_user_by_external_id(db, user_id)
-    if not user:
-        raise HTTPException(404, "Kullanıcı bulunamadı")
-    
-    # Get lab tests from ai_messages
-    lab_messages = get_ai_messages(db, external_user_id=user_id, message_type="lab_single", limit=LAB_MESSAGES_LIMIT)
-    lab_history = []
-    
-    # Convert ai_messages to lab_history format
-    for msg in lab_messages:
-        if msg.request_payload and "test" in msg.request_payload:
-            test_data = msg.request_payload["test"]
-            lab_history.append({
-                "id": msg.id,
-                "test_date": msg.created_at,
-                "test_type": "single",
-                "test_results": {"tests": [test_data]}
-            })
-    
-    # Analyze trends
-    if len(lab_history) < 2:
-        return {
-            "message": "Progress analizi için en az 2 test gerekli",
-            "test_count": len(lab_history),
-            "trends": "Trend analizi yapılamaz"
-        }
-    
-    # Real trend analysis - Compare lab results
-    trends = {
-        "total_tests": len(lab_history),
-        "test_frequency": f"Son {len(lab_history)} test yapıldı",
-        "improvement_areas": [],
-        "stable_areas": [],
-        "worsening_areas": []
-    }
-    
-    # Compare test results if we have at least 2 tests
-    if len(lab_history) >= MIN_LAB_TESTS_FOR_COMPARISON:
-        latest_test = lab_history[0]  # Most recent
-        previous_test = lab_history[1]  # Previous
-        
-        if latest_test.test_results and previous_test.test_results:
-            # Extract test names and values for comparison
-            latest_results = {}
-            previous_results = {}
-            
-            # Parse test results (handle both list and dict formats)
-            if isinstance(latest_test.test_results, list):
-                for test in latest_test.test_results:
-                    if isinstance(test, dict) and 'name' in test:
-                        latest_results[test['name']] = test
-            elif isinstance(latest_test.test_results, dict):
-                latest_results = latest_test.test_results
-                
-            if isinstance(previous_test.test_results, list):
-                for test in previous_test.test_results:
-                    if isinstance(test, dict) and 'name' in test:
-                        previous_results[test['name']] = test
-            elif isinstance(previous_test.test_results, dict):
-                previous_results = previous_test.test_results
-            
-            # Compare each test
-            for test_name in set(latest_results.keys()) & set(previous_results.keys()):
-                latest = latest_results[test_name]
-                previous = previous_results[test_name]
-                
-                # Try to extract numeric values for comparison
-                try:
-                    latest_val = float(str(latest.get('value', '0')).replace(',', ''))
-                    previous_val = float(str(previous.get('value', '0')).replace(',', ''))
-                    
-                    if latest_val > previous_val:
-                        trends["improvement_areas"].append(f"{test_name}: {previous_val} → {latest_val} (İyileşme)")
-                    elif latest_val < previous_val:
-                        trends["worsening_areas"].append(f"{test_name}: {previous_val} → {latest_val} (Bozulma)")
-                    else:
-                        trends["stable_areas"].append(f"{test_name}: {latest_val} (Stabil)")
-                except (ValueError, TypeError):
-                    # Non-numeric values, just mark as stable
-                    trends["stable_areas"].append(f"{test_name}: Değer karşılaştırılamadı")
-    
-    # If no trends found, add default message
-    if not trends["improvement_areas"] and not trends["worsening_areas"] and not trends["stable_areas"]:
-        trends["stable_areas"].append("Trend analizi için yeterli veri yok")
-    
-    return {
-        "user_id": user_id,
-        "lab_test_history": [
-            {
-                "test_date": record.test_date.isoformat(),
-                "test_type": record.test_type,
-                "test_count": len(record.test_results) if record.test_results else 0
-            }
-            for record in lab_history
-        ],
-        "trends": trends,
-        "recommendations": "Progress bazlı öneriler"
-    }
+# Progress endpoint removed - production'da gerekli değil
 
 @app.get("/api/supplements.xml")
 @cache_supplements(ttl_seconds=3600)  # 1 saat cache
@@ -1814,22 +1709,7 @@ def clear_free_user_session(x_user_id: str | None = Header(default=None)):
         return {"message": "Session temizlendi", "user_id": x_user_id}
     return {"message": "Session bulunamadı", "user_id": x_user_id}
 
-@app.get("/users/{external_user_id}/info")
-def get_user_info(external_user_id: str, db: Session = Depends(get_db)):
-    """Kullanıcı bilgilerini getir (production için test)"""
-    from backend.db import get_user_by_external_id
-    
-    user = get_user_by_external_id(db, external_user_id)
-    if not user:
-        raise HTTPException(404, "Kullanıcı bulunamadı")
-    
-    return {
-        "user_id": user.id,
-        "external_user_id": user.external_user_id,
-        "plan": user.plan,
-        "conversation_count": len(user.conversations),
-        "created_at": user.created_at.isoformat(),
-    }
+# Users info endpoint removed - production'da gerekli değil
 
 # Global error handler
 @app.exception_handler(Exception)
