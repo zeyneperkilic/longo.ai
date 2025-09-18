@@ -503,12 +503,32 @@ def extract_user_context_ai(message_content: str, user_id: str = None) -> dict:
         
         # AI model'e gönder - User session ile izole et
         session_prompt = f"SESSION_ID: {user_id or 'anonymous'}\n\n{prompt}"
-        response = call_chat_model(
-            "google/gemini-2.5-flash",  # Daha akıllı, prompt'u daha iyi anlar
-            [{"role": "system", "content": session_prompt}],
-            temperature=0.0,  # Sıkı davranış için
-            max_tokens=150
-        )
+        
+        # Ana model: Gemini 2.5 Flash
+        response = None
+        try:
+            response = call_chat_model(
+                "google/gemini-2.5-flash",  # Daha akıllı, prompt'u daha iyi anlar
+                [{"role": "system", "content": session_prompt}],
+                temperature=0.0,  # Sıkı davranış için
+                max_tokens=150
+            )
+            print(f"✅ Gemini 2.5 Flash başarılı")
+        except Exception as e:
+            print(f"❌ Gemini 2.5 Flash hata: {e}")
+            
+            # Fallback: GPT-OSS-20B
+            try:
+                response = call_chat_model(
+                    "openai/gpt-oss-20b:free",
+                    [{"role": "system", "content": session_prompt}],
+                    temperature=0.0,
+                    max_tokens=150
+                )
+                print(f"✅ Gemini fallback (GPT-OSS-20B) başarılı")
+            except Exception as e2:
+                print(f"❌ Gemini fallback (GPT-OSS-20B) hata: {e2}")
+                return {"error": "AI model hatası", "details": str(e2)}
         
         content = response.get("content", "")
         

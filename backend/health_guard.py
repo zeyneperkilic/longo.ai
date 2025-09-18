@@ -62,9 +62,25 @@ def classify_topic_simple(text: str) -> str:
     usr = f"Kullanıcı sorusu: {text}"
     
     try:
-        out = call_chat_model(MODERATION_MODEL,
-                              [{"role": "system", "content": sys}, {"role": "user", "content": usr}],
-                              temperature=0.1, max_tokens=5)
+        # Ana model: Moderation model
+        out = None
+        try:
+            out = call_chat_model(MODERATION_MODEL,
+                                  [{"role": "system", "content": sys}, {"role": "user", "content": usr}],
+                                  temperature=0.1, max_tokens=5)
+            print(f"✅ Moderation model başarılı")
+        except Exception as e:
+            print(f"❌ Moderation model hata: {e}")
+            
+            # Fallback: GPT-OSS-20B
+            try:
+                out = call_chat_model("openai/gpt-oss-20b:free",
+                                      [{"role": "system", "content": sys}, {"role": "user", "content": usr}],
+                                      temperature=0.1, max_tokens=5)
+                print(f"✅ Moderation fallback (GPT-OSS-20B) başarılı")
+            except Exception as e2:
+                print(f"❌ Moderation fallback (GPT-OSS-20B) hata: {e2}")
+                return "ALLOW"  # Fallback'te güvenli taraf
         
         label = (out.get("content") or "").strip().upper()
         
