@@ -1044,13 +1044,6 @@ def parallel_single_session_analyze(session_tests: List[Dict[str, Any]], session
                     executor.submit(call_chat_model, model, messages, 0.3, 1500): model 
                     for model in PARALLEL_MODELS
                 }
-        else:
-            # Çoklu model - paralel çağır
-            with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
-                future_to_model = {
-                    executor.submit(call_chat_model, model, messages, 0.3, 1500): model 
-                    for model in PARALLEL_MODELS
-                }
                 
                 for future in as_completed(future_to_model):
                     model = future_to_model[future]
