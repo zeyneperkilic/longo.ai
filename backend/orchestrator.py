@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from backend.config import PARALLEL_MODELS
+from backend.config import PARALLEL_MODELS, FALLBACK_MODEL
 from backend.openrouter_client import call_chat_model
 from backend.utils import is_valid_chat, parse_json_safe
 import time
@@ -222,11 +222,11 @@ def gpt4o_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
             msg for msg in messages if msg["role"] != "system"
         ]
         
-        # Try GPT-4o
-        result = call_chat_model("openai/gpt-4o:online", updated_messages, 0.6, 800)
+        # Try fallback model
+        result = call_chat_model(FALLBACK_MODEL, updated_messages, 0.6, 800)
         if is_valid_chat(result["content"]):
             result["content"] = _sanitize_links(result["content"])
-            result["model_used"] = "openai/gpt-4o:online (fallback)"
+            result["model_used"] = f"{FALLBACK_MODEL} (fallback)"
             return result
         else:
             raise Exception("GPT-4o response invalid")
@@ -513,11 +513,11 @@ def gpt4o_quiz_fallback(quiz_answers: Dict[str, Any], available_supplements: Lis
         # Build prompt for GPT-4o
         messages = build_quiz_prompt(quiz_answers, available_supplements)
         
-        # Try GPT-4o
-        result = call_chat_model("openai/gpt-4o:online", messages, 0.2, 4000)
+        # Try fallback model
+        result = call_chat_model(FALLBACK_MODEL, messages, 0.2, 4000)
         if result["content"].strip():
             result["content"] = _sanitize_links(result["content"])
-            result["model_used"] = "openai/gpt-4o:online (fallback)"
+            result["model_used"] = f"{FALLBACK_MODEL} (fallback)"
             return result
         else:
             raise Exception("GPT-4o response invalid")
@@ -1108,11 +1108,11 @@ def gpt4o_lab_fallback(test_data: Dict[str, Any], historical_results: List[Dict[
         # Build prompt for GPT-4o
         messages = build_single_lab_prompt(test_data, historical_results)
         
-        # Try GPT-4o
-        result = call_chat_model("openai/gpt-4o:online", messages, 0.3, 1200)
+        # Try fallback model
+        result = call_chat_model(FALLBACK_MODEL, messages, 0.3, 1200)
         if result["content"].strip():
             result["content"] = _sanitize_links(result["content"])
-            result["models_used"] = ["openai/gpt-4o:online (fallback)"]
+            result["models_used"] = [f"{FALLBACK_MODEL} (fallback)"]
             return result
         else:
             raise Exception("GPT-4o response invalid")
@@ -1132,11 +1132,11 @@ def gpt4o_session_fallback(session_tests: List[Dict[str, Any]], session_date: st
         # Build prompt for GPT-4o
         messages = build_single_session_prompt(session_tests, session_date, laboratory)
         
-        # Try GPT-4o
-        result = call_chat_model("openai/gpt-4o:online", messages, 0.3, 1500)
+        # Try fallback model
+        result = call_chat_model(FALLBACK_MODEL, messages, 0.3, 1500)
         if result["content"].strip():
             result["content"] = _sanitize_links(result["content"])
-            result["models_used"] = ["openai/gpt-4o:online (fallback)"]
+            result["models_used"] = [f"{FALLBACK_MODEL} (fallback)"]
             return result
         else:
             raise Exception("GPT-4o response invalid")
@@ -1156,11 +1156,11 @@ def gpt4o_multiple_lab_fallback(tests_data: List[Dict[str, Any]], session_count:
         # Build prompt for GPT-4o
         messages = build_multiple_lab_prompt(tests_data, session_count, available_supplements, user_profile)
         
-        # Try GPT-4o
-        result = call_chat_model("openai/gpt-4o:online", messages, 0.3, 2500)
+        # Try fallback model
+        result = call_chat_model(FALLBACK_MODEL, messages, 0.3, 2500)
         if result["content"].strip():
             result["content"] = _sanitize_links(result["content"])
-            result["models_used"] = ["openai/gpt-4o:online (fallback)"]
+            result["models_used"] = [f"{FALLBACK_MODEL} (fallback)"]
             return result
         else:
             raise Exception("GPT-4o response invalid")

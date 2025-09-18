@@ -590,7 +590,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         ai_response = await get_ai_response(
             system_prompt=system_prompt,
             user_message=user_message,
-            model="openai/gpt-5-chat:online"  # Tüm kullanıcılar için aynı kalite
+            model="openai/gpt-5-chat:online"  # Ana model
         )
         
         # AI yanıtını al
