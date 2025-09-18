@@ -1917,6 +1917,11 @@ YANIT FORMATI:
 
 3. ÖĞÜN PLANLAMA
    - Kahvaltı, öğle, akşam yemeği önerileri
+
+ÖNEMLİ KURALLAR:
+- Link verme, sadece metin içeriği ver
+- Kaynak gösterme, sadece öneriler ver
+- Temiz ve okunabilir format kullan
    - Ara öğün stratejileri
    - Egzersiz öncesi/sonrası beslenme
    - Haftalık menü önerileri
@@ -2330,6 +2335,11 @@ async def premium_plus_lifestyle_recommendations(
 3. 🥗 BESLENME ÖNERİLERİ
 4. ⚡ PERFORMANS İPUÇLARI
 5. 📅 HAFTALIK PLAN ÖNERİSİ
+
+ÖNEMLİ KURALLAR:
+- Link verme, sadece metin içeriği ver
+- Kaynak gösterme, sadece öneriler ver
+- Temiz ve okunabilir format kullan
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
 
