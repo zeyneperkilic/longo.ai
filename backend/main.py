@@ -979,7 +979,16 @@ async def analyze_quiz(body: QuizRequest,
     
     # Quiz data'yı dict'e çevir ve validate et - TAMAMEN ESNEK
     logger.info(f"🔍 DEBUG: Body quiz_answers: {body.quiz_answers}")
-    quiz_dict = validate_input_data(body.quiz_answers or {}, [])  # Required fields yok, her şeyi kabul et
+    logger.info(f"🔍 DEBUG: Body dict: {body.dict()}")
+    
+    # Eğer quiz_answers boşsa, body'nin kendisini kullan
+    if body.quiz_answers:
+        quiz_dict = validate_input_data(body.quiz_answers, [])
+    else:
+        # Body'nin kendisini kullan (quiz_answers field'ı yoksa)
+        body_dict = body.dict()
+        body_dict.pop('available_supplements', None)  # Supplement field'ını çıkar
+        quiz_dict = validate_input_data(body_dict, [])
     
     # XML'den supplement listesini al (eğer body'de yoksa)
     from backend.config import SUPPLEMENTS_LIST
