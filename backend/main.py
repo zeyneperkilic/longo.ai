@@ -818,7 +818,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-                else:
+    else:
         user_message = message_text
     
     # Kalıcı kullanıcı bağlamını yükle ve system prompt'a hazırla
@@ -936,7 +936,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Supplement listesi sadece supplement önerisi istenirse ekle
     if any(keyword in message_text.lower() for keyword in ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin"]):
-    history.append({"role": "user", "content": supplements_info})
+        history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
@@ -1623,7 +1623,7 @@ JSON formatında yanıt ver:
             response_payload=data,
             model_used="openrouter"
             )
-        except Exception as e:
+    except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
     return data
