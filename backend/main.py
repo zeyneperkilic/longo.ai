@@ -1905,6 +1905,7 @@ YANIT FORMATI:
    - Kullanıcının quiz verilerinden çıkarılan sağlık profili
    - Lab sonuçlarından tespit edilen eksiklikler/riskler
    - Genel sağlık durumu değerlendirmesi
+   - Risk faktörleri ve öncelikler
 
 2. DETAYLI BESLENME ÖNERİLERİ
    - Her öneri için NEDEN açıkla
@@ -1914,14 +1915,21 @@ YANIT FORMATI:
    - Supplement ile beslenme dengesi
    - Su tüketimi ve hidrasyon stratejileri
    - Besin kombinasyonları ve emilim ipuçları
+   - Haftalık menü örnekleri
 
 3. ÖĞÜN PLANLAMA
    - Kahvaltı, öğle, akşam yemeği önerileri
+   - Ara öğün stratejileri
+   - Egzersiz öncesi/sonrası beslenme
 
 ÖNEMLİ KURALLAR:
-- Link verme, sadece metin içeriği ver
-- Kaynak gösterme, sadece öneriler ver
+- KESINLIKLE link verme, sadece metin içeriği ver
+- KESINLIKLE kaynak gösterme, sadece öneriler ver
+- KESINLIKLE URL, web sitesi, kaynak belirtme
 - Temiz ve okunabilir format kullan
+- Detaylı ve kapsamlı analiz yap
+- Her öneri için NEDEN açıkla
+- Uygulanabilir ve pratik öneriler ver
    - Ara öğün stratejileri
    - Egzersiz öncesi/sonrası beslenme
    - Haftalık menü önerileri
@@ -2331,16 +2339,40 @@ async def premium_plus_lifestyle_recommendations(
 
 💡 YANIT FORMATI:
 1. 📊 MEVCUT DURUM ANALİZİ
-2. 🏃‍♂️ SPOR/EGZERSİZ PROGRAMI
+   - Quiz verilerinden çıkarılan sağlık profili
+   - Lab sonuçlarından tespit edilen durum
+   - Risk faktörleri ve öncelikler
+   - Egzersiz kapasitesi değerlendirmesi
+
+2. 🏃‍♂️ DETAYLI EGZERSİZ PROGRAMI
+   - Her egzersiz için NEDEN açıkla
+   - Haftalık program (günler, süreler)
+   - Kardiyovasküler egzersizler
+   - Güç antrenmanı programı
+   - Esneklik ve mobilite egzersizleri
+
 3. 🥗 BESLENME ÖNERİLERİ
+   - Egzersiz öncesi/sonrası beslenme
+   - Hidrasyon stratejileri
+   - Enerji için besin önerileri
+
 4. ⚡ PERFORMANS İPUÇLARI
+   - Egzersiz teknikleri
+   - İlerleme stratejileri
+   - Güvenlik önerileri
+
 5. 📅 HAFTALIK PLAN ÖNERİSİ
+   - Detaylı günlük program
+   - Hedefler ve takip
 
 ÖNEMLİ KURALLAR:
 - KESINLIKLE link verme, sadece metin içeriği ver
 - KESINLIKLE kaynak gösterme, sadece öneriler ver
 - KESINLIKLE URL, web sitesi, kaynak belirtme
 - Temiz ve okunabilir format kullan
+- Detaylı ve kapsamlı analiz yap
+- Her öneri için NEDEN açıkla
+- Uygulanabilir ve pratik öneriler ver
 - Sadece egzersiz önerileri ve programları ver
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
