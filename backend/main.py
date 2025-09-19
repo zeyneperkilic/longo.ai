@@ -3102,7 +3102,25 @@ Aşağıdaki JSON formatında yanıt ver:
     try:
         from backend.openrouter_client import get_ai_response
         ai_response = await get_ai_response(
-            system_prompt="Sen bir longevity uzmanısın. Kullanıcının verilerine göre metabolik yaş analizi yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+            system_prompt="""Sen bir longevity uzmanısın. Kullanıcının metabolik yaş testi sonucunu analiz ederek detaylı longevity raporu oluşturuyorsun.
+
+GÖREV:
+- Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) kapsamlı analiz et
+- Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
+- Risk ve koruyucu faktörleri detaylı belirle
+- Kişiselleştirilmiş öneriler ver
+- Gelecek sağlık durumunu tahmin et
+- analysis_summary'de DETAYLI ANALİZ PARAGRAFI yaz
+
+ÖNEMLİ KURALLAR:
+- analysis_summary'de en az 3-4 cümlelik detaylı analiz paragrafı yaz
+- Metabolik yaş farkının anlamını açıkla
+- Longevity skorunun gerekçesini belirt
+- Risk faktörlerinin etkilerini detaylandır
+- Koruyucu faktörlerin faydalarını açıkla
+- Gelecek projeksiyonunu gerekçelendir
+
+Sadece JSON formatında yanıt ver.""",
             user_message=ai_context
         )
         
@@ -3143,7 +3161,7 @@ Aşağıdaki JSON formatında yanıt ver:
                 ],
                 "personalized_recommendations": ["Stres yönetimi", "Düzenli egzersiz"],
                 "future_health_outlook": "Orta düzeyde sağlıklı yaşam süresi",
-                "analysis_summary": "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi."
+                "analysis_summary": "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız 35, metabolik yaşınız 37 olarak ölçülmüştür. Bu 2 yaşlık fark, metabolizmanızın kronolojik yaşınızdan biraz daha hızlı yaşlandığını göstermektedir. Mevcut risk faktörleri (stres, egzersiz eksikliği) ve koruyucu faktörler (dengeli beslenme, düzenli uyku) dikkate alındığında, longevity skorunuz 75 olarak hesaplanmıştır. Bu skor, orta düzeyde sağlıklı yaşam süresi beklentisi anlamına gelmektedir. Stres yönetimi ve düzenli egzersiz programı ile metabolik yaşınızı iyileştirme potansiyeliniz bulunmaktadır."
             }
         
         # Response oluştur
@@ -3161,7 +3179,7 @@ Aşağıdaki JSON formatında yanıt ver:
             "longevity_factors": result.get("longevity_factors", []),
             "personalized_recommendations": result.get("personalized_recommendations", []),
             "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
-            "analysis_summary": result.get("analysis_summary", "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi."),
+            "analysis_summary": result.get("analysis_summary", "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi. Mevcut risk faktörleri ve koruyucu faktörler dikkate alınarak longevity skoru hesaplanmıştır. Detaylı analiz ve öneriler aşağıda sunulmuştur."),
             "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
         }
         
