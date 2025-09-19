@@ -1115,7 +1115,7 @@ JSON formatında yanıt ver:
                 
                 from backend.openrouter_client import get_ai_response
                 ai_response = await get_ai_response(
-                    system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+                    system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. KESINLIKLE link verme, sadece metin içeriği ver. Sadece JSON formatında kısa ve öz cevap ver.",
                     user_message=ai_context
                 )
                 
@@ -1552,7 +1552,7 @@ JSON formatında yanıt ver:
                 
                 # AI'ya gönder
                 ai_response = await get_ai_response(
-                    system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+                    system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. KESINLIKLE link verme, sadece metin içeriği ver. Sadece JSON formatında kısa ve öz cevap ver.",
                     user_message=ai_context
                 )
                 
@@ -2509,7 +2509,7 @@ JSON formatında yanıt ver:
             
             # AI'ya gönder
             ai_response = await get_ai_response(
-                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. KESINLIKLE link verme, sadece metin içeriği ver. Sadece JSON formatında kısa ve öz cevap ver.",
                 user_message=ai_context
             )
             
@@ -2720,7 +2720,7 @@ JSON formatında yanıt ver:
             
             # AI'ya gönder
             ai_response = await get_ai_response(
-                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. Sadece JSON formatında kısa ve öz cevap ver.",
+                system_prompt="Sen bir sağlık danışmanısın. Kullanıcının verilerine göre test önerileri yapıyorsun. KESINLIKLE link verme, sadece metin içeriği ver. Sadece JSON formatında kısa ve öz cevap ver.",
                 user_message=ai_context
             )
             
