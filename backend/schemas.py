@@ -140,6 +140,8 @@ class MultipleLabRequest(BaseModel):
 class ChatStartRequest(BaseModel):
     # TÜM FIELD'LAR OPSİYONEL - Asıl site'dan herhangi bir format gelebilir
     # Boş body kabul et, herhangi bir field eklenebilir
+    pass  # Hiç field yok, sadece extra = "allow"
+    
     class Config:
         extra = "allow"
 
