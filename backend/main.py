@@ -18,11 +18,11 @@ from backend.config import (
     XML_REQUEST_TIMEOUT, FREE_QUESTION_LIMIT, FREE_SESSION_TIMEOUT_SECONDS,
     CHAT_HISTORY_LIMIT, USER_ANALYSES_LIMIT, QUIZ_LAB_MESSAGES_LIMIT,
     AI_MESSAGES_LIMIT, AI_MESSAGES_LIMIT_LARGE, LAB_MESSAGES_LIMIT,
-    QUIZ_LAB_ANALYSES_LIMIT, DEBUG_AI_MESSAGES_LIMIT, MILLISECOND_MULTIPLIER,
+    QUIZ_LAB_ANALYSES_LIMIT, MILLISECOND_MULTIPLIER,
     MIN_LAB_TESTS_FOR_COMPARISON, AVAILABLE_TESTS
 )
-from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type, get_or_create_user_by_external_id
-from backend.auth import get_db, get_or_create_user
+from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type
+from backend.auth import get_db
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
@@ -1623,112 +1623,6 @@ JSON formatında yanıt ver:
 
 
 
-@app.get("/ai/progress/{user_id}")
-def get_user_progress(user_id: str, db: Session = Depends(get_db)):
-    """Get user's lab test progress and trends"""
-    
-    # Get lab test history from ai_messages
-    from backend.db import get_ai_messages, get_user_by_external_id
-    
-    # external_user_id ile kullanıcıyı bul
-    user = get_user_by_external_id(db, user_id)
-    if not user:
-        raise HTTPException(404, "Kullanıcı bulunamadı")
-    
-    # Get lab tests from ai_messages
-    lab_messages = get_ai_messages(db, external_user_id=user_id, message_type="lab_single", limit=LAB_MESSAGES_LIMIT)
-    lab_history = []
-    
-    # Convert ai_messages to lab_history format
-    for msg in lab_messages:
-        if msg.request_payload and "test" in msg.request_payload:
-            test_data = msg.request_payload["test"]
-            lab_history.append({
-                "id": msg.id,
-                "test_date": msg.created_at,
-                "test_type": "single",
-                "test_results": {"tests": [test_data]}
-            })
-    
-    # Analyze trends
-    if len(lab_history) < 2:
-        return {
-            "message": "Progress analizi için en az 2 test gerekli",
-            "test_count": len(lab_history),
-            "trends": "Trend analizi yapılamaz"
-        }
-    
-    # Real trend analysis - Compare lab results
-    trends = {
-        "total_tests": len(lab_history),
-        "test_frequency": f"Son {len(lab_history)} test yapıldı",
-        "improvement_areas": [],
-        "stable_areas": [],
-        "worsening_areas": []
-    }
-    
-    # Compare test results if we have at least 2 tests
-    if len(lab_history) >= MIN_LAB_TESTS_FOR_COMPARISON:
-        latest_test = lab_history[0]  # Most recent
-        previous_test = lab_history[1]  # Previous
-        
-        if latest_test.test_results and previous_test.test_results:
-            # Extract test names and values for comparison
-            latest_results = {}
-            previous_results = {}
-            
-            # Parse test results (handle both list and dict formats)
-            if isinstance(latest_test.test_results, list):
-                for test in latest_test.test_results:
-                    if isinstance(test, dict) and 'name' in test:
-                        latest_results[test['name']] = test
-            elif isinstance(latest_test.test_results, dict):
-                latest_results = latest_test.test_results
-                
-            if isinstance(previous_test.test_results, list):
-                for test in previous_test.test_results:
-                    if isinstance(test, dict) and 'name' in test:
-                        previous_results[test['name']] = test
-            elif isinstance(previous_test.test_results, dict):
-                previous_results = previous_test.test_results
-            
-            # Compare each test
-            for test_name in set(latest_results.keys()) & set(previous_results.keys()):
-                latest = latest_results[test_name]
-                previous = previous_results[test_name]
-                
-                # Try to extract numeric values for comparison
-                try:
-                    latest_val = float(str(latest.get('value', '0')).replace(',', ''))
-                    previous_val = float(str(previous.get('value', '0')).replace(',', ''))
-                    
-                    if latest_val > previous_val:
-                        trends["improvement_areas"].append(f"{test_name}: {previous_val} → {latest_val} (İyileşme)")
-                    elif latest_val < previous_val:
-                        trends["worsening_areas"].append(f"{test_name}: {previous_val} → {latest_val} (Bozulma)")
-                    else:
-                        trends["stable_areas"].append(f"{test_name}: {latest_val} (Stabil)")
-                except (ValueError, TypeError):
-                    # Non-numeric values, just mark as stable
-                    trends["stable_areas"].append(f"{test_name}: Değer karşılaştırılamadı")
-    
-    # If no trends found, add default message
-    if not trends["improvement_areas"] and not trends["worsening_areas"] and not trends["stable_areas"]:
-        trends["stable_areas"].append("Trend analizi için yeterli veri yok")
-    
-    return {
-        "user_id": user_id,
-        "lab_test_history": [
-            {
-                "test_date": record.test_date.isoformat(),
-                "test_type": record.test_type,
-                "test_count": len(record.test_results) if record.test_results else 0
-            }
-            for record in lab_history
-        ],
-        "trends": trends,
-        "recommendations": "Progress bazlı öneriler"
-    }
 
 @app.get("/api/supplements.xml")
 @cache_supplements(ttl_seconds=3600)  # 1 saat cache
@@ -1790,22 +1684,6 @@ def clear_free_user_session(x_user_id: str | None = Header(default=None)):
         return {"message": "Session temizlendi", "user_id": x_user_id}
     return {"message": "Session bulunamadı", "user_id": x_user_id}
 
-@app.get("/users/{external_user_id}/info")
-def get_user_info(external_user_id: str, db: Session = Depends(get_db)):
-    """Kullanıcı bilgilerini getir (production için test)"""
-    from backend.db import get_user_by_external_id
-    
-    user = get_user_by_external_id(db, external_user_id)
-    if not user:
-        raise HTTPException(404, "Kullanıcı bulunamadı")
-    
-    return {
-        "user_id": user.id,
-        "external_user_id": user.external_user_id,
-        "plan": user.plan,
-        "conversation_count": len(user.conversations),
-        "created_at": user.created_at.isoformat(),
-    }
 
 # Global error handler
 @app.exception_handler(Exception)
@@ -2490,67 +2368,7 @@ def validate_input_data(data: dict, required_fields: list = None) -> dict:
     # Pydantic schema'lar zaten extra = "allow" ile esnek
     return data
 
-@app.get("/debug/database")
-def debug_database(current_user: str = Depends(get_current_user),
-                   db: Session = Depends(get_db),
-                   x_user_id: str | None = Header(default=None)):
-    """Debug endpoint to check database contents"""
-    try:
-        from backend.db import get_or_create_user_by_external_id, get_ai_messages
-        
-        # User bilgilerini al
-        user = get_or_create_user_by_external_id(db, x_user_id, "free")
-        
-        # AI messages
-        ai_messages = get_ai_messages(db, external_user_id=x_user_id, limit=DEBUG_AI_MESSAGES_LIMIT)
-        
-        return {
-            "user_id": user.id,
-            "external_user_id": user.external_user_id,
-            "plan": user.plan,
-            "ai_messages_count": len(ai_messages),
-            "ai_messages": [
-                {
-                    "id": msg.id,
-                    "message_type": msg.message_type,
-                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
-                    "model_used": msg.model_used
-                } for msg in ai_messages
-            ]
-        }
-    except Exception as e:
-        return {"error": str(e), "type": type(e).__name__}
 
-@app.get("/ai/messages")
-def get_ai_messages_endpoint(
-    current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    x_user_id: str | None = Header(default=None),
-    message_type: str | None = None,
-    limit: int = 50
-):
-    """Get AI messages for debugging"""
-    try:
-        from backend.db import get_ai_messages
-        messages = get_ai_messages(db, external_user_id=x_user_id, message_type=message_type, limit=limit)
-        
-        return {
-            "success": True,
-            "count": len(messages),
-            "messages": [
-                {
-                    "id": msg.id,
-                    "external_user_id": msg.external_user_id,
-                    "message_type": msg.message_type,
-                    "model_used": msg.model_used,
-                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
-                    "request_payload": msg.request_payload,
-                    "response_payload": msg.response_payload
-                } for msg in messages
-            ]
-        }
-    except Exception as e:
-        return {"error": str(e), "type": type(e).__name__}
 
 # ---------- TEST ÖNERİSİ ENDPOINT ----------
 
