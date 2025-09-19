@@ -1195,7 +1195,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getUserIdForChat(),
-                    'x-user-level': window.longoUserLevel,
+                    ...(window.longoUserLevel && { 'x-user-level': window.longoUserLevel }),
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({})
@@ -1254,7 +1254,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getUserIdForChat(),
-                    'x-user-level': window.longoUserLevel,
+                    ...(window.longoUserLevel && { 'x-user-level': window.longoUserLevel }),
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
