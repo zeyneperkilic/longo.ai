@@ -1176,7 +1176,6 @@ JSON formatında yanıt ver:
                             "title": "Test Önerileri",
                             "recommended_tests": recommended_tests,
                             "analysis_summary": "Quiz verilerine göre analiz tamamlandı",
-                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
                         }
                         
                         data["test_recommendations"] = test_rec_response
@@ -1610,7 +1609,6 @@ JSON formatında yanıt ver:
                             "title": "Test Önerileri",
                             "recommended_tests": recommended_tests,
                             "analysis_summary": "Lab verilerine göre analiz tamamlandı",
-                            "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
                         }
                         
                         data["test_recommendations"] = test_rec_response

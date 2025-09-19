@@ -553,72 +553,53 @@ curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendat
 
 ---
 
-## 🧪 Test Recommendations Endpoint
+## 🧪 Test Recommendations (Entegre)
 
-### **POST** `/ai/test-recommendations`
+**⚠️ ÖNEMLİ:** Test önerileri artık ayrı bir endpoint değil, **Quiz** ve **Lab Summary** endpoint'lerine entegre edilmiştir!
 
-Premium ve Premium Plus kullanıcıları için kişiselleştirilmiş test önerileri. Kullanıcının quiz ve lab verilerini analiz ederek **sadece anormal değerler için** en uygun testleri önerir.
-
-#### Request Body
+### Quiz Endpoint'inde Test Önerileri
+Quiz endpoint'i (`/ai/quiz`) artık test önerilerini de içerir:
 ```json
 {
-  "user_analysis": true,
-  "exclude_taken_tests": true,
-  "max_recommendations": 10
+  "test_recommendations": {
+    "title": "Test Önerileri",
+    "recommended_tests": [
+      {
+        "test_name": "Vitamin B12 ve Metilmalonik Asit (MMA) Testi",
+        "reason": "Vegan beslenme nedeniyle B12 eksikliği riski yüksek",
+        "benefit": "B12 eksikliğinin erken tespiti ve sinir sistemi sağlığının korunması"
+      }
+    ],
+    "analysis_summary": "Quiz verilerine göre analiz tamamlandı"
+  }
 }
 ```
 
-#### Request Parameters
-- `user_analysis` (boolean): Kullanıcı verilerini analiz et (zorunlu: true)
-- `exclude_taken_tests` (boolean): Daha önce yapılan testleri hariç tut (zorunlu: true)
-- `max_recommendations` (integer): Maksimum öneri sayısı (1-10 arası, default: 3)
+### Lab Summary Endpoint'inde Test Önerileri
+Lab Summary endpoint'i (`/ai/lab/summary`) de test önerilerini içerir:
+```json
+{
+  "test_recommendations": {
+    "title": "Test Önerileri",
+    "recommended_tests": [
+      {
+        "test_name": "25-OH D Vitamini Tekrar Testi",
+        "reason": "D vitamini seviyeniz ciddi düşük (18; normal 30-100)",
+        "benefit": "Kemik sağlığı, bağışıklık ve metabolizma için eksikliği teyit ederek takviye planına yön verir"
+      }
+    ],
+    "analysis_summary": "Lab verilerine göre analiz tamamlandı"
+  }
+}
+```
 
 #### Özellikler
-- **Akıllı Analiz**: Sadece anormal/düşük/yüksek lab değerleri için test önerir
-- **Kişiselleştirilmiş**: Kullanıcının mevcut değerlerini referans alarak açıklama yapar
-- **Gereksiz Test Önleme**: Normal değerlere "kontrol amaçlı" test önermez
-- **Maksimum 10 Test**: Boş yere test önermez, sadece gerekli olanları önerir
-
-#### Response
-```json
-{
-  "title": "Test Önerileri",
-  "recommended_tests": [
-    {
-      "test_name": "HbA1c (Glikozillenmiş Hemoglobin)",
-      "reason": "Glukozunuz 110 mg/dL (referans: 70-100) ile hafif yüksek. Bu, insülin direnci veya prediyabet riski göstergesi olabilir. HbA1c testi, son 2-3 aylık ortalama kan şekeri düzeyinizi değerlendirmeye yardımcı olur.",
-      "benefit": "Diyabet veya prediyabet riskinizi erken tespit ederek, yaşam tarzı değişiklikleri veya tedaviye erken başlamanıza olanak tanır."
-    },
-    {
-      "test_name": "Serum Demir, Ferritin ve Total Demir Bağlama Kapasitesi (TIBC)",
-      "reason": "Hemoglobininiz 11.8 g/dL (referans: 12-16) ile hafif düşük. Bu, demir eksikliği anemisini düşündürebilir. Ferritin ve demir testleri vücuttaki demir depolarını değerlendirir.",
-      "benefit": "Demir eksikliğiniz olup olmadığını netleştirerek doğru tedavi (ör. demir takviyesi) planlanmasına yardımcı olur."
-    },
-    {
-      "test_name": "Vitamin B12 ve Folat",
-      "reason": "Hemoglobininiz düşük (11.8 g/dL). Demir dışında B12 ve folat eksiklikleri de kansızlığa sebep olabilir.",
-      "benefit": "Aneminin nedeni B12/Folat eksikliğine bağlıysa doğru tedavi planlanır."
-    }
-  ],
-  "analysis_summary": "Kişiselleştirilmiş analiz tamamlandı.",
-  "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Test yaptırmadan önce doktorunuza danışın."
-}
-```
-
-#### Özellik
-- **AI Tabanlı**: Kullanıcının quiz ve lab verilerini analiz eder
-- **Akıllı Analiz**: Sadece anormal değerler için test önerir
-- **Kişiselleştirilmiş**: Mevcut değerleri referans alarak açıklama yapar
-- **Gereksiz Test Önleme**: Normal değerlere "kontrol amaçlı" test önermez
-- **Akıllı Filtreleme**: Daha önce yapılan testleri otomatik olarak hariç tutar
-- **Tıbbi Mantık**: Test sonuçlarına göre ilgili testleri önerir
-- **Premium Only**: Sadece `x-user-level: 2` (Premium) ve `x-user-level: 3` (Premium Plus) kullanıcıları erişebilir
-
-#### Strateji
-- **Quiz Verisi**: Yaş, cinsiyet, hastalıklar, hedefler analiz edilir
-- **Lab Verisi**: Mevcut test sonuçları değerlendirilir
-- **AI Analizi**: Tüm veriler AI tarafından analiz edilerek en uygun testler belirlenir
-- **Test Listesi**: 18 farklı test kategorisinden öneriler yapılır
+- **Entegre Sistem**: Test önerileri artık ana endpoint'lerde
+- **Quiz Tabanlı**: Quiz cevaplarına göre test önerileri
+- **Lab Tabanlı**: Lab sonuçlarına göre test önerileri
+- **AI Tabanlı**: Kullanıcının verilerini analiz eder
+- **Akıllı Analiz**: Sadece gerekli testleri önerir
+- **Kişiselleştirilmiş**: Mevcut verileri referans alarak açıklama yapar
 
 ---
 
@@ -680,25 +661,50 @@ const exerciseData = await exerciseResponse.json();
 console.log(dietData.recommendations);
 console.log(exerciseData.recommendations);
 
-// Test Recommendations endpoint (Premium ve Premium Plus)
-const testRecResponse = await fetch('https://longo-ai.onrender.com/ai/test-recommendations', {
+// Test önerileri artık Quiz ve Lab Summary endpoint'lerinde entegre!
+// Quiz endpoint'inden test önerileri al
+const quizResponse = await fetch('https://longo-ai.onrender.com/ai/quiz', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',  // ZORUNLU!
-    'username': 'longopass',             // ZORUNLU!
-    'password': '123456',                // ZORUNLU!
-    'x-user-id': 'user123',              // ZORUNLU!
-    'x-user-level': 2                    // ZORUNLU! (2=Premium, 3=Premium Plus)
+    'Content-Type': 'application/json',
+    'username': 'longopass',
+    'password': '123456',
+    'x-user-id': 'user123',
+    'x-user-level': 2
   },
   body: JSON.stringify({
-    user_analysis: true,
-    exclude_taken_tests: true,
-    max_recommendations: 10
+    quiz_data: {
+      age: 30,
+      gender: 'female',
+      health_conditions: [],
+      current_supplements: [],
+      goals: ['energy', 'immunity']
+    }
   })
 });
 
-const testRecData = await testRecResponse.json();
-console.log(testRecData.recommended_tests);
+const quizData = await quizResponse.json();
+console.log(quizData.test_recommendations); // Test önerileri burada!
+
+// Lab Summary endpoint'inden test önerileri al
+const labSummaryResponse = await fetch('https://longo-ai.onrender.com/ai/lab/summary', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'username': 'longopass',
+    'password': '123456',
+    'x-user-id': 'user123',
+    'x-user-level': 2
+  },
+  body: JSON.stringify({
+    tests: [
+      {name: "Vitamin D", value: 18, unit: "ng/mL", reference_range: "30-100 ng/mL"}
+    ]
+  })
+});
+
+const labSummaryData = await labSummaryResponse.json();
+console.log(labSummaryData.test_recommendations); // Test önerileri burada!
 ```
 
 ### cURL Example
@@ -739,17 +745,35 @@ curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendat
   -H "x-user-level: 3" \                   # ZORUNLU! (3=Premium Plus)
   -d '{}'                                  # BOŞ OBJECT!
 
-# Test Recommendations endpoint (Premium ve Premium Plus)
-curl -X POST "https://longo-ai.onrender.com/ai/test-recommendations" \
-  -H "Content-Type: application/json" \    # ZORUNLU!
-  -H "username: longopass" \               # ZORUNLU!
-  -H "password: 123456" \                  # ZORUNLU!
-  -H "x-user-id: test123" \                # ZORUNLU!
-  -H "x-user-level: 2" \                   # ZORUNLU! (2=Premium, 3=Premium Plus)
+# Test önerileri artık Quiz ve Lab Summary endpoint'lerinde entegre!
+# Quiz endpoint'inden test önerileri al
+curl -X POST "https://longo-ai.onrender.com/ai/quiz" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: test123" \
+  -H "x-user-level: 2" \
   -d '{
-    "user_analysis": true,
-    "exclude_taken_tests": true,
-    "max_recommendations": 10
+    "quiz_data": {
+      "age": 30,
+      "gender": "female",
+      "health_conditions": [],
+      "current_supplements": [],
+      "goals": ["energy", "immunity"]
+    }
+  }'
+
+# Lab Summary endpoint'inden test önerileri al
+curl -X POST "https://longo-ai.onrender.com/ai/lab/summary" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: test123" \
+  -H "x-user-level: 2" \
+  -d '{
+    "tests": [
+      {"name": "Vitamin D", "value": 18, "unit": "ng/mL", "reference_range": "30-100 ng/mL"}
+    ]
   }'
 ```
 
