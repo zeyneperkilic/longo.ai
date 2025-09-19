@@ -165,7 +165,7 @@ def get_user_context_for_message(user_context: dict, user_analyses: list) -> tup
 def get_user_plan_from_headers(x_user_level: int | None) -> str:
     """Header'lardan user plan'ı belirle - sadece x_user_level kullan"""
     if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
+        if x_user_level == 1:
             return "free"
         elif x_user_level == 2:
             return "premium"
@@ -685,7 +685,7 @@ async def chat_message(req: ChatMessageRequest,
     # Guest ve Free kullanıcılar için limiting
     client_ip = request.client.host if request else "unknown"
     
-    if not x_user_level or x_user_level == 0:  # Guest (null/undefined/0)
+    if not x_user_level:  # Guest (null/undefined)
         can_chat, remaining = check_ip_daily_limit(client_ip)
         if not can_chat:
             raise HTTPException(
@@ -1727,7 +1727,7 @@ async def premium_plus_diet_recommendations(
     
     # Plan kontrolü - Yeni sistem: userLevel bazlı
     if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
+        if x_user_level == 1:
             user_plan = "free"
         elif x_user_level == 2:
             user_plan = "premium"
@@ -1941,7 +1941,7 @@ async def premium_plus_exercise_recommendations(
     
     # Plan kontrolü - Yeni sistem: userLevel bazlı
     if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
+        if x_user_level == 1:
             user_plan = "free"
         elif x_user_level == 2:
             user_plan = "premium"
@@ -2150,7 +2150,7 @@ async def premium_plus_lifestyle_recommendations(
     
     # Plan kontrolü - Yeni sistem: userLevel bazlı
     if x_user_level is not None:
-        if x_user_level == 0 or x_user_level == 1:
+        if x_user_level == 1:
             user_plan = "free"
         elif x_user_level == 2:
             user_plan = "premium"

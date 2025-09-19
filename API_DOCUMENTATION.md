@@ -16,11 +16,11 @@ password: 123456
 ### 👤 User Management Headers
 ```http
 x-user-id: unique_user_id        # Kullanıcı ID'si (zorunlu)
-x-user-level: 0|1|2|3           # Kullanıcı seviyesi (opsiyonel, default: 0)
+x-user-level: 1|2|3             # Kullanıcı seviyesi (opsiyonel)
 ```
 
 **Plan Mapping:**
-- `0` veya `1` → **Free** (10 soru limiti)
+- `1` → **Free** (10 soru limiti)
 - `2` → **Premium** (Sınırsız + Lab analizi)
 - `3` → **Premium Plus** (Tüm özellikler)
 - Header gelmezse → **Free** (üye değilse)
@@ -802,7 +802,7 @@ async function processLabResults(labData) {
     'username': 'longopass',
     'password': '123456',
     'x-user-id': userId,
-    'x-user-level': userLevel  // 0=Free, 1=Free, 2=Premium, 3=Premium Plus
+    'x-user-level': userLevel  // 1=Free, 2=Premium, 3=Premium Plus
   };
 
   try {

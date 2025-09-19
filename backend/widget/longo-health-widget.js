@@ -5,12 +5,12 @@
     // DOM hazır olunca widget'ı başlat
     function initWidget() {
         // Siteden userLevel gelip gelmediğini kontrol et
-        // Ideasoft'ta gerçek değerler gelecek, yoksa guest (0) olarak ayarla
-        window.longoUserLevel = window.longoUserLevel || 0; // Siteden gelmezse 0 (guest)
+        // Ideasoft'ta gerçek değerler gelecek, yoksa guest (null) olarak ayarla
+        window.longoUserLevel = window.longoUserLevel || null; // Siteden gelmezse null (guest)
         window.longoRealUserId = window.longoRealUserId || null; // Premium kullanıcılar için gerçek user ID
         
         // User plan'ı user level'a göre otomatik belirle
-        if (window.longoUserLevel === 0 || window.longoUserLevel === 1) {
+        if (!window.longoUserLevel || window.longoUserLevel === 1) {
             window.longoUserPlan = 'free';
         } else if (window.longoUserLevel === 2) {
             window.longoUserPlan = 'premium';
@@ -1195,7 +1195,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getUserIdForChat(),
-                    'x-user-level': window.longoUserLevel || 0,
+                    'x-user-level': window.longoUserLevel,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({})
@@ -1254,7 +1254,7 @@
                     'username': 'longopass',
                     'password': '123456',
                     'x-user-id': getUserIdForChat(),
-                    'x-user-level': window.longoUserLevel || 0,
+                    'x-user-level': window.longoUserLevel,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
