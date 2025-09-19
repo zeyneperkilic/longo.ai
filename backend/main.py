@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Header, Request, Query
+from fastapi import FastAPI, Depends, HTTPException, Header, Request, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -589,7 +589,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 # ---------- PREMIUM USER DATABASE-BASED CHAT ----------
 
 @app.post("/ai/chat/start", response_model=ChatStartResponse)
-def chat_start(body: ChatStartRequest = None,
+def chat_start(body: ChatStartRequest = Body(default={}),
                db: Session = Depends(get_db),
                x_user_id: str | None = Header(default=None),
                x_user_level: int | None = Header(default=None)):
@@ -794,7 +794,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Build enhanced system prompt with user context
@@ -901,7 +901,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Supplement listesi sadece supplement önerisi istenirse ekle
     if any(keyword in message_text.lower() for keyword in ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin"]):
-        history.append({"role": "user", "content": supplements_info})
+    history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
