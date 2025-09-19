@@ -326,6 +326,15 @@ def check_ip_daily_limit(client_ip: str) -> tuple[bool, int]:
     # 24 saat = 86400 saniye
     daily_reset_seconds = 86400
     
+    # Eski IP'leri temizle (48 saatten eski)
+    expired_ips = []
+    for ip, data in ip_daily_limits.items():
+        if current_time - data.get("reset_time", 0) > daily_reset_seconds * 2:  # 48 saat
+            expired_ips.append(ip)
+    
+    for ip in expired_ips:
+        del ip_daily_limits[ip]
+    
     if client_ip not in ip_daily_limits:
         # İlk kez gelen IP
         ip_daily_limits[client_ip] = {
@@ -360,6 +369,15 @@ def check_user_daily_limit(user_id: str, client_ip: str) -> tuple[bool, int]:
     
     # 24 saat = 86400 saniye
     daily_reset_seconds = 86400
+    
+    # Eski User+IP kombinasyonlarını temizle (48 saatten eski)
+    expired_keys = []
+    for key, data in ip_daily_limits.items():
+        if current_time - data.get("reset_time", 0) > daily_reset_seconds * 2:  # 48 saat
+            expired_keys.append(key)
+    
+    for key in expired_keys:
+        del ip_daily_limits[key]
     
     if user_ip_key not in ip_daily_limits:
         # İlk kez gelen User ID + IP kombinasyonu
