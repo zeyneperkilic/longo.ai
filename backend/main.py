@@ -192,7 +192,7 @@ def detect_language_simple(message: str) -> str:
     # İngilizce yaygın kelimeler
     english_patterns = [
         r'\b(hello|hi|how|what|why|when|where|who|which|can|could|would|should)\b',
-        r'\b(health|nutrition|vitamin|mineral|supplement|diet|exercise)\b',
+        r'\b(health|nutrition|supplement|diet|exercise)\b',
         r'\b(and|or|for|with|the|a|an|this|that|i|you|we|they)\b'
     ]
     
@@ -826,11 +826,13 @@ async def chat_message(req: ChatMessageRequest,
     
     # Dil algılama ve system prompt hazırlama
     detected_language = detect_language_simple(message_text)
+    logger.info(f"🔍 DEBUG: Detected language: {detected_language} for message: {message_text}")
     system_prompt = build_chat_system_prompt()
     
     # Eğer İngilizce algılandıysa, system prompt'a dil talimatı ekle
     if detected_language == "en":
         system_prompt += "\n\n🌍 LANGUAGE: The user is writing in English. Please respond in English only!"
+        logger.info("🔍 DEBUG: Added English language instruction to system prompt")
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
