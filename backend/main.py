@@ -825,13 +825,36 @@ async def chat_message(req: ChatMessageRequest,
         user_message = message_text
     
     # Dil algılama ve system prompt hazırlama
+    import logging
+    logger = logging.getLogger(__name__)
     detected_language = detect_language_simple(message_text)
     logger.info(f"🔍 DEBUG: Detected language: {detected_language} for message: {message_text}")
     system_prompt = build_chat_system_prompt()
     
     # Eğer İngilizce algılandıysa, system prompt'a dil talimatı ekle
     if detected_language == "en":
-        system_prompt += "\n\n🌍 LANGUAGE: The user is writing in English. Please respond in English only!"
+        system_prompt = """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!
+
+🚨 ÇOK ÖNEMLİ: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler var. Bu bilgiler kullanıcının yazdığı DEĞİL! Bunlar senin hafızanda olan geçmiş veriler! Kullanıcı sadece son cümlesini yazdı, diğer bilgiler senin hafızandan.
+
+❌ YANLIŞ İFADELER KULLANMA:
+- "paylaştığın için teşekkür ederim" 
+- "gönderdiğin için teşekkür ederim"
+- "paylaştığın veriler"
+- "gönderdiğin sonuçlar"
+
+✅ DOĞRU İFADELER KULLAN:
+- "hafızamdaki verilerine göre"
+- "geçmiş analizlerine göre"
+- "daha önceki test sonuçlarına göre"
+
+🚨 ÜRÜN ÖNERİLERİ:
+- SADECE bizim listedeki ürünleri öner
+- Ürün ID'lerini gösterme
+- Liste hakkında konuşma
+- Link verme, kaynak gösterme
+
+🌍 LANGUAGE: The user is writing in English. You MUST respond in English only! Do not use Turkish at all!"""
         logger.info("🔍 DEBUG: Added English language instruction to system prompt")
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
