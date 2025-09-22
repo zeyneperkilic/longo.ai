@@ -55,7 +55,7 @@
         #chat-button {
             width: 70px;
             height: 70px;
-            background: linear-gradient(135deg, #2F5D83 0%, #4A7C9A 100%);
+            background: transparent;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -69,7 +69,7 @@
             right: 20px;
             z-index: 10002;
             overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: none;
             backdrop-filter: blur(10px);
         }
 
@@ -137,14 +137,14 @@
         }
 
         .chat-button-image {
-            width: 40px;
-            height: 40px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             object-fit: cover;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
             z-index: 2;
             position: relative;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: none;
         }
 
         /* Chat Window - Kahve.com Glassmorphism */
