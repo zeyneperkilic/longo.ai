@@ -1328,4 +1328,36 @@
         
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
         
-        // Sessio
+        // Session history'ye ekle (free kullanıcılar için)
+        if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+            addToSessionChatHistory(role, content);
+        }
+    }
+    
+    // Loading mesajını kaldır
+    function longoRemoveLoadingMessage() {
+        const loadingMessage = document.querySelector('.longo-message.loading');
+        if (loadingMessage) {
+            loadingMessage.style.opacity = '0';
+            loadingMessage.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (loadingMessage.parentNode) {
+                    loadingMessage.remove();
+                }
+            }, 300);
+        }
+    }
+    
+    // Widget'ı başlat
+    createWidget();
+    }
+    
+    // DOM hazır olunca widget'ı başlat
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWidget);
+    } else {
+        // DOM zaten hazır
+        initWidget();
+    }
+    
+})();
