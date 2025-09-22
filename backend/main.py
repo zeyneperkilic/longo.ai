@@ -464,7 +464,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     
     for user_id in expired_users:
         del free_user_conversations[user_id]
-        print(f"🔍 DEBUG: Eski session temizlendi: {user_id}")
+        # print(f"🔍 DEBUG: Eski session temizlendi: {user_id}")
     
     # Son aktivite zamanını güncelle
     free_user_conversations[x_user_id]["last_activity"] = current_time
@@ -613,7 +613,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
             for msg in conversation_history[-5:]:  # Son 5 mesajı al
                 context_message += f"{msg['role'].upper()}: {msg['content']}\n"
             user_message = context_message + "\n" + user_message
-            print(f"🔍 DEBUG: Free kullanıcı için {len(conversation_history)} mesaj geçmişi eklendi")
+            # print(f"🔍 DEBUG: Free kullanıcı için {len(conversation_history)} mesaj geçmişi eklendi")
         
         # XML ürünlerini user message'a ekle
         if xml_products:
@@ -622,7 +622,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
                 category = product.get('category', 'Kategori Yok')
                 user_message += f"{i}. {product['name']} ({category})\n"
             user_message += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
-            print(f"🔍 DEBUG: Free kullanıcı için {len(xml_products)} XML ürünü eklendi")
+            # print(f"🔍 DEBUG: Free kullanıcı için {len(xml_products)} XML ürünü eklendi")
         
         ai_response = await get_ai_response(
             system_prompt=system_prompt,
