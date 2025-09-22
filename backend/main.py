@@ -491,7 +491,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
                 model_used="health_guard"
             )
         except Exception as e:
-            # print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
+            print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
         
         return ChatResponse(conversation_id=1, reply=msg, latency_ms=0)
     
@@ -1381,7 +1381,7 @@ def analyze_single_lab(body: SingleLabRequest,
                         }
                         historical_results.append(item)
     except Exception as e:
-        # print(f"🔍 DEBUG: ai_messages'tan geçmiş lab sonuçlarını çekerken hata: {e}")
+        print(f"🔍 DEBUG: ai_messages'tan geçmiş lab sonuçlarını çekerken hata: {e}")
 
     # Body'den gelen geçmiş sonuçları da ekle (varsa)
     if body.historical_results:
@@ -1478,7 +1478,7 @@ def analyze_single_session(body: SingleSessionRequest,
             model_used="openrouter"
         )
     except Exception as e:
-        # print(f"🔍 DEBUG: Lab Session ai_messages kaydı hatası: {e}")
+        print(f"🔍 DEBUG: Lab Session ai_messages kaydı hatası: {e}")
     
     return data
 
@@ -1566,7 +1566,7 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
                         test_with_date['test_date'] = msg_date or 'Geçmiş'
                         all_tests_dict.append(test_with_date)
     except Exception as e:
-        # print(f"🔍 DEBUG: ai_messages'tan geçmiş lab testlerini çekerken hata: {e}")
+        print(f"🔍 DEBUG: ai_messages'tan geçmiş lab testlerini çekerken hata: {e}")
 
     # Yeni testleri ekle
     for test in new_tests_dict:
@@ -1707,9 +1707,11 @@ JSON formatında yanıt ver:
                         data["test_recommendations"] = test_rec_response
                 except Exception as parse_error:
                     # print(f"🔍 DEBUG: Lab summary test recommendations parse hatası: {parse_error}")
+                    pass
                     
         except Exception as e:
             # print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
+            pass
     
     # Log to ai_messages
     try:
@@ -2020,7 +2022,7 @@ Lütfen bu kullanıcı için DETAYLI beslenme önerileri hazırla. Sadece beslen
         }
         
     except Exception as e:
-        print(f"🔍 DEBUG: Diet recommendations hatası: {e}")
+        # print(f"🔍 DEBUG: Diet recommendations hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Beslenme önerileri hazırlanırken hata: {str(e)}")
 
 @app.post("/ai/premium-plus/exercise-recommendations")
@@ -2229,7 +2231,7 @@ Lütfen bu kullanıcı için DETAYLI egzersiz önerileri hazırla. Sadece egzers
         }
         
     except Exception as e:
-        print(f"🔍 DEBUG: Exercise recommendations hatası: {e}")
+        # print(f"🔍 DEBUG: Exercise recommendations hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Egzersiz önerileri hazırlanırken hata: {str(e)}")
 
 @app.post("/ai/premium-plus/lifestyle-recommendations")
@@ -2458,7 +2460,7 @@ Sadece bu 3 field'ı doldur, başka hiçbir şey ekleme!"""
             }
         
     except Exception as e:
-        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
+        # print(f"❌ Premium Plus lifestyle recommendations error: {e}")
         raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
 
 # Input validation helper
@@ -2667,7 +2669,7 @@ JSON formatında yanıt ver:
                     raise ValueError("AI response parse edilemedi")
                 
         except Exception as e:
-            print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
+            # print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
             return None
         
         # Response oluştur
@@ -2681,7 +2683,7 @@ JSON formatında yanıt ver:
         return response_data
         
     except Exception as e:
-        print(f"🔍 DEBUG: Test recommendations internal hatası: {e}")
+        # print(f"🔍 DEBUG: Test recommendations internal hatası: {e}")
         return None
 
 @app.post("/ai/test-recommendations", response_model=TestRecommendationResponse)
@@ -2718,11 +2720,11 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         if source == "quiz":
             # Sadece quiz verisi al
             quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
-            print(f"🔍 DEBUG: Quiz messages found: {len(quiz_messages) if quiz_messages else 0}")
+            # print(f"🔍 DEBUG: Quiz messages found: {len(quiz_messages) if quiz_messages else 0}")
             if quiz_messages:
                 user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
                 analysis_summary = "Quiz verilerine göre analiz tamamlandı."
-                print(f"🔍 DEBUG: Quiz data: {user_context['quiz_data']}")
+                # print(f"🔍 DEBUG: Quiz data: {user_context['quiz_data']}")
         
         elif source == "lab":
             # Sadece lab verisi al
@@ -2779,8 +2781,8 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         
         # Source'a göre AI context hazırla
         if source == "quiz":
-            print(f"🔍 DEBUG: Quiz user_info: {user_info}")
-            print(f"🔍 DEBUG: Quiz taken_tests_info: {taken_tests_info}")
+            # print(f"🔍 DEBUG: Quiz user_info: {user_info}")
+            # print(f"🔍 DEBUG: Quiz taken_tests_info: {taken_tests_info}")
             
             ai_context = f"""
 KULLANICI QUIZ CEVAPLARI:
@@ -2833,7 +2835,7 @@ JSON formatında yanıt ver:
                 user_message=ai_context
             )
             
-            print(f"🔍 DEBUG: AI Response for {source}: {ai_response}")
+            # print(f"🔍 DEBUG: AI Response for {source}: {ai_response}")
             
             # AI response'unu parse et
             import json
@@ -2842,12 +2844,12 @@ JSON formatında yanıt ver:
                 parsed_response = json.loads(ai_response)
                 if "recommended_tests" in parsed_response:
                     recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
-                    print(f"🔍 DEBUG: AI önerileri başarılı: {len(recommended_tests)} adet")
+                    # print(f"🔍 DEBUG: AI önerileri başarılı: {len(recommended_tests)} adet")
                 else:
                     raise ValueError("AI response format hatası")
             except (json.JSONDecodeError, ValueError, KeyError) as parse_error:
-                print(f"🔍 DEBUG: JSON parse hatası: {parse_error}")
-                print(f"🔍 DEBUG: Raw response: {ai_response}")
+                # print(f"🔍 DEBUG: JSON parse hatası: {parse_error}")
+                # print(f"🔍 DEBUG: Raw response: {ai_response}")
                 
                 # AI response'u temizle ve tekrar dene
                 cleaned_response = ai_response.strip()
@@ -2884,7 +2886,7 @@ JSON formatında yanıt ver:
                     parsed_response = json.loads(cleaned_response)
                     if "recommended_tests" in parsed_response:
                         recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
-                        print(f"🔍 DEBUG: Temizlenmiş AI önerileri başarılı: {len(recommended_tests)} adet")
+                        # print(f"🔍 DEBUG: Temizlenmiş AI önerileri başarılı: {len(recommended_tests)} adet")
                     else:
                         raise ValueError("Temizlenmiş AI response format hatası")
                 except:
@@ -2892,7 +2894,7 @@ JSON formatında yanıt ver:
                     raise ValueError("AI response parse edilemedi")
                 
         except Exception as e:
-            print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
+            # print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
             # Fallback kaldırıldı - AI çalışmazsa hata ver
             raise HTTPException(status_code=500, detail=f"AI test önerisi oluşturulamadı: {str(e)}")
         
@@ -3044,84 +3046,4 @@ GÖREV:
 - Metabolik yaş farkının anlamını açıkla
 - Longevity skorunun gerekçesini belirt
 - Risk faktörlerinin etkilerini detaylandır
-- Koruyucu faktörlerin faydalarını açıkla
-- Gelecek projeksiyonunu gerekçelendir
-
-Sadece JSON formatında yanıt ver.""",
-            user_message=ai_context
-        )
-        
-        # JSON parse et
-        try:
-            # Markdown code block'ları temizle
-            if "```json" in ai_response:
-                ai_response = ai_response.split("```json")[1].split("```")[0]
-            elif "```" in ai_response:
-                ai_response = ai_response.split("```")[1].split("```")[0]
-            
-            # Son } karakterine kadar al
-            last_brace = ai_response.rfind("}")
-            if last_brace != -1:
-                ai_response = ai_response[:last_brace + 1]
-            
-            result = json.loads(ai_response.strip())
-        except json.JSONDecodeError as e:
-            print(f"JSON parse hatası: {e}")
-            print(f"AI Response: {ai_response}")
-            # Fallback response
-            result = {
-                "chronological_age": req.chronological_age,
-                "metabolic_age": req.chronological_age + 2,
-                "age_difference": 2,
-                "biological_age_status": "normal",
-                "longevity_score": 75,
-                "health_span_prediction": "Orta düzeyde sağlıklı yaşam süresi bekleniyor",
-                "risk_factors": ["Stres seviyesi yüksek", "Egzersiz eksikliği"],
-                "protective_factors": ["Dengeli beslenme", "Düzenli uyku"],
-                "longevity_factors": [
-                    {
-                        "factor_name": "Stres Yönetimi",
-                        "current_status": "Yüksek stres",
-                        "impact_score": 8,
-                        "recommendation": "Meditasyon ve nefes egzersizleri"
-                    }
-                ],
-                "personalized_recommendations": ["Stres yönetimi", "Düzenli egzersiz"],
-                "future_health_outlook": "Orta düzeyde sağlıklı yaşam süresi",
-                "analysis_summary": "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız 35, metabolik yaşınız 37 olarak ölçülmüştür. Bu 2 yaşlık fark, metabolizmanızın kronolojik yaşınızdan biraz daha hızlı yaşlandığını göstermektedir. Mevcut risk faktörleri (stres, egzersiz eksikliği) ve koruyucu faktörler (dengeli beslenme, düzenli uyku) dikkate alındığında, longevity skorunuz 75 olarak hesaplanmıştır. Bu skor, orta düzeyde sağlıklı yaşam süresi beklentisi anlamına gelmektedir. Stres yönetimi ve düzenli egzersiz programı ile metabolik yaşınızı iyileştirme potansiyeliniz bulunmaktadır."
-            }
-        
-        # Response oluştur
-        response_data = {
-            "success": True,
-            "message": "Metabolik yaş analizi tamamlandı",
-            "chronological_age": result.get("chronological_age", req.chronological_age),
-            "metabolic_age": result.get("metabolic_age", req.chronological_age),
-            "age_difference": result.get("age_difference", 0),
-            "biological_age_status": result.get("biological_age_status", "normal"),
-            "longevity_score": result.get("longevity_score", 75),
-            "health_span_prediction": result.get("health_span_prediction", "Analiz tamamlandı"),
-            "risk_factors": result.get("risk_factors", []),
-            "protective_factors": result.get("protective_factors", []),
-            "longevity_factors": result.get("longevity_factors", []),
-            "personalized_recommendations": result.get("personalized_recommendations", []),
-            "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
-            "analysis_summary": result.get("analysis_summary", "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi. Mevcut risk faktörleri ve koruyucu faktörler dikkate alınarak longevity skoru hesaplanmıştır. Detaylı analiz ve öneriler aşağıda sunulmuştur."),
-            "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
-        }
-        
-        # AI mesajını kaydet
-        create_ai_message(
-            db=db,
-            external_user_id=x_user_id,
-            message_type="metabolic_age_test",
-            request_payload=req.model_dump(),
-            response_payload=response_data,
-            model_used="metabolic_age_ai"
-        )
-        
-        return response_data
-        
-    except Exception as e:
-        print(f"Metabolik yaş testi hatası: {e}")
-        raise HTTPException(status_code=500, detail=f"Metabolik yaş analizi sırasında hata: {str(e)}")
+- Koruyucu faktörlerin faydal
