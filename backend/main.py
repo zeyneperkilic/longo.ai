@@ -464,7 +464,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     
     for user_id in expired_users:
         del free_user_conversations[user_id]
-        # print(f"🔍 DEBUG: Eski session temizlendi: {user_id}")
+        print(f"🔍 DEBUG: Eski session temizlendi: {user_id}")
     
     # Son aktivite zamanını güncelle
     free_user_conversations[x_user_id]["last_activity"] = current_time
@@ -613,7 +613,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
             for msg in conversation_history[-5:]:  # Son 5 mesajı al
                 context_message += f"{msg['role'].upper()}: {msg['content']}\n"
             user_message = context_message + "\n" + user_message
-            # print(f"🔍 DEBUG: Free kullanıcı için {len(conversation_history)} mesaj geçmişi eklendi")
+            print(f"🔍 DEBUG: Free kullanıcı için {len(conversation_history)} mesaj geçmişi eklendi")
         
         # XML ürünlerini user message'a ekle
         if xml_products:
@@ -622,7 +622,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
                 category = product.get('category', 'Kategori Yok')
                 user_message += f"{i}. {product['name']} ({category})\n"
             user_message += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
-            # print(f"🔍 DEBUG: Free kullanıcı için {len(xml_products)} XML ürünü eklendi")
+            print(f"🔍 DEBUG: Free kullanıcı için {len(xml_products)} XML ürünü eklendi")
         
         ai_response = await get_ai_response(
             system_prompt=system_prompt,
@@ -641,7 +641,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         return ChatResponse(conversation_id=1, reply=reply, latency_ms=0)
         
     except Exception as e:
-        # print(f"Free user chat error: {e}")
+        print(f"Free user chat error: {e}")
         reply = "Üzgünüm, şu anda yanıt veremiyorum. Lütfen daha sonra tekrar deneyin."
         # User mesajını memory'ye ekle
         free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
@@ -1706,12 +1706,10 @@ JSON formatında yanıt ver:
                         
                         data["test_recommendations"] = test_rec_response
                 except Exception as parse_error:
-                    # print(f"🔍 DEBUG: Lab summary test recommendations parse hatası: {parse_error}")
-                    pass
+                    print(f"🔍 DEBUG: Lab summary test recommendations parse hatası: {parse_error}")
                     
         except Exception as e:
-            # print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
-            pass
+            print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
     
     # Log to ai_messages
     try:
@@ -2022,7 +2020,7 @@ Lütfen bu kullanıcı için DETAYLI beslenme önerileri hazırla. Sadece beslen
         }
         
     except Exception as e:
-        # print(f"🔍 DEBUG: Diet recommendations hatası: {e}")
+        print(f"🔍 DEBUG: Diet recommendations hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Beslenme önerileri hazırlanırken hata: {str(e)}")
 
 @app.post("/ai/premium-plus/exercise-recommendations")
@@ -2231,7 +2229,7 @@ Lütfen bu kullanıcı için DETAYLI egzersiz önerileri hazırla. Sadece egzers
         }
         
     except Exception as e:
-        # print(f"🔍 DEBUG: Exercise recommendations hatası: {e}")
+        print(f"🔍 DEBUG: Exercise recommendations hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Egzersiz önerileri hazırlanırken hata: {str(e)}")
 
 @app.post("/ai/premium-plus/lifestyle-recommendations")
@@ -2460,7 +2458,7 @@ Sadece bu 3 field'ı doldur, başka hiçbir şey ekleme!"""
             }
         
     except Exception as e:
-        # print(f"❌ Premium Plus lifestyle recommendations error: {e}")
+        print(f"❌ Premium Plus lifestyle recommendations error: {e}")
         raise HTTPException(status_code=500, detail="Öneriler oluşturulurken hata oluştu")
 
 # Input validation helper
@@ -2669,7 +2667,7 @@ JSON formatında yanıt ver:
                     raise ValueError("AI response parse edilemedi")
                 
         except Exception as e:
-            # print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
+            print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
             return None
         
         # Response oluştur
@@ -2683,7 +2681,7 @@ JSON formatında yanıt ver:
         return response_data
         
     except Exception as e:
-        # print(f"🔍 DEBUG: Test recommendations internal hatası: {e}")
+        print(f"🔍 DEBUG: Test recommendations internal hatası: {e}")
         return None
 
 @app.post("/ai/test-recommendations", response_model=TestRecommendationResponse)
@@ -2720,11 +2718,11 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         if source == "quiz":
             # Sadece quiz verisi al
             quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", QUIZ_LAB_ANALYSES_LIMIT)
-            # print(f"🔍 DEBUG: Quiz messages found: {len(quiz_messages) if quiz_messages else 0}")
+            print(f"🔍 DEBUG: Quiz messages found: {len(quiz_messages) if quiz_messages else 0}")
             if quiz_messages:
                 user_context["quiz_data"] = [msg.request_payload for msg in quiz_messages]
                 analysis_summary = "Quiz verilerine göre analiz tamamlandı."
-                # print(f"🔍 DEBUG: Quiz data: {user_context['quiz_data']}")
+                print(f"🔍 DEBUG: Quiz data: {user_context['quiz_data']}")
         
         elif source == "lab":
             # Sadece lab verisi al
@@ -2781,8 +2779,8 @@ async def get_test_recommendations(body: TestRecommendationRequest,
         
         # Source'a göre AI context hazırla
         if source == "quiz":
-            # print(f"🔍 DEBUG: Quiz user_info: {user_info}")
-            # print(f"🔍 DEBUG: Quiz taken_tests_info: {taken_tests_info}")
+            print(f"🔍 DEBUG: Quiz user_info: {user_info}")
+            print(f"🔍 DEBUG: Quiz taken_tests_info: {taken_tests_info}")
             
             ai_context = f"""
 KULLANICI QUIZ CEVAPLARI:
@@ -2835,7 +2833,7 @@ JSON formatında yanıt ver:
                 user_message=ai_context
             )
             
-            # print(f"🔍 DEBUG: AI Response for {source}: {ai_response}")
+            print(f"🔍 DEBUG: AI Response for {source}: {ai_response}")
             
             # AI response'unu parse et
             import json
@@ -2844,12 +2842,12 @@ JSON formatında yanıt ver:
                 parsed_response = json.loads(ai_response)
                 if "recommended_tests" in parsed_response:
                     recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
-                    # print(f"🔍 DEBUG: AI önerileri başarılı: {len(recommended_tests)} adet")
+                    print(f"🔍 DEBUG: AI önerileri başarılı: {len(recommended_tests)} adet")
                 else:
                     raise ValueError("AI response format hatası")
             except (json.JSONDecodeError, ValueError, KeyError) as parse_error:
-                # print(f"🔍 DEBUG: JSON parse hatası: {parse_error}")
-                # print(f"🔍 DEBUG: Raw response: {ai_response}")
+                print(f"🔍 DEBUG: JSON parse hatası: {parse_error}")
+                print(f"🔍 DEBUG: Raw response: {ai_response}")
                 
                 # AI response'u temizle ve tekrar dene
                 cleaned_response = ai_response.strip()
@@ -2886,7 +2884,7 @@ JSON formatında yanıt ver:
                     parsed_response = json.loads(cleaned_response)
                     if "recommended_tests" in parsed_response:
                         recommended_tests = parsed_response["recommended_tests"][:body.max_recommendations]
-                        # print(f"🔍 DEBUG: Temizlenmiş AI önerileri başarılı: {len(recommended_tests)} adet")
+                        print(f"🔍 DEBUG: Temizlenmiş AI önerileri başarılı: {len(recommended_tests)} adet")
                     else:
                         raise ValueError("Temizlenmiş AI response format hatası")
                 except:
@@ -2894,7 +2892,7 @@ JSON formatında yanıt ver:
                     raise ValueError("AI response parse edilemedi")
                 
         except Exception as e:
-            # print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
+            print(f"🔍 DEBUG: AI test önerisi hatası: {e}")
             # Fallback kaldırıldı - AI çalışmazsa hata ver
             raise HTTPException(status_code=500, detail=f"AI test önerisi oluşturulamadı: {str(e)}")
         
