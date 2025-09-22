@@ -177,6 +177,33 @@ def get_user_plan_from_headers(x_user_level: int | None) -> str:
         # x_user_level gelmezse (üye değilse) free olarak kabul et
         return "free"
 
+def detect_language_simple(message: str) -> str:
+    """Basit dil algılama - İngilizce/Türkçe kelime sayısına bak"""
+    import re
+    
+    # Türkçe karakterler ve yaygın kelimeler
+    turkish_patterns = [
+        r'[çğıöşüÇĞIİÖŞÜ]',  # Türkçe karakterler
+        r'\b(ve|veya|için|ile|bir|bu|şu|o|ben|sen|biz|siz|onlar)\b',  # Yaygın Türkçe kelimeler
+        r'\b(merhaba|nasıl|neden|ne|hangi|kim|nerede|ne zaman)\b',  # Soru kelimeleri
+        r'\b(sağlık|beslenme|vitamin|mineral|takviye|supplement)\b'  # Sağlık terimleri
+    ]
+    
+    # İngilizce yaygın kelimeler
+    english_patterns = [
+        r'\b(hello|hi|how|what|why|when|where|who|which|can|could|would|should)\b',
+        r'\b(health|nutrition|vitamin|mineral|supplement|diet|exercise)\b',
+        r'\b(and|or|for|with|the|a|an|this|that|i|you|we|they)\b'
+    ]
+    
+    turkish_count = sum(len(re.findall(pattern, message, re.IGNORECASE)) for pattern in turkish_patterns)
+    english_count = sum(len(re.findall(pattern, message, re.IGNORECASE)) for pattern in english_patterns)
+    
+    if english_count > turkish_count and english_count > 0:
+        return "en"
+    else:
+        return "tr"
+
 def build_chat_system_prompt() -> str:
     """Chat için system prompt oluştur"""
     return """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!
@@ -797,8 +824,13 @@ async def chat_message(req: ChatMessageRequest,
     else:
         user_message = message_text
     
-    # Build enhanced system prompt with user context
+    # Dil algılama ve system prompt hazırlama
+    detected_language = detect_language_simple(message_text)
     system_prompt = build_chat_system_prompt()
+    
+    # Eğer İngilizce algılandıysa, system prompt'a dil talimatı ekle
+    if detected_language == "en":
+        system_prompt += "\n\n🌍 LANGUAGE: The user is writing in English. Please respond in English only!"
     
     # 1.5. READ-THROUGH: Lab verisi global context'te yoksa DB'den çek
     # LAB VERİLERİ PROMPT'TAN TAMAMEN ÇIKARILDI - TOKEN TASARRUFU İÇİN
