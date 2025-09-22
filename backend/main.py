@@ -491,7 +491,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
                 model_used="health_guard"
             )
         except Exception as e:
-            print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
+            # print(f"🔍 DEBUG: Chat ai_messages kaydı hatası: {e}")
         
         return ChatResponse(conversation_id=1, reply=msg, latency_ms=0)
     
@@ -641,7 +641,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         return ChatResponse(conversation_id=1, reply=reply, latency_ms=0)
         
     except Exception as e:
-        print(f"Free user chat error: {e}")
+        # print(f"Free user chat error: {e}")
         reply = "Üzgünüm, şu anda yanıt veremiyorum. Lütfen daha sonra tekrar deneyin."
         # User mesajını memory'ye ekle
         free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
@@ -1381,7 +1381,7 @@ def analyze_single_lab(body: SingleLabRequest,
                         }
                         historical_results.append(item)
     except Exception as e:
-        print(f"🔍 DEBUG: ai_messages'tan geçmiş lab sonuçlarını çekerken hata: {e}")
+        # print(f"🔍 DEBUG: ai_messages'tan geçmiş lab sonuçlarını çekerken hata: {e}")
 
     # Body'den gelen geçmiş sonuçları da ekle (varsa)
     if body.historical_results:
@@ -1478,7 +1478,7 @@ def analyze_single_session(body: SingleSessionRequest,
             model_used="openrouter"
         )
     except Exception as e:
-        print(f"🔍 DEBUG: Lab Session ai_messages kaydı hatası: {e}")
+        # print(f"🔍 DEBUG: Lab Session ai_messages kaydı hatası: {e}")
     
     return data
 
@@ -1566,7 +1566,7 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
                         test_with_date['test_date'] = msg_date or 'Geçmiş'
                         all_tests_dict.append(test_with_date)
     except Exception as e:
-        print(f"🔍 DEBUG: ai_messages'tan geçmiş lab testlerini çekerken hata: {e}")
+        # print(f"🔍 DEBUG: ai_messages'tan geçmiş lab testlerini çekerken hata: {e}")
 
     # Yeni testleri ekle
     for test in new_tests_dict:
@@ -1706,10 +1706,10 @@ JSON formatında yanıt ver:
                         
                         data["test_recommendations"] = test_rec_response
                 except Exception as parse_error:
-                    print(f"🔍 DEBUG: Lab summary test recommendations parse hatası: {parse_error}")
+                    # print(f"🔍 DEBUG: Lab summary test recommendations parse hatası: {parse_error}")
                     
         except Exception as e:
-            print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
+            # print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
     
     # Log to ai_messages
     try:
