@@ -1952,7 +1952,7 @@ KULLANICI BİLGİLERİ:
     if user_context:
         user_message += f"\nQUIZ VERİLERİ:\n"
         for key, value in user_context.items():
-            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
+            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
                 user_message += f"- {key.upper()}: {value}\n"
     
     # Quiz geçmişini ekle
@@ -1970,15 +1970,14 @@ KULLANICI BİLGİLERİ:
     
     # Global context'ten tüm verileri ekle
     if user_context:
-        # Quiz verilerini ekle
-        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        # Quiz verilerini ekle - TÜM quiz verilerini ekle
         quiz_data_found = False
-        for key in quiz_keys:
-            if key in user_context and user_context[key]:
+        for key, value in user_context.items():
+            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
                 if not quiz_data_found:
                     user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
                     quiz_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
+                user_message += f"- {key.upper()}: {value}\n"
         
         # Lab verilerini ekle
         lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
@@ -2161,7 +2160,7 @@ KULLANICI BİLGİLERİ:
     if user_context:
         user_message += f"\nQUIZ VERİLERİ:\n"
         for key, value in user_context.items():
-            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
+            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
                 user_message += f"- {key.upper()}: {value}\n"
     
     # Quiz geçmişini ekle
@@ -2179,15 +2178,14 @@ KULLANICI BİLGİLERİ:
     
     # Global context'ten tüm verileri ekle
     if user_context:
-        # Quiz verilerini ekle
-        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        # Quiz verilerini ekle - TÜM quiz verilerini ekle
         quiz_data_found = False
-        for key in quiz_keys:
-            if key in user_context and user_context[key]:
+        for key, value in user_context.items():
+            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
                 if not quiz_data_found:
                     user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
                     quiz_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
+                user_message += f"- {key.upper()}: {value}\n"
         
         # Lab verilerini ekle
         lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
@@ -2374,7 +2372,7 @@ KULLANICI BİLGİLERİ:
     if user_context:
         user_message += f"\nQUIZ VERİLERİ:\n"
         for key, value in user_context.items():
-            if value and key in ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_sonuc', 'quiz_summary', 'quiz_gecmisi']:
+            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
                 user_message += f"- {key.upper()}: {value}\n"
     
     # Quiz geçmişini ekle
@@ -2392,15 +2390,14 @@ KULLANICI BİLGİLERİ:
     
     # Global context'ten tüm verileri ekle
     if user_context:
-        # Quiz verilerini ekle
-        quiz_keys = ['yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_supplements', 'quiz_priority', 'quiz_tarih']
+        # Quiz verilerini ekle - TÜM quiz verilerini ekle
         quiz_data_found = False
-        for key in quiz_keys:
-            if key in user_context and user_context[key]:
+        for key, value in user_context.items():
+            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
                 if not quiz_data_found:
                     user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
                     quiz_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
+                user_message += f"- {key.upper()}: {value}\n"
         
         # Lab verilerini ekle
         lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
