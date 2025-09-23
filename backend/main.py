@@ -929,7 +929,7 @@ async def chat_message(req: ChatMessageRequest,
     if user_analyses:
         system_prompt += "\n\nKULLANICI GEÇMİŞİ:\n"
         for analysis in user_analyses:
-            if analysis.message_type in ["quiz", "lab_single", "lab_session", "lab_summary"]:
+            if analysis.message_type and analysis.message_type.startswith(('quiz', 'lab_', 'test_')):
                 system_prompt += f"- {analysis.message_type.upper()}: {analysis.created_at.strftime('%Y-%m-%d')}\n"
                 # Analiz içeriğini de ekle
                 if analysis.response_payload:
@@ -1309,11 +1309,11 @@ def analyze_single_lab(body: SingleLabRequest,
     if not test_dict:
         raise HTTPException(400, "Test verisi boş olamaz.")
     
-    # Gerekli field'ları kontrol et
-    required_fields = ['name', 'value']
-    for field in required_fields:
-        if field not in test_dict or not test_dict[field]:
-            raise HTTPException(400, f"Test verisinde '{field}' field'ı gerekli ve boş olamaz.")
+    # Gerekli field'ları kontrol et - daha esnek
+    if not test_dict.get('name') and not test_dict.get('test_name'):
+        raise HTTPException(400, "Test verisinde 'name' veya 'test_name' field'ı gerekli.")
+    if not test_dict.get('value') and not test_dict.get('result'):
+        raise HTTPException(400, "Test verisinde 'value' veya 'result' field'ı gerekli.")
     
     # YENİ: Geçmiş sonuçları ai_messages tablosundan topla (yalnızca ham test değerleri)
     from backend.db import get_ai_messages
@@ -1979,15 +1979,14 @@ KULLANICI BİLGİLERİ:
                     quiz_data_found = True
                 user_message += f"- {key.upper()}: {value}\n"
         
-        # Lab verilerini ekle
-        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        # Lab verilerini ekle - TÜM lab verilerini ekle
         lab_data_found = False
-        for key in lab_keys:
-            if key in user_context and user_context[key]:
+        for key, value in user_context.items():
+            if value and key.startswith(('lab_', 'son_lab_', 'test_', 'vitamin_', 'mineral_')):
                 if not lab_data_found:
                     user_message += f"\nGLOBAL LAB VERİLERİ:\n"
                     lab_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
+                user_message += f"- {key.upper()}: {value}\n"
     
     user_message += f"""
 
@@ -2187,15 +2186,14 @@ KULLANICI BİLGİLERİ:
                     quiz_data_found = True
                 user_message += f"- {key.upper()}: {value}\n"
         
-        # Lab verilerini ekle
-        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        # Lab verilerini ekle - TÜM lab verilerini ekle
         lab_data_found = False
-        for key in lab_keys:
-            if key in user_context and user_context[key]:
+        for key, value in user_context.items():
+            if value and key.startswith(('lab_', 'son_lab_', 'test_', 'vitamin_', 'mineral_')):
                 if not lab_data_found:
                     user_message += f"\nGLOBAL LAB VERİLERİ:\n"
                     lab_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
+                user_message += f"- {key.upper()}: {value}\n"
     
     user_message += f"""
 
@@ -2399,15 +2397,14 @@ KULLANICI BİLGİLERİ:
                     quiz_data_found = True
                 user_message += f"- {key.upper()}: {value}\n"
         
-        # Lab verilerini ekle
-        lab_keys = ['lab_gecmisi', 'lab_genel_durum', 'lab_summary', 'lab_tarih', 'son_lab_test', 'son_lab_deger', 'son_lab_durum']
+        # Lab verilerini ekle - TÜM lab verilerini ekle
         lab_data_found = False
-        for key in lab_keys:
-            if key in user_context and user_context[key]:
+        for key, value in user_context.items():
+            if value and key.startswith(('lab_', 'son_lab_', 'test_', 'vitamin_', 'mineral_')):
                 if not lab_data_found:
                     user_message += f"\nGLOBAL LAB VERİLERİ:\n"
                     lab_data_found = True
-                user_message += f"- {key.upper()}: {user_context[key]}\n"
+                user_message += f"- {key.upper()}: {value}\n"
     
     user_message += f"""
 
@@ -2486,8 +2483,8 @@ async def get_test_recommendations_internal(
     max_recommendations: int = 3
 ):
     """Internal test recommendations function"""
-    # Source validation
-    if source not in ["quiz", "lab"]:
+    # Source validation - daha esnek
+    if not source or not source.startswith(('quiz', 'lab', 'test')):
         return None
     
     # Free kullanıcı engeli - Test önerileri premium özellik
@@ -2690,9 +2687,9 @@ async def get_test_recommendations(body: TestRecommendationRequest,
                                  source: str = Query(description="Data source: quiz or lab")):
     """Premium/Premium Plus kullanıcılar için kişiselleştirilmiş test önerileri"""
     
-    # Source validation
-    if source not in ["quiz", "lab"]:
-        raise HTTPException(status_code=400, detail="Source must be 'quiz' or 'lab'")
+    # Source validation - daha esnek
+    if not source or not source.startswith(('quiz', 'lab', 'test')):
+        raise HTTPException(status_code=400, detail="Source must start with 'quiz', 'lab', or 'test'")
     
     # Plan kontrolü
     user_plan = get_user_plan_from_headers(x_user_level)
