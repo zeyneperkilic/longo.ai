@@ -992,8 +992,9 @@ async def chat_message(req: ChatMessageRequest,
     if lab_info:
         history.append({"role": "user", "content": lab_info})
     
-    # Supplement listesi sadece supplement önerisi istenirse ekle
-    if any(keyword in message_text.lower() for keyword in ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin"]):
+    # Supplement listesi sadece supplement önerisi istenirse ekle - daha esnek
+    supplement_keywords = ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin", "ürün", "besin", "mineral"]
+    if any(keyword in message_text.lower() for keyword in supplement_keywords):
         history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
