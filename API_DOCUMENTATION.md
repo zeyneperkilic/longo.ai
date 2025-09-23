@@ -174,11 +174,29 @@ Kişiselleştirilmiş supplement önerileri ve beslenme tavsiyeleri alır.
 
 ---
 
+## 📊 Lab Endpoint'leri Karşılaştırması
+
+| Endpoint | Amaç | Test Sayısı | Supplement Önerisi | Test Önerisi | Kullanım Senaryosu |
+|----------|------|-------------|-------------------|--------------|-------------------|
+| `/ai/lab/single` | Tek test analizi | 1 | ❌ | ❌ | Tek test sonucunun detaylı analizi |
+| `/ai/lab/session` | Seans analizi | 1+ (aynı gün) | ❌ | ❌ | Aynı gün yapılan testlerin birlikte analizi |
+| `/ai/lab/summary` | Genel analiz | 1+ (tüm testler) | ✅ | ✅ | Tüm testlerin genel değerlendirmesi |
+
+---
+
 ## 🧬 Lab Summary Endpoint
 
 ### **POST** `/ai/lab/summary`
 
-Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
+**TÜM LAB TESTLERİNİN GENEL ANALİZİ** - Birden fazla test sonucunun bir arada değerlendirilmesi ve supplement önerileri.
+
+**Kullanım:** Tüm testlerin genel sağlık durumu analizi için kullanılır.
+
+**Ne zaman kullanılır:**
+- Kullanıcının tüm lab testlerinin genel değerlendirmesi
+- Supplement önerileri isteniyorsa
+- Test önerileri isteniyorsa
+- Genel sağlık durumu raporu isteniyorsa
 
 #### Request Body
 ```json
@@ -291,7 +309,15 @@ Laboratuvar test sonuçlarının genel analizi ve supplement önerileri.
 
 ### **POST** `/ai/lab/session`
 
-Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
+**TEK BİR LAB SEANSININ ANALİZİ** - Aynı gün yapılan birden fazla testin birlikte değerlendirilmesi (supplement önerisi YOK).
+
+**Kullanım:** Aynı gün yapılan testlerin seans analizi için kullanılır.
+
+**Ne zaman kullanılır:**
+- Aynı gün yapılan birden fazla testin birlikte değerlendirilmesi
+- Seans bazında test sonuçlarının analizi
+- Supplement önerisi istenmiyorsa
+- Sadece test analizi isteniyorsa
 
 #### Request Body
 ```json
@@ -359,7 +385,15 @@ Tek bir laboratuvar seansının analizi (supplement önerisi YOK).
 
 ### **POST** `/ai/lab/single`
 
-Tek bir test sonucunun detaylı analizi (supplement önerisi YOK).
+**TEK BİR TEST SONUCUNUN DETAYLI ANALİZİ** - Sadece bir test sonucunun derinlemesine değerlendirilmesi (supplement önerisi YOK).
+
+**Kullanım:** Tek bir test sonucunun detaylı analizi için kullanılır.
+
+**Ne zaman kullanılır:**
+- Sadece bir test sonucunun detaylı analizi
+- Test sonucunun derinlemesine değerlendirilmesi
+- Supplement önerisi istenmiyorsa
+- Tek test odaklı analiz isteniyorsa
 
 #### Request Body
 ```json
