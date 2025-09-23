@@ -41,12 +41,13 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                 system_prompt += f"İsim: {context['isim']}\n"
             if "tercihler" in context:
                 system_prompt += f"Tercihler: {', '.join(context['tercihler'])}\n"
-            if "hastaliklar" in context:
-                system_prompt += f"Hastalıklar: {', '.join(context['hastaliklar'])}\n"
-            if "yas" in context and context["yas"]:
-                system_prompt += f"Yaş: {context['yas']}\n"
-            if "cinsiyet" in context and context["cinsiyet"]:
-                system_prompt += f"Cinsiyet: {context['cinsiyet']}\n"
+            # Tüm context verilerini ekle - esnek
+            for key, value in context.items():
+                if value and key.startswith(('hastalik', 'yas', 'cinsiyet', 'isim', 'tercih', 'alerji')):
+                    if isinstance(value, list):
+                        system_prompt += f"{key.title()}: {', '.join(value)}\n"
+                    else:
+                        system_prompt += f"{key.title()}: {value}\n"
             system_prompt += "\n\n🎯 KRİTİK KİŞİSEL ASİSTAN TALİMATI: Bu kullanıcı bilgilerini MUTLAKA dikkate al ve her yanıtında kullan! Eğer kullanıcının hastalıkları, alerjileri veya tercihleri varsa, bunları göz ardı etme. Her supplement önerisinde bu bilgileri dikkate al ve güvenli tavsiyeler ver. Context'i kullanmazsan yanıtın eksik olur. Sen bu kullanıcının kişisel sağlık asistanısın - önceki konuşmaları hatırla ve kişiselleştirilmiş yanıtlar ver!"
         
         # Update system message with detected language - system prompt'u her zaman ilk sıraya ekle
@@ -151,12 +152,13 @@ def cascade_chat_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
             system_prompt += f"İsim: {context['isim']}\n"
         if "tercihler" in context:
             system_prompt += f"Tercihler: {', '.join(context['tercihler'])}\n"
-        if "hastaliklar" in context:
-            system_prompt += f"Hastalıklar: {', '.join(context['hastaliklar'])}\n"
-        if "yas" in context and context["yas"]:
-            system_prompt += f"Yaş: {context['yas']}\n"
-        if "cinsiyet" in context and context["cinsiyet"]:
-            system_prompt += f"Cinsiyet: {context['cinsiyet']}\n"
+        # Tüm context verilerini ekle - esnek
+        for key, value in context.items():
+            if value and key.startswith(('hastalik', 'yas', 'cinsiyet', 'isim', 'tercih', 'alerji')):
+                if isinstance(value, list):
+                    system_prompt += f"{key.title()}: {', '.join(value)}\n"
+                else:
+                    system_prompt += f"{key.title()}: {value}\n"
         system_prompt += "\n\nKRİTİK TALİMAT: Bu kullanıcı bilgilerini MUTLAKA dikkate al ve her yanıtında kullan. Eğer kullanıcının hastalıkları, alerjileri veya tercihleri varsa, bunları göz ardı etme. Her supplement önerisinde bu bilgileri dikkate al ve güvenli tavsiyeler ver. Context'i kullanmazsan yanıtın eksik olur."
     
     # Update messages with correct language - system prompt'u her zaman ilk sıraya ekle

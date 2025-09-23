@@ -388,10 +388,9 @@ def get_mixed_context(user_context: dict, max_items: int = 2) -> dict:
     """Karma context (küçük)"""
     mixed = {}
     
-    # Her kategoriden max_items kadar al
-    for key in ["isim", "hastaliklar", "tercihler", "alerjiler"]:
-        if key in user_context:
-            value = user_context[key]
+    # Tüm context verilerini ekle - esnek
+    for key, value in user_context.items():
+        if value and key.startswith(('isim', 'hastalik', 'tercih', 'alerji', 'yas', 'cinsiyet')):
             if isinstance(value, list):
                 mixed[key] = value[:max_items]
             else:
@@ -438,16 +437,20 @@ def get_smart_context(user_context: dict, current_message: str) -> dict:
     
     message_lower = current_message.lower()
     
-    # Mesaj türüne göre context seç
-    if any(word in message_lower for word in ["hastalık", "rahatsızlık", "problem", "semptom"]):
+    # Mesaj türüne göre context seç - daha esnek
+    health_keywords = ["hastalık", "rahatsızlık", "problem", "semptom", "sağlık", "tedavi", "ilaç"]
+    preference_keywords = ["tercih", "sevdiğim", "kullandığım", "supplement", "vitamin", "takviye", "öner"]
+    personal_keywords = ["adım", "isim", "ben", "hatırlıyor musun", "kimim", "kimsin"]
+    
+    if any(word in message_lower for word in health_keywords):
         # Sağlık sorusu → Sağlık context'i
         return get_health_context(user_context)
     
-    elif any(word in message_lower for word in ["tercih", "sevdiğim", "kullandığım", "supplement", "vitamin"]):
+    elif any(word in message_lower for word in preference_keywords):
         # Tercih sorusu → Tercih context'i
         return get_preference_context(user_context)
     
-    elif any(word in message_lower for word in ["adım", "isim", "ben", "hatırlıyor musun"]):
+    elif any(word in message_lower for word in personal_keywords):
         # Kişisel sorusu → Temel context
         return get_basic_context(user_context)
     
