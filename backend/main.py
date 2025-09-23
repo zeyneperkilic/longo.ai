@@ -2102,27 +2102,27 @@ VERİ ANALİZİ:
 - Bu verileri birleştirerek güvenli ve etkili egzersiz planı
 
 YANIT FORMATI:
-1. MEVCUT DURUM ANALİZİ
-   - Kullanıcının quiz verilerinden çıkarılan fitness profili
-   - Lab sonuçlarından tespit edilen sağlık durumu
-   - Mevcut kondisyon seviyesi değerlendirmesi
-   - Egzersiz hedefleri ve kısıtlamalar
+MEVCUT DURUM ANALİZİ
+- Kullanıcının quiz verilerinden çıkarılan fitness profili
+- Lab sonuçlarından tespit edilen sağlık durumu
+- Mevcut kondisyon seviyesi değerlendirmesi
+- Egzersiz hedefleri ve kısıtlamalar
 
-2. DETAYLI EGZERSİZ PROGRAMI
-   - Her öneri için NEDEN açıkla
-   - Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
-   - Haftalık program önerisi (kaç gün, ne kadar süre)
-   - Kardiyovasküler, güç antrenmanı, esneklik dengesi
-   - Başlangıç seviyesi için güvenli ve sürdürülebilir
-   - Spesifik egzersiz hareketleri ve set/tekrar sayıları
+DETAYLI EGZERSİZ PROGRAMI
+- Her öneri için NEDEN açıkla
+- Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
+- Haftalık program önerisi (kaç gün, ne kadar süre)
+- Kardiyovasküler, güç antrenmanı, esneklik dengesi
+- Başlangıç seviyesi için güvenli ve sürdürülebilir
+- Spesifik egzersiz hareketleri ve set/tekrar sayıları
 
-3. GÜÇ ANTRENMANI
-   - Vücut ağırlığı ve ağırlık antrenmanları
-   - Kas gruplarına göre egzersiz dağılımı
-   - Progresyon stratejileri
-   - Form ve teknik önerileri
+GÜÇ ANTRENMANI
+- Vücut ağırlığı ve ağırlık antrenmanları
+- Kas gruplarına göre egzersiz dağılımı
+- Progresyon stratejileri
+- Form ve teknik önerileri
 
-4. KARDİYOVASKÜLER
+KARDİYOVASKÜLER
    - Koşu, yürüyüş, bisiklet önerileri
    - HIIT ve steady-state kardio dengesi
    - Kalp atış hızı hedefleri
