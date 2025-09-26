@@ -224,11 +224,13 @@
             
             // Event listener'lar
             dailyFrame.on('joined-meeting', () => {
+                console.log('Daily.co meeting joined');
                 loadingDiv.style.display = 'none';
                 iframe.style.display = 'block';
             });
             
             dailyFrame.on('left-meeting', () => {
+                console.log('Daily.co meeting left');
                 closeModal();
             });
             
@@ -236,10 +238,21 @@
                 console.error('Daily.co hatası:', error);
                 loadingDiv.innerHTML = `
                     <div class="longopass-daily-error">
-                        Görüşme başlatılamadı. Lütfen tekrar deneyin.
+                        Görüşme başlatılamadı: ${error.message || 'Bilinmeyen hata'}<br>
+                        <button onclick="window.location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #2F5D83; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Tekrar Dene
+                        </button>
                     </div>
                 `;
             });
+            
+            // Timeout ekle
+            setTimeout(() => {
+                if (loadingDiv.style.display !== 'none') {
+                    console.log('Daily.co timeout - modal kapanıyor');
+                    closeModal();
+                }
+            }, 10000); // 10 saniye timeout
             
             // Meeting'e katıl
             const joinOptions = { url: meetingUrl };
@@ -274,6 +287,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'username': 'longopass',
+                    'password': '123456',
                     'x-user-id': config.userId || '',
                     'x-user-level': config.userLevel || 3
                 },
