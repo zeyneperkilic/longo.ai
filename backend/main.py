@@ -3142,6 +3142,8 @@ async def join_video_call(
         
         # Daily.co API key (environment variable'dan alınacak)
         daily_api_key = os.getenv("DAILY_API_KEY")
+        print(f"🔍 DEBUG: Daily API Key var mı: {bool(daily_api_key)}")
+        print(f"🔍 DEBUG: Daily API Key uzunluğu: {len(daily_api_key) if daily_api_key else 0}")
         if not daily_api_key:
             raise HTTPException(status_code=500, detail="Daily.co API key bulunamadı")
         
@@ -3150,6 +3152,9 @@ async def join_video_call(
         
         # Daily.co meeting token oluştur
         import requests
+        print(f"🔍 DEBUG: Room name: {room_name}")
+        print(f"🔍 DEBUG: API key başlangıcı: {daily_api_key[:10] if daily_api_key else 'YOK'}...")
+        
         token_response = requests.post(
             "https://api.daily.co/v1/meeting-tokens",
             headers={
@@ -3166,10 +3171,14 @@ async def join_video_call(
             }
         )
         
+        print(f"🔍 DEBUG: Daily.co response status: {token_response.status_code}")
+        print(f"🔍 DEBUG: Daily.co response text: {token_response.text}")
+        
         if token_response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Daily.co token oluşturulamadı")
+            raise HTTPException(status_code=500, detail=f"Daily.co token oluşturulamadı: {token_response.status_code} - {token_response.text}")
         
         token_data = token_response.json()
+        print(f"🔍 DEBUG: Token data: {token_data}")
         
         return {
             "success": True,
