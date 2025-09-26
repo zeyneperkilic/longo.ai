@@ -3166,8 +3166,7 @@ async def join_video_call(
                     "room_name": room_name,
                     "is_owner": False,
                     "user_name": "Hasta"
-                },
-                "exp": int(time.time()) + 60 * 20  # 20 dakika geçerli
+                }
             }
         )
         
