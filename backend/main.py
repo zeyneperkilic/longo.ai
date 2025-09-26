@@ -3120,3 +3120,64 @@ Sadece JSON formatında yanıt ver.""",
     except Exception as e:
         print(f"Metabolik yaş testi hatası: {e}")
         raise HTTPException(status_code=500, detail=f"Metabolik yaş analizi sırasında hata: {str(e)}")
+
+# Video Call Endpoints
+@app.post("/ai/premium-plus/video-call/join")
+async def join_video_call(
+    payload: dict = Body(...),
+    current_user: str = Depends(get_current_user),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None)
+):
+    """Video call'a katılmak için Daily.co token oluştur"""
+    try:
+        # Premium Plus kontrolü
+        user_plan = get_user_plan_from_headers(x_user_level)
+        if user_plan != "premium_plus":
+            raise HTTPException(status_code=403, detail="Bu özellik sadece Premium Plus üyeler için")
+        
+        meeting_id = payload.get("meeting_id")
+        if not meeting_id:
+            raise HTTPException(status_code=400, detail="meeting_id gerekli")
+        
+        # Daily.co API key (environment variable'dan alınacak)
+        daily_api_key = os.getenv("DAILY_API_KEY")
+        if not daily_api_key:
+            raise HTTPException(status_code=500, detail="Daily.co API key bulunamadı")
+        
+        # Mock room name (gerçekte database'den alınacak)
+        room_name = f"longopass-meeting-{meeting_id}"
+        
+        # Daily.co meeting token oluştur
+        import requests
+        token_response = requests.post(
+            "https://api.daily.co/v1/meeting-tokens",
+            headers={
+                "Authorization": f"Bearer {daily_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "properties": {
+                    "room_name": room_name,
+                    "is_owner": False,
+                    "user_name": "Hasta"
+                },
+                "exp": int(time.time()) + 60 * 20  # 20 dakika geçerli
+            }
+        )
+        
+        if token_response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Daily.co token oluşturulamadı")
+        
+        token_data = token_response.json()
+        
+        return {
+            "success": True,
+            "meetingUrl": f"https://longopass.daily.co/{room_name}",
+            "token": token_data.get("token")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Video call hatası: {str(e)}")
