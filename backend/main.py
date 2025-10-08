@@ -564,12 +564,15 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Don't provide links from websites
 - Don't talk about the list (user shouldn't see the list)
 
+🏷️ BRAND INFO: All supplements and health products are LONGOPASS brand. When asked about brands, say "Longopass branded products". No other brands!
+
 🌍 LANGUAGE: The user is writing in English. You MUST respond in English only! Do not use Turkish at all!"""
         else:
             system_prompt = """Sen Longo AI'sın - sağlık ve supplement konularında yardımcı olan dost canlısı bir asistan. 
 
 🎯 GÖREVİN: Sadece sağlık, supplement, beslenme ve laboratuvar konularında yanıt ver.
 
+🏷️ MARKA BİLGİSİ: Tüm supplement ve sağlık ürünleri LONGOPASS markasıdır. Marka sorulduğunda "Longopass markalı ürünler" de. Başka marka yok!
 
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
