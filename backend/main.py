@@ -1598,9 +1598,19 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
         from backend.config import SUPPLEMENTS_LIST
         supplements_dict = SUPPLEMENTS_LIST
     
+    # Quiz verilerini al (ürün önerileri için)
+    quiz_data = None
+    try:
+        quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=1)
+        if quiz_messages and quiz_messages[0].request_payload:
+            quiz_data = quiz_messages[0].request_payload
+            print(f"🔍 DEBUG: Lab summary için quiz verisi bulundu: {quiz_data}")
+    except Exception as e:
+        print(f"🔍 DEBUG: Quiz verisi alınırken hata (sorun değil): {e}")
+    
     # Use parallel multiple lab analysis with supplements
     total_sessions = body.total_test_sessions or 1  # Default 1
-    res = parallel_multiple_lab_analyze(tests_dict, total_sessions, supplements_dict, body.user_profile)
+    res = parallel_multiple_lab_analyze(tests_dict, total_sessions, supplements_dict, body.user_profile, quiz_data)
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
     

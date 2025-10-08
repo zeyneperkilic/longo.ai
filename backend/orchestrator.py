@@ -773,7 +773,7 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         {"role": "user", "content": user_prompt}
     ]
 
-def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: int, available_supplements: List[Dict[str, Any]] = None, user_profile: Dict[str, Any] = None) -> List[Dict[str, str]]:
+def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: int, available_supplements: List[Dict[str, Any]] = None, user_profile: Dict[str, Any] = None, quiz_data: Dict[str, Any] = None) -> List[Dict[str, str]]:
     """Build prompt for multiple lab tests general summary - ÜRÜN KATALOĞU ENTEGRASYONU"""
     
     # Test seanslarını grupla
@@ -798,6 +798,16 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
             if test.get('reference_range'):
                 tests_info += f" (Referans: {test['reference_range']})"
             tests_info += "\n"
+    
+    # Quiz verisi bilgisi - KİŞİSELLEŞTİRİLMİŞ ÜRÜN ÖNERİLERİ İÇİN
+    quiz_info = ""
+    if quiz_data:
+        quiz_info = "\n\n📋 KULLANICI PROFİLİ (QUIZ VERİLERİ):\n"
+        # Quiz verilerini formatla
+        for key, value in quiz_data.items():
+            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'beslenme', 'hastalik', 'ilac')):
+                quiz_info += f"- {key.upper()}: {value}\n"
+        quiz_info += "\n💡 Bu bilgileri kullanarak KİŞİSELLEŞTİRİLMİŞ ürün önerileri yap!"
     
     # Ürün kataloğu bilgisi - TÜM ÜRÜNLERİ LİSTELE
     supplements_info = ""
@@ -886,10 +896,12 @@ def build_multiple_lab_prompt(tests_data: List[Dict[str, Any]], session_count: i
         "MUTLAKA urun_onerileri field'ını doldur! "
         "4-6 supplement öner! "
         "Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme! "
+        "QUIZ VERİLERİNİ DIKKATE AL: Kullanıcının yaşı, cinsiyeti, hedefi, aktivite seviyesi, beslenme tercihi gibi bilgileri ürün önerilerinde kullan! "
+        "Örneğin: Vejetaryen ise B12/Demir, Kas kütlesi hedefi varsa Protein, Yüksek aktivite ise Magnezyum öner! "
         "DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
     )
     
-    user_prompt = f"Laboratuvar test sonuçları:\n{tests_info}{supplements_info}{user_profile_info}\n\n{schema}"
+    user_prompt = f"Laboratuvar test sonuçları:\n{tests_info}{quiz_info}{supplements_info}{user_profile_info}\n\n{schema}"
     
     return [
         {"role": "system", "content": system_prompt},
@@ -1054,10 +1066,10 @@ def parallel_single_session_analyze(session_tests: List[Dict[str, Any]], session
         print(f"Single session analyze failed: {e}")
         return single_session_fallback(session_tests, session_date, laboratory)
 
-def parallel_multiple_lab_analyze(tests_data: List[Dict[str, Any]], session_count: int, available_supplements: List[Dict[str, Any]] = None, user_profile: Dict[str, Any] = None) -> Dict[str, Any]:
+def parallel_multiple_lab_analyze(tests_data: List[Dict[str, Any]], session_count: int, available_supplements: List[Dict[str, Any]] = None, user_profile: Dict[str, Any] = None, quiz_data: Dict[str, Any] = None) -> Dict[str, Any]:
     """Analyze multiple lab tests for general summary - ÜRÜN KATALOĞU ENTEGRASYONU"""
     try:
-        messages = build_multiple_lab_prompt(tests_data, session_count, available_supplements, user_profile)
+        messages = build_multiple_lab_prompt(tests_data, session_count, available_supplements, user_profile, quiz_data)
         
         # Parallel analysis
         responses = []
@@ -1084,7 +1096,7 @@ def parallel_multiple_lab_analyze(tests_data: List[Dict[str, Any]], session_coun
         
         if not responses:
             print("No successful responses, using GPT-4o fallback")
-            return gpt4o_multiple_lab_fallback(tests_data, session_count, available_supplements, user_profile)
+            return gpt4o_multiple_lab_fallback(tests_data, session_count, available_supplements, user_profile, quiz_data)
         
         # Tek model kullanıldığı için synthesis'e gerek yok - direkt response'u döndür
         cleaned_response = _sanitize_links(responses[0]["response"])
@@ -1096,7 +1108,7 @@ def parallel_multiple_lab_analyze(tests_data: List[Dict[str, Any]], session_coun
         
     except Exception as e:
         print(f"Multiple lab analyze failed: {e}")
-        return gpt4o_multiple_lab_fallback(tests_data, session_count, available_supplements, user_profile)
+        return gpt4o_multiple_lab_fallback(tests_data, session_count, available_supplements, user_profile, quiz_data)
 
 # Session synthesis prompt fonksiyonu kaldırıldı - tek model kullanıldığı için gerekli değil
 
@@ -1150,13 +1162,13 @@ def gpt4o_session_fallback(session_tests: List[Dict[str, Any]], session_date: st
             "models_used": ["fallback_error"]
         }
 
-def gpt4o_multiple_lab_fallback(tests_data: List[Dict[str, Any]], session_count: int, available_supplements: List[Dict[str, Any]] = None, user_profile: Dict[str, Any] = None) -> Dict[str, Any]:
+def gpt4o_multiple_lab_fallback(tests_data: List[Dict[str, Any]], session_count: int, available_supplements: List[Dict[str, Any]] = None, user_profile: Dict[str, Any] = None, quiz_data: Dict[str, Any] = None) -> Dict[str, Any]:
     """Fallback to GPT-4o for multiple lab analysis when GPT-5 fails"""
     try:
         print("GPT-5 failed, trying GPT-4o fallback for multiple lab analysis...")
         
         # Build prompt for GPT-4o
-        messages = build_multiple_lab_prompt(tests_data, session_count, available_supplements, user_profile)
+        messages = build_multiple_lab_prompt(tests_data, session_count, available_supplements, user_profile, quiz_data)
         
         # Try GPT-4o
         result = call_chat_model("openai/gpt-4o:online", messages, 0.3, 2500)
