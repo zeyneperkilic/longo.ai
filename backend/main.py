@@ -664,13 +664,6 @@ def chat_start(body: ChatStartRequest = Body(default={}),
     user_plan = get_user_plan_from_headers(x_user_level)
     is_premium = user_plan in ["premium", "premium_plus"]
     
-    # Guest kullanıcı kontrolü - Sisteme kayıt olmalı
-    if not x_user_level:  # Guest (null/undefined)
-        return ChatStartResponse(
-            conversation_id=0,
-            detail="🔐 Longo AI'ı kullanabilmek için sisteme kayıt olmalısınız. Üye olarak sağlık sorularınıza yanıt alabilir, kişiselleştirilmiş öneriler alabilirsiniz!"
-        )
-    
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
     if not validate_chat_user_id(x_user_id or "", user_plan):
         raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
@@ -755,13 +748,23 @@ async def chat_message(req: ChatMessageRequest,
     
     is_premium = user_plan in ["premium", "premium_plus"]
     
-    # Guest kullanıcı kontrolü - Widget'tan konuşamaz
-    if not x_user_level:  # Guest (null/undefined) - Sisteme kayıt olmalı
-        return ChatResponse(
-            conversation_id=0,
-            reply="REGISTER_POPUP:🔐 Longo AI'ı kullanabilmek için sisteme kayıt olmalısınız. Üye olarak sağlık sorularınıza yanıt alabilir, kişiselleştirilmiş öneriler alabilirsiniz! 💡 Hemen üye olun!",
-            latency_ms=0
-        )
+    # Guest ve Free kullanıcılar için limiting
+    client_ip = request.client.host if request else "unknown"
+    
+    if not x_user_level:  # Guest (null/undefined)
+        can_chat, remaining = check_ip_daily_limit(client_ip)
+        if not can_chat:
+            raise HTTPException(
+                status_code=429, 
+                detail=f"Günlük soru limitiniz aşıldı. 24 saat sonra tekrar deneyin. (Kalan: {remaining})"
+            )
+    elif x_user_level == 1:  # Free (hesap var)
+        can_chat, remaining = check_user_daily_limit(x_user_id, client_ip)
+        if not can_chat:
+            raise HTTPException(
+                status_code=429, 
+                detail=f"Günlük soru limitiniz aşıldı. 24 saat sonra tekrar deneyin. (Kalan: {remaining})"
+            )
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
     if not validate_chat_user_id(x_user_id or "", user_plan):
@@ -857,7 +860,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Dil algılama ve system prompt hazırlama
@@ -995,7 +998,7 @@ async def chat_message(req: ChatMessageRequest,
     # Supplement listesi sadece supplement önerisi istenirse ekle - daha esnek
     supplement_keywords = ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin", "ürün", "besin", "mineral"]
     if any(keyword in message_text.lower() for keyword in supplement_keywords):
-        history.append({"role": "user", "content": supplements_info})
+    history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)

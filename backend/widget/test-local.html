@@ -23,6 +23,52 @@
             color: #333;
             text-align: center;
         }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .jitsi-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .jitsi-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .jitsi-container {
+            width: 100%;
+            height: 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: height 0.3s ease;
+            margin: 15px 0;
+        }
+        .jitsi-container.active {
+            height: 400px;
+        }
+        .jitsi-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .room-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -30,9 +76,54 @@
         <h1>🧪 Widget Local Test</h1>
         <p>Bu sayfada widget'ın çalışıp çalışmadığını test edebilirsiniz.</p>
         <p>Sağ alt köşede mavi chat butonu görünmelidir.</p>
+        
+        <h2>📹 Jitsi Meet Test</h2>
+        <p>Jitsi Meet video konferans testi için butona tıklayın:</p>
+        
+        <button class="jitsi-button" onclick="toggleJitsi()">
+            🎥 Jitsi Meet'i Aç/Kapat
+        </button>
+        
+        <div class="jitsi-container" id="jitsiContainer">
+            <iframe 
+                class="jitsi-iframe"
+                src="https://meet.jit.si/test-room-123" 
+                allow="camera; microphone; fullscreen; speaker; display-capture"
+                allowfullscreen>
+            </iframe>
+        </div>
+        
+        <div class="room-info">
+            <strong>Room ID:</strong> test-room-123<br>
+            <strong>URL:</strong> https://meet.jit.si/test-room-123
+        </div>
     </div>
 
     <!-- Widget JavaScript (CSS dahil) -->
     <script src="longo-health-widget.js"></script>
+    
+    <!-- Jitsi Meet Toggle Script -->
+    <script>
+        function toggleJitsi() {
+            const container = document.getElementById('jitsiContainer');
+            const button = document.querySelector('.jitsi-button');
+            
+            if (container.classList.contains('active')) {
+                container.classList.remove('active');
+                button.textContent = '🎥 Jitsi Meet\'i Aç';
+                button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            } else {
+                container.classList.add('active');
+                button.textContent = '❌ Jitsi Meet\'i Kapat';
+                button.style.background = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+            }
+        }
+        
+        // Sayfa yüklendiğinde buton metnini ayarla
+        document.addEventListener('DOMContentLoaded', function() {
+            const button = document.querySelector('.jitsi-button');
+            button.textContent = '🎥 Jitsi Meet\'i Aç';
+        });
+    </script>
 </body>
 </html>
