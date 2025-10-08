@@ -860,7 +860,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-                else:
+    else:
         user_message = message_text
     
     # Dil algılama ve system prompt hazırlama
@@ -998,7 +998,7 @@ async def chat_message(req: ChatMessageRequest,
     # Supplement listesi sadece supplement önerisi istenirse ekle - daha esnek
     supplement_keywords = ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin", "ürün", "besin", "mineral"]
     if any(keyword in message_text.lower() for keyword in supplement_keywords):
-    history.append({"role": "user", "content": supplements_info})
+        history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
