@@ -9,6 +9,9 @@
         window.longoUserLevel = window.longoUserLevel || null; // Siteden gelmezse null (guest)
         window.longoRealUserId = window.longoRealUserId || null; // Premium kullanıcılar için gerçek user ID
         
+        // Debug: Widget initialization
+        console.log('🔍 DEBUG: Widget initialized with userLevel =', window.longoUserLevel);
+        
         // User plan'ı user level'a göre otomatik belirle
         if (!window.longoUserLevel || window.longoUserLevel === 1) {
             window.longoUserPlan = 'free';
