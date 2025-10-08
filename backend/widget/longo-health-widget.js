@@ -2,6 +2,18 @@
 (function() {
     'use strict';
     
+    // Ideasoft'ta kullanım için public fonksiyon
+    window.setLongoUserLevel = function(userLevel, realUserId = null) {
+        window.longoUserLevel = userLevel;
+        window.longoRealUserId = realUserId;
+        console.log('🔍 DEBUG: User level set to:', userLevel);
+        
+        // Widget zaten yüklenmişse yeniden initialize et
+        if (window.longoWidgetInitialized) {
+            initWidget();
+        }
+    };
+    
     // DOM hazır olunca widget'ı başlat
     function initWidget() {
         // Siteden userLevel gelip gelmediğini kontrol et
@@ -1422,10 +1434,14 @@
     
     // DOM hazır olunca widget'ı başlat
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initWidget);
+        document.addEventListener('DOMContentLoaded', function() {
+            initWidget();
+            window.longoWidgetInitialized = true;
+        });
     } else {
         // DOM zaten hazır
         initWidget();
+        window.longoWidgetInitialized = true;
     }
     
 })();
