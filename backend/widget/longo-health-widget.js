@@ -1225,6 +1225,9 @@
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
             
+            // Debug: User level kontrolü
+            console.log('🔍 DEBUG: window.longoUserLevel =', window.longoUserLevel);
+            
             const response = await fetch(`${apiUrl}/ai/chat/start`, {
                 method: 'POST',
                 headers: {
@@ -1243,9 +1246,13 @@
             
             const data = await response.json();
             
+            // Debug: Backend response
+            console.log('🔍 DEBUG: Backend response =', data);
+            
             // Guest user için REGISTER_POPUP kontrolü
             if (data.detail && data.detail.includes('kayıt olmalısınız')) {
                 // Guest user - popup göster
+                console.log('🔍 DEBUG: Guest user detected, showing register popup');
                 showRegisterPopup();
                 return null; // Conversation başlatma
             }
