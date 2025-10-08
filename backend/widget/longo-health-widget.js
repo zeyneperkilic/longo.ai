@@ -1002,6 +1002,42 @@
         }, 5000);
     }
     
+    // Register popup (Guest user için)
+    window.showRegisterPopup = function() {
+        const existingPopup = document.getElementById('register-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+        
+        const popupHTML = `
+            <div id="register-popup" class="limit-popup-mini">
+                <div class="limit-popup-content-mini">
+                    <div class="limit-popup-icon">🔐</div>
+                    <div class="limit-popup-text">
+                        <h4>Kayıt Gerekli!</h4>
+                        <p>Longo AI'ı kullanmak için sisteme kayıt olmalısınız</p>
+                    </div>
+                    <button onclick="closeRegisterPopup()" class="limit-popup-close">✕</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', popupHTML);
+        
+        // 5 saniye sonra otomatik kapat
+        setTimeout(() => {
+            closeRegisterPopup();
+        }, 5000);
+    }
+    
+    // Register popup'ını kapat
+    window.closeRegisterPopup = function() {
+        const popup = document.getElementById('register-popup');
+        if (popup) {
+            popup.remove();
+        }
+    }
+    
     // Limit popup'ını kapat
     window.closeLimitPopup = function() {
         const popup = document.getElementById('limit-popup');
@@ -1283,8 +1319,14 @@
             // AI yanıtını göster
             const reply = result.reply;
             
-            // Limit popup kontrolü
-            if (reply.startsWith('LIMIT_POPUP:')) {
+            // Register popup kontrolü (Guest user)
+            if (reply.startsWith('REGISTER_POPUP:')) {
+                const cleanReply = reply.replace('REGISTER_POPUP:', '');
+                longoAddMessage('assistant', cleanReply);
+                showRegisterPopup();
+            }
+            // Limit popup kontrolü (Free user)
+            else if (reply.startsWith('LIMIT_POPUP:')) {
                 const cleanReply = reply.replace('LIMIT_POPUP:', '');
                 longoAddMessage('assistant', cleanReply);
                 showLimitPopup();
