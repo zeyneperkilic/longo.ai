@@ -1242,6 +1242,14 @@
             }
             
             const data = await response.json();
+            
+            // Guest user için REGISTER_POPUP kontrolü
+            if (data.detail && data.detail.includes('kayıt olmalısınız')) {
+                // Guest user - popup göster
+                showRegisterPopup();
+                return null; // Conversation başlatma
+            }
+            
             return data.conversation_id;
         } catch (error) {
             console.error('Error starting conversation:', error);
