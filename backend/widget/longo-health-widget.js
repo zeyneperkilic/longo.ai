@@ -1257,6 +1257,14 @@
                 return null; // Conversation başlatma
             }
             
+            // Free user için LIMIT_POPUP kontrolü
+            if (data.detail && data.detail.includes('limitiniz doldu')) {
+                // Free user limit doldu - popup göster
+                console.log('🔍 DEBUG: Free user limit reached, showing limit popup');
+                showLimitPopup();
+                return null; // Conversation başlatma
+            }
+            
             return data.conversation_id;
         } catch (error) {
             console.error('Error starting conversation:', error);
