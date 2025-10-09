@@ -3074,6 +3074,9 @@ KRİTİK KURALLAR:
 - improvement_priorities'de 3 öncelik ver
 - Gerçekçi değerler kullan
 - analysis_summary'de 4-5 cümle detaylı analiz yaz
+- JSON syntax'ına DİKKAT ET: Son element'ten sonra virgül KULLANMA
+- Tüm string'leri çift tırnak ile yaz
+- Geçerli JSON formatı kullan
 """
     
     # AI çağrısı
@@ -3121,6 +3124,11 @@ SADECE JSON DÖNDÜR, BAŞKA HİÇBİR ŞEY YAZMA!""",
             if first_brace != -1 and last_brace != -1:
                 cleaned_response = cleaned_response[first_brace:last_brace + 1]
             
+            # Trailing comma'ları temizle (JSON hatalarını önlemek için)
+            import re
+            # ,} veya ,] şeklindeki hataları düzelt
+            cleaned_response = re.sub(r',(\s*[}\]])', r'\1', cleaned_response)
+            
             print(f"🔍 DEBUG: Temizlenmiş Response (ilk 500 karakter): {cleaned_response[:500]}")
             
             result = json.loads(cleaned_response.strip())
@@ -3128,7 +3136,7 @@ SADECE JSON DÖNDÜR, BAŞKA HİÇBİR ŞEY YAZMA!""",
             
         except json.JSONDecodeError as e:
             print(f"❌ JSON parse hatası: {e}")
-            print(f"❌ Hatalı Response: {ai_response[:1000]}")
+            print(f"❌ Hatalı Response (tamamı): {ai_response}")
             # Fallback response
             result = {
                 "chronological_age": req.chronological_age,
