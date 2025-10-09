@@ -1901,58 +1901,60 @@ VERİ ANALİZİ:
 - Lab sonuçlarından vitamin/mineral eksiklikleri, sağlık durumu
 - Bu verileri birleştirerek holistik beslenme yaklaşımı
 
-YANIT FORMATI:
-1. MEVCUT DURUM ANALİZİ
-   - Kullanıcının quiz verilerinden çıkarılan sağlık profili
-   - Lab sonuçlarından tespit edilen eksiklikler/riskler
-   - Genel sağlık durumu değerlendirmesi
-   - Risk faktörleri ve öncelikler
-
-2. DETAYLI BESLENME ÖNERİLERİ
-   - Her öneri için NEDEN açıkla
-   - Lab sonuçlarına göre eksik vitamin/mineraller için spesifik besin önerileri
-   - Quiz'deki hedeflere uygun makro besin dağılımı (karbonhidrat, protein, yağ)
-   - Öğün planlama ve porsiyon önerileri (gram cinsinden)
-   - Supplement ile beslenme dengesi
-   - Su tüketimi ve hidrasyon stratejileri
-   - Besin kombinasyonları ve emilim ipuçları
-   - Haftalık menü örnekleri
-
-3. ÖĞÜN PLANLAMA
-   - Kahvaltı, öğle, akşam yemeği önerileri
-   - Ara öğün stratejileri
-   - Egzersiz öncesi/sonrası beslenme
+YANIT FORMATI - SADECE JSON:
+{{
+  "current_status_analysis": {{
+    "health_profile": "Quiz verilerinden çıkarılan sağlık profili",
+    "lab_findings": "Lab sonuçlarından tespit edilen eksiklikler/riskler",
+    "overall_health": "Genel sağlık durumu değerlendirmesi",
+    "risk_factors": ["Risk faktörü 1", "Risk faktörü 2"]
+  }},
+  "detailed_nutrition_recommendations": {{
+    "macro_distribution": {{
+      "protein": "X-Y gram/gün (Neden önemli açıklaması)",
+      "carbohydrate": "X-Y gram/gün (Neden önemli açıklaması)",
+      "fat": "X-Y gram/gün (Neden önemli açıklaması)"
+    }},
+    "deficiency_foods": [
+      {{
+        "nutrient": "Vitamin/mineral adı",
+        "reason": "Neden gerekli",
+        "food_sources": ["Besin 1", "Besin 2"],
+        "daily_target": "Hedef miktar"
+      }}
+    ],
+    "meal_planning": {{
+      "breakfast": ["Öneri 1", "Öneri 2"],
+      "lunch": ["Öneri 1", "Öneri 2"],
+      "dinner": ["Öneri 1", "Öneri 2"],
+      "snacks": ["Öneri 1", "Öneri 2"]
+    }},
+    "hydration": "Su tüketimi ve hidrasyon stratejileri",
+    "food_combinations": ["Emilim ipucu 1", "Emilim ipucu 2"]
+  }},
+  "weekly_menu": {{
+    "sample_day": {{
+      "breakfast": "Kahvaltı menüsü (porsiyon ile)",
+      "lunch": "Öğle yemeği menüsü (porsiyon ile)",
+      "dinner": "Akşam yemeği menüsü (porsiyon ile)"
+    }}
+  }},
+  "performance_nutrition": {{
+    "energy_foods": ["Besin 1", "Besin 2"],
+    "muscle_building": ["Protein kaynağı 1", "Protein kaynağı 2"],
+    "anti_inflammatory": ["Besin 1", "Besin 2"],
+    "immune_boosting": ["Besin 1", "Besin 2"]
+  }},
+  "practical_tips": ["Uygulanabilir öneri 1", "Uygulanabilir öneri 2"]
+}}
 
 ÖNEMLİ KURALLAR:
-- KESINLIKLE link verme, sadece metin içeriği ver
-- KESINLIKLE kaynak gösterme, sadece öneriler ver
-- KESINLIKLE URL, web sitesi, kaynak belirtme
-- Temiz ve okunabilir format kullan
-- Detaylı ve kapsamlı analiz yap
+- SADECE JSON formatında yanıt ver
+- Markdown kullanma (###, **, - gibi)
+- KESINLIKLE link verme
 - Her öneri için NEDEN açıkla
+- Detaylı ve kapsamlı analiz yap
 - Uygulanabilir ve pratik öneriler ver
-   - Ara öğün stratejileri
-   - Egzersiz öncesi/sonrası beslenme
-   - Haftalık menü önerileri
-
-4. PERFORMANS BESLENMESİ
-   - Enerji seviyelerini optimize eden besinler
-   - Kas gelişimi için protein kaynakları
-   - Anti-inflamatuar besinler
-   - Bağışıklık güçlendirici besinler
-
-5. HAFTALIK MENÜ ÖNERİSİ
-   - Detaylı menü planı
-   - Porsiyon miktarları
-
-6. SUPPLEMENT ÖNERİLERİ
-   - Hangi supplement'lerin neden gerekli olduğu
-   - Dozaj önerileri
-
-KISITLAMALAR:
-- Sadece genel öneriler, tıbbi tavsiye değil
-- Diyetisyen yerine geçmez
-- Güvenlik öncelikli yaklaşım
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
 
@@ -2014,20 +2016,42 @@ Lütfen bu kullanıcı için DETAYLI beslenme önerileri hazırla. Sadece beslen
             user_message=user_message
         )
         
+        # JSON parse et
+        import json
+        try:
+            # Markdown code block'ları temizle
+            cleaned_response = ai_response.strip()
+            if cleaned_response.startswith('```json'):
+                json_start = cleaned_response.find('```json') + 7
+                json_end = cleaned_response.find('```', json_start)
+                if json_end != -1:
+                    cleaned_response = cleaned_response[json_start:json_end].strip()
+            elif cleaned_response.startswith('```'):
+                json_start = cleaned_response.find('```') + 3
+                json_end = cleaned_response.find('```', json_start)
+                if json_end != -1:
+                    cleaned_response = cleaned_response[json_start:json_end].strip()
+            
+            recommendations_json = json.loads(cleaned_response)
+        except json.JSONDecodeError as e:
+            print(f"🔍 DEBUG: JSON parse hatası: {e}")
+            # Fallback: Raw response döndür
+            recommendations_json = {"raw_response": ai_response}
+        
         # AI mesajını kaydet
         create_ai_message(
             db=db,
             external_user_id=x_user_id,
             message_type="diet_recommendations",
             request_payload={},
-            response_payload={"recommendations": ai_response},
+            response_payload={"recommendations": recommendations_json},
             model_used="openrouter"
         )
         
         return {
             "success": True,
             "message": "Beslenme önerileri hazırlandı",
-            "recommendations": ai_response,
+            "recommendations": recommendations_json,
             "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
         }
         
@@ -2113,52 +2137,70 @@ VERİ ANALİZİ:
 - Lab sonuçlarından sağlık durumu ve performans göstergeleri
 - Bu verileri birleştirerek güvenli ve etkili egzersiz planı
 
-YANIT FORMATI:
-MEVCUT DURUM ANALİZİ
-- Kullanıcının quiz verilerinden çıkarılan fitness profili
-- Lab sonuçlarından tespit edilen sağlık durumu
-- Mevcut kondisyon seviyesi değerlendirmesi
-- Egzersiz hedefleri ve kısıtlamalar
+YANIT FORMATI - SADECE JSON:
+{{
+  "current_status_analysis": {{
+    "fitness_profile": "Quiz verilerinden çıkarılan fitness profili",
+    "health_status": "Lab sonuçlarından tespit edilen sağlık durumu",
+    "current_condition": "Mevcut kondisyon seviyesi değerlendirmesi",
+    "exercise_goals": ["Hedef 1", "Hedef 2"],
+    "limitations": ["Kısıtlama 1", "Kısıtlama 2"]
+  }},
+  "detailed_exercise_program": {{
+    "weekly_schedule": {{
+      "frequency": "Haftada X gün",
+      "duration": "Her seans Y dakika",
+      "structure": "Program yapısı açıklaması"
+    }},
+    "strength_training": {{
+      "exercises": [
+        {{
+          "name": "Egzersiz adı",
+          "sets": "X set",
+          "reps": "Y tekrar",
+          "reason": "Neden önemli",
+          "tips": "Form ve teknik önerileri"
+        }}
+      ],
+      "muscle_groups": ["Grup 1", "Grup 2"],
+      "progression": "Progresyon stratejisi"
+    }},
+    "cardiovascular": {{
+      "activities": ["Aktivite 1", "Aktivite 2"],
+      "intensity": "HIIT ve steady-state dengesi",
+      "heart_rate_zones": "Kalp atış hızı hedefleri",
+      "duration": "Süre önerileri"
+    }},
+    "flexibility_mobility": {{
+      "stretching": ["Stretching 1", "Stretching 2"],
+      "daily_routine": ["Rutin 1", "Rutin 2"],
+      "recovery": "Recovery egzersizleri"
+    }}
+  }},
+  "weekly_plan": {{
+    "monday": "Pazartesi programı",
+    "tuesday": "Salı programı",
+    "wednesday": "Çarşamba programı",
+    "thursday": "Perşembe programı",
+    "friday": "Cuma programı",
+    "saturday": "Cumartesi programı",
+    "sunday": "Pazar programı"
+  }},
+  "performance_recovery": {{
+    "pre_workout": ["Öneri 1", "Öneri 2"],
+    "post_workout": ["Öneri 1", "Öneri 2"],
+    "sleep": "Uyku önerileri",
+    "injury_prevention": ["Öneri 1", "Öneri 2"]
+  }},
+  "practical_tips": ["Motivasyon ipucu 1", "Sürdürülebilirlik ipucu 2"]
+}}
 
-DETAYLI EGZERSİZ PROGRAMI
+ÖNEMLİ KURALLAR:
+- SADECE JSON formatında yanıt ver
+- Markdown kullanma (###, **, - gibi)
+- KESINLIKLE link verme
 - Her öneri için NEDEN açıkla
-- Kullanıcının yaşına, kondisyonuna ve hedeflerine uygun
-- Haftalık program önerisi (kaç gün, ne kadar süre)
-- Kardiyovasküler, güç antrenmanı, esneklik dengesi
-- Başlangıç seviyesi için güvenli ve sürdürülebilir
-- Spesifik egzersiz hareketleri ve set/tekrar sayıları
-
-GÜÇ ANTRENMANI
-- Vücut ağırlığı ve ağırlık antrenmanları
-- Kas gruplarına göre egzersiz dağılımı
-- Progresyon stratejileri
-- Form ve teknik önerileri
-
-KARDİYOVASKÜLER
-   - Koşu, yürüyüş, bisiklet önerileri
-   - HIIT ve steady-state kardio dengesi
-   - Kalp atış hızı hedefleri
-   - Sürdürülebilir kardio programı
-
-5. ESNEKLİK VE MOBİLİTE
-   - Stretching ve yoga önerileri
-   - Günlük mobilite rutinleri
-   - Recovery ve rahatlama egzersizleri
-   - Postür düzeltme egzersizleri
-
-6. PERFORMANS VE RECOVERY
-   - Egzersiz öncesi/sonrası rutinler
-   - Uyku ve recovery önerileri
-   - Sakatlanma önleme stratejileri
-   - Motivasyon ve sürdürülebilirlik ipuçları
-
-7. HAFTALIK PROGRAM ÖNERİSİ
-   - Detaylı haftalık program
-   - Günlük egzersiz planı
-
-KISITLAMALAR:
-- Sadece genel öneriler, tıbbi tavsiye değil
-- Kişisel antrenör yerine geçmez
+- Spesifik egzersiz hareketleri ve set/tekrar sayıları ver
 - Güvenlik öncelikli yaklaşım
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
@@ -2221,20 +2263,42 @@ Lütfen bu kullanıcı için DETAYLI egzersiz önerileri hazırla. Sadece egzers
             user_message=user_message
         )
         
+        # JSON parse et
+        import json
+        try:
+            # Markdown code block'ları temizle
+            cleaned_response = ai_response.strip()
+            if cleaned_response.startswith('```json'):
+                json_start = cleaned_response.find('```json') + 7
+                json_end = cleaned_response.find('```', json_start)
+                if json_end != -1:
+                    cleaned_response = cleaned_response[json_start:json_end].strip()
+            elif cleaned_response.startswith('```'):
+                json_start = cleaned_response.find('```') + 3
+                json_end = cleaned_response.find('```', json_start)
+                if json_end != -1:
+                    cleaned_response = cleaned_response[json_start:json_end].strip()
+            
+            recommendations_json = json.loads(cleaned_response)
+        except json.JSONDecodeError as e:
+            print(f"🔍 DEBUG: JSON parse hatası: {e}")
+            # Fallback: Raw response döndür
+            recommendations_json = {"raw_response": ai_response}
+        
         # AI mesajını kaydet
         create_ai_message(
             db=db,
             external_user_id=x_user_id,
             message_type="exercise_recommendations",
             request_payload={},
-            response_payload={"recommendations": ai_response},
+            response_payload={"recommendations": recommendations_json},
             model_used="openrouter"
         )
         
         return {
             "success": True,
             "message": "Egzersiz önerileri hazırlandı",
-            "recommendations": ai_response,
+            "recommendations": recommendations_json,
             "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
         }
         
@@ -3114,91 +3178,4 @@ Sadece JSON formatında yanıt ver.""",
             "longevity_factors": result.get("longevity_factors", []),
             "personalized_recommendations": result.get("personalized_recommendations", []),
             "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
-            "analysis_summary": result.get("analysis_summary", "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi. Mevcut risk faktörleri ve koruyucu faktörler dikkate alınarak longevity skoru hesaplanmıştır. Detaylı analiz ve öneriler aşağıda sunulmuştur."),
-            "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
-        }
-        
-        # AI mesajını kaydet
-        create_ai_message(
-            db=db,
-            external_user_id=x_user_id,
-            message_type="metabolic_age_test",
-            request_payload=req.model_dump(),
-            response_payload=response_data,
-            model_used="metabolic_age_ai"
-        )
-        
-        return response_data
-        
-    except Exception as e:
-        print(f"Metabolik yaş testi hatası: {e}")
-        raise HTTPException(status_code=500, detail=f"Metabolik yaş analizi sırasında hata: {str(e)}")
-
-# Video Call Endpoints
-@app.post("/ai/premium-plus/video-call/join")
-async def join_video_call(
-    payload: dict = Body(...),
-    current_user: str = Depends(get_current_user),
-    x_user_id: str | None = Header(default=None),
-    x_user_level: int | None = Header(default=None)
-):
-    """Video call'a katılmak için Daily.co token oluştur"""
-    try:
-        # Premium Plus kontrolü
-        user_plan = get_user_plan_from_headers(x_user_level)
-        if user_plan != "premium_plus":
-            raise HTTPException(status_code=403, detail="Bu özellik sadece Premium Plus üyeler için")
-        
-        meeting_id = payload.get("meeting_id")
-        if not meeting_id:
-            raise HTTPException(status_code=400, detail="meeting_id gerekli")
-        
-        # Daily.co API key (environment variable'dan alınacak)
-        daily_api_key = os.getenv("DAILY_API_KEY")
-        print(f"🔍 DEBUG: Daily API Key var mı: {bool(daily_api_key)}")
-        print(f"🔍 DEBUG: Daily API Key uzunluğu: {len(daily_api_key) if daily_api_key else 0}")
-        if not daily_api_key:
-            raise HTTPException(status_code=500, detail="Daily.co API key bulunamadı")
-        
-        # Mock room name (gerçekte database'den alınacak)
-        room_name = f"longopass-meeting-{meeting_id}"
-        
-        # Daily.co meeting token oluştur
-        import requests
-        print(f"🔍 DEBUG: Room name: {room_name}")
-        print(f"🔍 DEBUG: API key başlangıcı: {daily_api_key[:10] if daily_api_key else 'YOK'}...")
-        
-        token_response = requests.post(
-            "https://api.daily.co/v1/meeting-tokens",
-            headers={
-                "Authorization": f"Bearer {daily_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "properties": {
-                    "room_name": room_name,
-                    "is_owner": False,
-                    "user_name": "Hasta"
-                }
-            }
-        )
-        
-        print(f"🔍 DEBUG: Daily.co response status: {token_response.status_code}")
-        print(f"🔍 DEBUG: Daily.co response text: {token_response.text}")
-        
-        if token_response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Daily.co token oluşturulamadı: {token_response.status_code} - {token_response.text}")
-        
-        token_data = token_response.json()
-        print(f"🔍 DEBUG: Token data: {token_data}")
-        
-        return {
-            "success": True,
-            "meetingUrl": f"https://longopass.daily.co/{room_name}",
-            "token": token_data.get("token")
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video call hatası: {str(e)}")
+            "analysis_summary": result.get("analysi
