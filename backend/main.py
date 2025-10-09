@@ -3008,6 +3008,36 @@ async def metabolic_age_test(
     # Lab verilerini al (sadece ek bilgi için)
     lab_tests = get_standardized_lab_data(db, x_user_id, limit=20)
     
+    # Kapsamlı test paneli sayısını kontrol et (lab_summary mesajları)
+    from backend.db import get_ai_messages
+    comprehensive_test_count = 0
+    first_comprehensive_test = None
+    last_comprehensive_test = None
+    
+    try:
+        lab_summary_messages = get_ai_messages(db, external_user_id=x_user_id, limit=100)
+        for msg in lab_summary_messages:
+            if msg.message_type == 'lab_summary':
+                comprehensive_test_count += 1
+                if not first_comprehensive_test:
+                    first_comprehensive_test = msg
+                last_comprehensive_test = msg
+    except Exception as e:
+        print(f"🔍 DEBUG: Lab summary mesajları alınırken hata: {e}")
+    
+    print(f"🔍 DEBUG: Kapsamlı test sayısı: {comprehensive_test_count}")
+    
+    # Longopass gelişim skoru hesaplama
+    longopass_score = 0
+    longopass_note = "Birden fazla kapsamlı test analizi gerekmektedir"
+    
+    if comprehensive_test_count >= 2:
+        # İlk ve son testleri karşılaştır
+        longopass_note = "İlk ve son kapsamlı test panelleri karşılaştırılarak hesaplandı"
+        print(f"🔍 DEBUG: İlk test: {first_comprehensive_test.created_at if first_comprehensive_test else 'Yok'}")
+        print(f"🔍 DEBUG: Son test: {last_comprehensive_test.created_at if last_comprehensive_test else 'Yok'}")
+        # AI'ya bu bilgiyi gönderelim
+    
     # AI context oluştur - Metabolik yaş testi sonucu + quiz + lab
     ai_context = f"""
 METABOLİK YAŞ TESTİ SONUCU:
@@ -3045,6 +3075,27 @@ LAB TEST SONUÇLARI (Biyokimyasal Durum):
             ai_context += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} {test.get('unit', '')} (Referans: {test.get('reference_range', 'N/A')})\n"
     else:
         ai_context += "Lab test verisi bulunamadı.\n"
+    
+    # Longopass gelişim skoru bilgisi
+    ai_context += f"""
+
+LONGOPASS GELİŞİM SKORU HESAPLAMA:
+- Kapsamlı test paneli sayısı: {comprehensive_test_count}
+- Durum: {'En az 2 test paneli var, karşılaştırma yapılabilir' if comprehensive_test_count >= 2 else 'Henüz yeterli test yok, skor 0 olmalı'}
+"""
+    
+    if comprehensive_test_count >= 2 and first_comprehensive_test and last_comprehensive_test:
+        ai_context += f"""- İlk test tarihi: {first_comprehensive_test.created_at.strftime('%Y-%m-%d') if first_comprehensive_test.created_at else 'Bilinmiyor'}
+- Son test tarihi: {last_comprehensive_test.created_at.strftime('%Y-%m-%d') if last_comprehensive_test.created_at else 'Bilinmiyor'}
+- İlk test verileri: {first_comprehensive_test.response_payload if hasattr(first_comprehensive_test, 'response_payload') else 'Veri yok'}
+- Son test verileri: {last_comprehensive_test.response_payload if hasattr(last_comprehensive_test, 'response_payload') else 'Veri yok'}
+
+ÖNEMLİ: İlk ve son test sonuçlarını karşılaştırarak gelişim skoru hesapla (0-100 arası). İyileşme varsa pozitif skor, kötüleşme varsa düşük skor ver.
+"""
+    else:
+        ai_context += f"""
+ÖNEMLİ: longopass_development_score.value = 0 olmalı (henüz en az 2 kapsamlı test paneli yok)
+"""
     
     ai_context += f"""
 
