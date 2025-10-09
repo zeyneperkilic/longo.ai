@@ -3144,23 +3144,21 @@ Aşağıdaki JSON formatında yanıt ver:
             system_prompt="""Sen bir longevity uzmanısın. Kullanıcının metabolik yaş testi sonucunu analiz ederek detaylı longevity raporu oluşturuyorsun.
 
 GÖREV:
-- Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) kapsamlı analiz et
-- Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
-- Risk ve koruyucu faktörleri detaylı belirle
-- Kişiselleştirilmiş öneriler ver
-- Gelecek sağlık durumunu tahmin et
-- analysis_summary'de DETAYLI ANALİZ PARAGRAFI yaz
+- Verilen JSON formatında MUTLAKA yanıt ver
+- Kullanıcının lab verilerine göre detaylı sağlık kategorilerini (kardiyovasküler, metabolik, enflamasyon vb.) analiz et
+- Her kategori için "status" (Mükemmel/İyi/Orta/Kötü) ve "metrics" listesi oluştur
+- Mevcut lab verilerine göre gerçekçi değerler ver
 
 ÖNEMLİ KURALLAR:
-- analysis_summary'de en az 3-4 cümlelik detaylı analiz paragrafı yaz
-- Metabolik yaş farkının anlamını açıkla
-- Longevity skorunun gerekçesini belirt
-- Risk faktörlerinin etkilerini detaylandır
-- Koruyucu faktörlerin faydalarını açıkla
-- Gelecek projeksiyonunu gerekçelendir
+- SADECE JSON formatında yanıt ver, başka metin ekleme
+- Tüm field'ları doldur (boş bırakma)
+- Lab verilerinde olmayan metrikler için tahmin yap veya "Veri yok" de
+- Status değerleri: Mükemmel, İyi, Orta, Kötü
+- Metrics'te status: ✓ (normal) veya ⚠️ (dikkat)
 
 Sadece JSON formatında yanıt ver.""",
-            user_message=ai_context
+            user_message=ai_context,
+            max_tokens=2500
         )
         
         # JSON parse et
