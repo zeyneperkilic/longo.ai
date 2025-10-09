@@ -3180,27 +3180,40 @@ Sadece JSON formatında yanıt ver.""",
         except json.JSONDecodeError as e:
             print(f"JSON parse hatası: {e}")
             print(f"AI Response: {ai_response}")
-            # Fallback response
+            # Fallback response - Yeni format
             result = {
-                "chronological_age": req.chronological_age,
-                "metabolic_age": req.chronological_age + 2,
-                "age_difference": 2,
-                "biological_age_status": "normal",
-                "longevity_score": 75,
-                "health_span_prediction": "Orta düzeyde sağlıklı yaşam süresi bekleniyor",
-                "risk_factors": ["Stres seviyesi yüksek", "Egzersiz eksikliği"],
-                "protective_factors": ["Dengeli beslenme", "Düzenli uyku"],
-                "longevity_factors": [
-                    {
-                        "factor_name": "Stres Yönetimi",
-                        "current_status": "Yüksek stres",
-                        "impact_score": 8,
-                        "recommendation": "Meditasyon ve nefes egzersizleri"
+                "longevity_report": {
+                    "biological_age": {
+                        "value": req.metabolic_age,
+                        "real_age": req.chronological_age,
+                        "difference": req.metabolic_age - req.chronological_age,
+                        "status": "Normal"
+                    },
+                    "health_score": {
+                        "value": 75,
+                        "label": "İyi",
+                        "percentile": "Üst %50'de"
+                    },
+                    "longopass_development_score": {
+                        "value": 0,
+                        "note": "Birden fazla kapsamlı test analizi gerekmektedir"
+                    },
+                    "metabolic_age": {
+                        "value": req.metabolic_age,
+                        "status": "Normal"
                     }
-                ],
-                "personalized_recommendations": ["Stres yönetimi", "Düzenli egzersiz"],
-                "future_health_outlook": "Orta düzeyde sağlıklı yaşam süresi",
-                "analysis_summary": "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız 35, metabolik yaşınız 37 olarak ölçülmüştür. Bu 2 yaşlık fark, metabolizmanızın kronolojik yaşınızdan biraz daha hızlı yaşlandığını göstermektedir. Mevcut risk faktörleri (stres, egzersiz eksikliği) ve koruyucu faktörler (dengeli beslenme, düzenli uyku) dikkate alındığında, longevity skorunuz 75 olarak hesaplanmıştır. Bu skor, orta düzeyde sağlıklı yaşam süresi beklentisi anlamına gelmektedir. Stres yönetimi ve düzenli egzersiz programı ile metabolik yaşınızı iyileştirme potansiyeliniz bulunmaktadır."
+                },
+                "detailed_analysis": {
+                    "cardiovascular_health": {"status": "İyi", "metrics": []},
+                    "metabolic_health": {"status": "İyi", "metrics": []},
+                    "inflammation_profile": {"status": "Orta", "metrics": []},
+                    "hormonal_balance": {"status": "İyi", "metrics": []},
+                    "cognitive_health": {"status": "İyi", "metrics": []},
+                    "body_composition": {"status": "İyi", "metrics": []}
+                },
+                "personalized_improvements": [
+                    {"category": "Yaşam Tarzı", "recommendation": "Düzenli egzersiz ve dengeli beslenme", "priority": "high"}
+                ]
             }
         
         # Response oluştur - Yeni format
