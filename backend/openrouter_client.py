@@ -38,7 +38,7 @@ def call_chat_model(model: str, messages: List[Dict[str, str]], temperature: flo
         "raw": data
     }
 
-async def get_ai_response(system_prompt: str, user_message: str, model: str = "openai/gpt-5-chat:online") -> str:
+async def get_ai_response(system_prompt: str, user_message: str, model: str = "openai/gpt-5-chat:online", max_tokens: int = 800) -> str:
     """Free kullanıcılar için basit AI yanıt fonksiyonu"""
     try:
         messages = [
@@ -46,7 +46,7 @@ async def get_ai_response(system_prompt: str, user_message: str, model: str = "o
             {"role": "user", "content": user_message}
         ]
         
-        result = call_chat_model(model, messages, temperature=0.6, max_tokens=800)
+        result = call_chat_model(model, messages, temperature=0.6, max_tokens=max_tokens)
         return result["content"]
         
     except Exception as e:

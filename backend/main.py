@@ -2013,7 +2013,8 @@ Lütfen bu kullanıcı için DETAYLI beslenme önerileri hazırla. Sadece beslen
         from backend.openrouter_client import get_ai_response
         ai_response = await get_ai_response(
             system_prompt=system_prompt,
-            user_message=user_message
+            user_message=user_message,
+            max_tokens=3000  # Diet recommendations için daha yüksek limit
         )
         
         # JSON parse et
@@ -2260,7 +2261,8 @@ Lütfen bu kullanıcı için DETAYLI egzersiz önerileri hazırla. Sadece egzers
         from backend.openrouter_client import get_ai_response
         ai_response = await get_ai_response(
             system_prompt=system_prompt,
-            user_message=user_message
+            user_message=user_message,
+            max_tokens=3000  # Exercise recommendations için daha yüksek limit
         )
         
         # JSON parse et
