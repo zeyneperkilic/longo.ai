@@ -2999,146 +2999,83 @@ LAB TEST SONUÇLARI (Biyokimyasal Durum):
     
     ai_context += f"""
 
-GÖREV: Bu kullanıcının metabolik yaş testi sonucunu analiz et ve DETAYLI longevity raporu oluştur.
+GÖREV: Bu kullanıcının metabolik yaş testi sonucunu analiz et ve longevity raporu oluştur.
 
-SADECE JSON YANIT VER, HİÇBİR EK AÇIKLAMA YAPMA!
-
-JSON Format (AYNEN BU YAPIYI KULLAN):
+Aşağıdaki JSON formatında yanıt ver:
 
 {{
     "chronological_age": {req.chronological_age},
     "metabolic_age": {req.metabolic_age},
-    "biological_age": 32,
-    "age_difference": -8,
-    "biological_age_status": "genç",
-    "longevity_score": 85,
-    "longevity_score_status": "Çok İyi",
-    "health_span_prediction": "Sağlıklı yaşam süresi beklentisi yüksek",
-    "detailed_analysis": {{
-        "cardiovascular_health": {{
-            "status": "Mükemmel",
-            "metrics": [{{"name": "Dinlenme Nabzı", "value": "58 bpm", "status": "İyi"}}]
-        }},
-        "metabolic_health": {{
-            "status": "İyi",
-            "metrics": [{{"name": "HbA1c", "value": "5.2%", "status": "İyi"}}]
-        }},
-        "inflammation_profile": {{
-            "status": "Orta",
-            "metrics": [{{"name": "hs-CRP", "value": "2.1 mg/L", "status": "Orta"}}]
-        }},
-        "hormonal_balance": {{
-            "status": "İyi",
-            "metrics": [{{"name": "TSH", "value": "2.1 mIU/L", "status": "Normal"}}]
-        }},
-        "cognitive_health": {{
-            "status": "Mükemmel",
-            "metrics": [{{"name": "B12", "value": "450 pg/mL", "status": "İyi"}}]
-        }},
-        "body_composition": {{
-            "status": "İyi",
-            "metrics": [{{"name": "BMI", "value": "23.2", "status": "Normal"}}]
-        }}
-    }},
-    "risk_factors": ["Risk faktörü 1", "Risk faktörü 2"],
-    "protective_factors": ["Koruyucu faktör 1", "Koruyucu faktör 2"],
-    "improvement_priorities": [
+    "age_difference": {req.metabolic_age - req.chronological_age},
+    "biological_age_status": "[genç/yaşlı/normal]",
+    "longevity_score": [0-100 arası skor],
+    "health_span_prediction": "[sağlıklı yaşam süresi tahmini]",
+    "risk_factors": ["risk faktörü 1", "risk faktörü 2"],
+    "protective_factors": ["koruyucu faktör 1", "koruyucu faktör 2"],
+    "longevity_factors": [
         {{
-            "priority": 1,
-            "title": "Enflamasyon Yönetimi",
-            "description": "hs-CRP hafif yüksek. Enflamasyonu azalt.",
-            "actions": ["Anti-enflamatuvar diyet", "Omega-3 (1000mg)", "Stres yönetimi"]
-        }},
-        {{
-            "priority": 2,
-            "title": "Kardiyovasküler Koruma",
-            "description": "Mükemmel durumu koru.",
-            "actions": ["150 dk/hafta kardiyo", "Zone 2 antrenman", "CoQ10 takviye"]
-        }},
-        {{
-            "priority": 3,
-            "title": "Mitokondriyal Destek",
-            "description": "Hücre enerjisini optimize et.",
-            "actions": ["16:8 oruç", "CoQ10 takviye", "Soğuk duş"]
+            "factor_name": "Faktör adı",
+            "current_status": "Mevcut durum",
+            "impact_score": [1-10 arası],
+            "recommendation": "Öneri"
         }}
     ],
-    "personalized_recommendations": ["Öneri 1", "Öneri 2", "Öneri 3"],
-    "future_health_outlook": "Mevcut sağlık durumunuz ve yaşam tarzınız ile uzun ve sağlıklı bir yaşam beklentiniz yüksek.",
-    "analysis_summary": "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız 38, metabolik yaşınız 30, biyolojik yaşınız ise 32 olarak hesaplanmıştır. Bu sonuçlar metabolizmanızın kronolojik yaşınızdan 8 yaş daha genç çalıştığını göstermektedir. Longevity skorunuz 85/100 olup 'Çok İyi' kategorisindedir. Kardiyovasküler ve bilişsel sağlığınız mükemmel durumdadır. Enflamasyon profili orta seviyede olup iyileştirme potansiyeli bulunmaktadır."
+    "personalized_recommendations": ["öneri 1", "öneri 2"],
+    "future_health_outlook": "[gelecek sağlık durumu tahmini]",
+    "analysis_summary": "[genel analiz özeti paragrafı]"
 }}
 
-KRİTİK KURALLAR:
-- Sadece JSON formatında yanıt ver, başka hiçbir şey yazma
-- Her kategoriyi (6 tane) doldur
-- Her kategori için SADECE 1-2 metrik ver (fazla değil!)
-- improvement_priorities'de 3 öncelik ver
-- Her öncelikte 2-3 aksiyon yeter (kısa tut!)
-- Gerçekçi değerler kullan
-- analysis_summary'de 3-4 cümle yaz (kısa ve öz!)
-- JSON syntax'ına DİKKAT ET: Son element'ten sonra virgül KULLANMA
-- Tüm string'leri çift tırnak ile yaz
-- KISA VE ÖZ TUT! Uzun açıklamalar yapma!
-- Geçerli JSON formatı kullan
+ÖNEMLİ:
+- Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) analiz et
+- Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
+- Risk ve koruyucu faktörleri belirle
+- Kişiselleştirilmiş öneriler ver
+- Gelecek sağlık durumunu tahmin et
 """
     
     # AI çağrısı
     try:
         from backend.openrouter_client import get_ai_response
         ai_response = await get_ai_response(
-            system_prompt="""Sen bir longevity uzmanısın. Kullanıcının metabolik yaş testi sonucunu analiz ediyorsun.
-
-ÇOK ÖNEMLİ: SADECE JSON FORMATINDA YANIT VER! Hiçbir markdown, açıklama veya ek metin kullanma!
+            system_prompt="""Sen bir longevity uzmanısın. Kullanıcının metabolik yaş testi sonucunu analiz ederek detaylı longevity raporu oluşturuyorsun.
 
 GÖREV:
-1. Kullanıcı verilerini analiz et
-2. Verilen JSON template'ini AYNEN kullan
-3. Değerleri kullanıcıya göre özelleştir
-4. 6 sağlık kategorisini doldur
-5. 3 iyileştirme önceliği belirle
-6. Detaylı analysis_summary yaz
+- Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) kapsamlı analiz et
+- Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
+- Risk ve koruyucu faktörleri detaylı belirle
+- Kişiselleştirilmiş öneriler ver
+- Gelecek sağlık durumunu tahmin et
+- analysis_summary'de DETAYLI ANALİZ PARAGRAFI yaz
 
-KRİTİK:
-- Template'teki tüm field'ları doldur
-- Gerçekçi değerler kullan
-- Her kategori için en az 1 metrik ver
-- improvement_priorities'de 3 öncelik ver
-- analysis_summary'de 4-5 cümle yaz
+ÖNEMLİ KURALLAR:
+- analysis_summary'de en az 3-4 cümlelik detaylı analiz paragrafı yaz
+- Metabolik yaş farkının anlamını açıkla
+- Longevity skorunun gerekçesini belirt
+- Risk faktörlerinin etkilerini detaylandır
+- Koruyucu faktörlerin faydalarını açıkla
+- Gelecek projeksiyonunu gerekçelendir
 
-SADECE JSON DÖNDÜR, BAŞKA HİÇBİR ŞEY YAZMA!""",
+Sadece JSON formatında yanıt ver.""",
             user_message=ai_context
         )
         
         # JSON parse et
         try:
-            print(f"🔍 DEBUG: Ham AI Response (ilk 500 karakter): {ai_response[:500]}")
-            
             # Markdown code block'ları temizle
-            cleaned_response = ai_response.strip()
-            if "```json" in cleaned_response:
-                cleaned_response = cleaned_response.split("```json")[1].split("```")[0]
-            elif "```" in cleaned_response:
-                cleaned_response = cleaned_response.split("```")[1].split("```")[0]
+            if "```json" in ai_response:
+                ai_response = ai_response.split("```json")[1].split("```")[0]
+            elif "```" in ai_response:
+                ai_response = ai_response.split("```")[1].split("```")[0]
             
-            # Başlangıç ve bitiş ayraçlarını bul
-            first_brace = cleaned_response.find("{")
-            last_brace = cleaned_response.rfind("}")
+            # Son } karakterine kadar al
+            last_brace = ai_response.rfind("}")
+            if last_brace != -1:
+                ai_response = ai_response[:last_brace + 1]
             
-            if first_brace != -1 and last_brace != -1:
-                cleaned_response = cleaned_response[first_brace:last_brace + 1]
-            
-            # Trailing comma'ları temizle (JSON hatalarını önlemek için)
-            import re
-            # ,} veya ,] şeklindeki hataları düzelt
-            cleaned_response = re.sub(r',(\s*[}\]])', r'\1', cleaned_response)
-            
-            print(f"🔍 DEBUG: Temizlenmiş Response (ilk 500 karakter): {cleaned_response[:500]}")
-            
-            result = json.loads(cleaned_response.strip())
-            print(f"✅ DEBUG: JSON parse başarılı!")
-            
+            result = json.loads(ai_response.strip())
         except json.JSONDecodeError as e:
-            print(f"❌ JSON parse hatası: {e}")
-            print(f"❌ Hatalı Response (tamamı): {ai_response}")
+            print(f"JSON parse hatası: {e}")
+            print(f"AI Response: {ai_response}")
             # Fallback response
             result = {
                 "chronological_age": req.chronological_age,
@@ -3167,17 +3104,13 @@ SADECE JSON DÖNDÜR, BAŞKA HİÇBİR ŞEY YAZMA!""",
             "success": True,
             "message": "Metabolik yaş analizi tamamlandı",
             "chronological_age": result.get("chronological_age", req.chronological_age),
-            "biological_age": result.get("biological_age", req.metabolic_age),
             "metabolic_age": result.get("metabolic_age", req.chronological_age),
             "age_difference": result.get("age_difference", 0),
             "biological_age_status": result.get("biological_age_status", "normal"),
             "longevity_score": result.get("longevity_score", 75),
-            "longevity_score_status": result.get("longevity_score_status", "İyi"),
             "health_span_prediction": result.get("health_span_prediction", "Analiz tamamlandı"),
-            "detailed_analysis": result.get("detailed_analysis", {}),
             "risk_factors": result.get("risk_factors", []),
             "protective_factors": result.get("protective_factors", []),
-            "improvement_priorities": result.get("improvement_priorities", []),
             "longevity_factors": result.get("longevity_factors", []),
             "personalized_recommendations": result.get("personalized_recommendations", []),
             "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
