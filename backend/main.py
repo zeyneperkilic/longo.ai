@@ -3105,21 +3105,30 @@ SADECE JSON DÖNDÜR, BAŞKA HİÇBİR ŞEY YAZMA!""",
         
         # JSON parse et
         try:
+            print(f"🔍 DEBUG: Ham AI Response (ilk 500 karakter): {ai_response[:500]}")
+            
             # Markdown code block'ları temizle
-            if "```json" in ai_response:
-                ai_response = ai_response.split("```json")[1].split("```")[0]
-            elif "```" in ai_response:
-                ai_response = ai_response.split("```")[1].split("```")[0]
+            cleaned_response = ai_response.strip()
+            if "```json" in cleaned_response:
+                cleaned_response = cleaned_response.split("```json")[1].split("```")[0]
+            elif "```" in cleaned_response:
+                cleaned_response = cleaned_response.split("```")[1].split("```")[0]
             
-            # Son } karakterine kadar al
-            last_brace = ai_response.rfind("}")
-            if last_brace != -1:
-                ai_response = ai_response[:last_brace + 1]
+            # Başlangıç ve bitiş ayraçlarını bul
+            first_brace = cleaned_response.find("{")
+            last_brace = cleaned_response.rfind("}")
             
-            result = json.loads(ai_response.strip())
+            if first_brace != -1 and last_brace != -1:
+                cleaned_response = cleaned_response[first_brace:last_brace + 1]
+            
+            print(f"🔍 DEBUG: Temizlenmiş Response (ilk 500 karakter): {cleaned_response[:500]}")
+            
+            result = json.loads(cleaned_response.strip())
+            print(f"✅ DEBUG: JSON parse başarılı!")
+            
         except json.JSONDecodeError as e:
-            print(f"JSON parse hatası: {e}")
-            print(f"AI Response: {ai_response}")
+            print(f"❌ JSON parse hatası: {e}")
+            print(f"❌ Hatalı Response: {ai_response[:1000]}")
             # Fallback response
             result = {
                 "chronological_age": req.chronological_age,
