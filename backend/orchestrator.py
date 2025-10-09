@@ -384,7 +384,7 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
     - Örnek: 'Böbrek problemi var' → yüksek doz vitamin'leri çıkar, available_supplements'dan alternatif ekle
     
     KİŞİSELLEŞTİRİLMİŞ ÖNERİLER:
-    - Quiz cevaplarına göre ek 2-3 supplement öner
+    - Quiz cevaplarına göre ek 4-5 supplement öner
     - Sadece kullanılabilir ürünlerden seçim yap
     - Özel durumları dikkate alarak güvenli öneriler yap
     """
@@ -416,9 +416,9 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         "    }\n"
         "  ]\n"
         "}\n\n"
-        "ÖNEMLİ: 1) 4 DEFAULT + 2-3 PERSONALIZED = 6-7 supplement öner! "
+        "ÖNEMLİ: 1) 4 DEFAULT + 4-5 PERSONALIZED = 8-9 supplement öner! "
         "2) DEFAULT: D Vitamini, Omega-3, Magnezyum, B12 (alerji kontrolü ile) "
-        "3) PERSONALIZED: Quiz cevaplarına göre eksik değerler için "
+        "3) PERSONALIZED: Quiz cevaplarına göre eksik değerler için 4-5 ürün ekle "
         "4) SADECE kullanılabilir ürünlerden seçim yap! "
         "5) 'Diğer' seçeneğindeki özel durumları analiz et! "
         "SADECE VE SADECE bu JSON formatında yanıt ver. Hiçbir açıklama, metin ekleme."
@@ -428,9 +428,9 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         SYSTEM_HEALTH + " Sen bir supplement uzmanısın. "
         "Kullanıcının quiz cevaplarına göre beslenme önerileri, yaşam tarzı önerileri ve "
         "uygun supplement önerileri yap. E-ticaret sitesi için ürün önerileri hazırlıyorsun. "
-        "1) 4 DEFAULT + 2-3 PERSONALIZED = 6-7 supplement öner! "
+        "1) 4 DEFAULT + 4-5 PERSONALIZED = 8-9 supplement öner! "
         "2) DEFAULT: D Vitamini, Omega-3, Magnezyum, B12 (alerji kontrolü ile) "
-        "3) PERSONALIZED: Quiz cevaplarına göre eksik değerler için "
+        "3) PERSONALIZED: Quiz cevaplarına göre eksik değerler için 4-5 ürün ekle "
         "4) SADECE kullanılabilir ürünlerden öneri yap! "
         "5) 'Diğer' seçeneğindeki özel durumları dikkatle analiz et ve supplement önerilerini buna göre güncelle! "
         "6) Riskli durumlar varsa güvenli alternatifler öner! "
