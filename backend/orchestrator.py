@@ -745,6 +745,7 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         SYSTEM_HEALTH + " Sen bir laboratuvar seans analiz uzmanısın. "
         "Tek bir test seansındaki tüm testleri analiz et ve genel sağlık durumu yorumu yap. "
         "Test gruplarını kategorize et, normal/anormal sayılarını belirt. "
+        "Her test sonucunun KLİNİK ANLAMINI DETAYLI AÇIKLA: Neden önemli? Hangi sağlık sorunlarına işaret edebilir? Ne anlama gelir? "
         "Genel sağlık önerileri ver ama supplement önerisi verme. "
         "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "Sadece bilgilendirme amaçlı yorum yap, tıbbi tanı koyma. "
