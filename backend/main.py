@@ -1903,32 +1903,59 @@ VERİ ANALİZİ:
 
 YANIT FORMATI - SADECE JSON:
 {{
-  "current_status": {{
-    "health_profile": "Kullanıcının genel sağlık profili özeti",
-    "key_findings": "Önemli bulgular (lab + quiz birleşimi)",
-    "nutrition_goals": ["Hedef 1", "Hedef 2"]
+  "general_advice": "Kullanıcının durumuna göre genel beslenme önerisi paragrafı (2-3 cümle)",
+  "daily_calories": {{
+    "min": 2000,
+    "max": 2200,
+    "unit": "kcal"
   }},
-  "macro_recommendations": {{
-    "protein": "Günlük hedef ve genel açıklama",
-    "carbohydrate": "Günlük hedef ve genel açıklama",
-    "fat": "Günlük hedef ve genel açıklama"
+  "macro_distribution": {{
+    "carbohydrate": {{
+      "percentage": 40,
+      "label": "Karbonhidrat"
+    }},
+    "protein": {{
+      "percentage": 30,
+      "label": "Protein"
+    }},
+    "fat": {{
+      "percentage": 30,
+      "label": "Yağ"
+    }}
   }},
-  "food_recommendations": [
+  "recommended_supplements": [
     {{
-      "category": "Kategori (Protein, Vitamin vb.)",
-      "foods": ["Besin 1", "Besin 2", "Besin 3"],
-      "reason": "Neden önemli",
-      "tips": "Tüketim önerisi"
+      "name": "Vitamin D",
+      "dosage": "2000 IU",
+      "note": "Opsiyonel açıklama"
+    }},
+    {{
+      "name": "Omega-3",
+      "dosage": "Balık yağı veya alg bazlı",
+      "note": ""
     }}
   ],
-  "hydration": "Genel su ve sıvı tüketimi önerisi",
-  "meal_timing": [
-    "Genel öğün zamanlaması önerisi 1",
-    "Genel öğün zamanlaması önerisi 2"
+  "hydration": {{
+    "daily_target": "2.5-3L",
+    "label": "Günlük Su Tüketimi",
+    "tips": [
+      "Sabah kalktığınızda 1-2 bardak su",
+      "Her öğün öncesi 1 bardak su",
+      "Egzersiz sonrası ekstra 500 ml",
+      "İdrar rengi açık sarı olmalı"
+    ]
+  }},
+  "avoid_foods": [
+    "İşlenmiş gıdalar",
+    "Aşırı şeker tüketimi",
+    "Trans yağlar",
+    "Gazlı içecekler"
   ],
-  "practical_tips": [
-    "Uygulanabilir genel öneri 1",
-    "Uygulanabilir genel öneri 2"
+  "recommended_habits": [
+    "Düzenli öğün saatleri",
+    "Porsiyon kontrolü",
+    "Yavaş yemek yeme",
+    "Renkli sebze tüketimi"
   ]
 }}
 
