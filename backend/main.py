@@ -2977,7 +2977,7 @@ JSON formatında yanıt ver:
         raise HTTPException(status_code=500, detail=f"Test önerisi oluşturulurken hata: {str(e)}")
 
 # Metabolik Yaş Testi - Premium Plus (Test sonucu analizi)
-@app.post("/ai/premium-plus/metabolic-age-test", response_model=MetabolicAgeTestResponse)
+@app.post("/ai/premium-plus/metabolic-age-test")
 async def metabolic_age_test(
     req: MetabolicAgeTestRequest,
     current_user: str = Depends(get_current_user),
@@ -3053,25 +3053,80 @@ GÖREV: Bu kullanıcının metabolik yaş testi sonucunu analiz et ve longevity 
 Aşağıdaki JSON formatında yanıt ver:
 
 {{
-    "chronological_age": {req.chronological_age},
-    "metabolic_age": {req.metabolic_age},
-    "age_difference": {req.metabolic_age - req.chronological_age},
-    "biological_age_status": "[genç/yaşlı/normal]",
-    "longevity_score": [0-100 arası skor],
-    "health_span_prediction": "[sağlıklı yaşam süresi tahmini]",
-    "risk_factors": ["risk faktörü 1", "risk faktörü 2"],
-    "protective_factors": ["koruyucu faktör 1", "koruyucu faktör 2"],
-    "longevity_factors": [
-        {{
-            "factor_name": "Faktör adı",
-            "current_status": "Mevcut durum",
-            "impact_score": [1-10 arası],
-            "recommendation": "Öneri"
+    "longevity_report": {{
+        "biological_age": {{
+            "value": {req.metabolic_age},
+            "real_age": {req.chronological_age},
+            "difference": {req.metabolic_age - req.chronological_age},
+            "status": "[X yaş genç/yaşlı veya Optimal]"
+        }},
+        "health_score": {{
+            "value": [0-100 arası],
+            "label": "[Çok İyi/İyi/Orta/Kötü]",
+            "percentile": "[Üst %X'te]"
+        }},
+        "longopass_development_score": {{
+            "value": 0,
+            "note": "Birden fazla kapsamlı test analizi gerekmektedir"
+        }},
+        "metabolic_age": {{
+            "value": [hesaplanan değer],
+            "status": "[Harika/İyi/Orta/Kötü]"
         }}
-    ],
-    "personalized_recommendations": ["öneri 1", "öneri 2"],
-    "future_health_outlook": "[gelecek sağlık durumu tahmini]",
-    "analysis_summary": "[genel analiz özeti paragrafı]"
+    }},
+    "detailed_analysis": {{
+        "cardiovascular_health": {{
+            "status": "[Mükemmel/İyi/Orta/Kötü]",
+            "metrics": [
+                {{"name": "VO2 Max", "value": "X ml/kg/dk", "status": "✓"}},
+                {{"name": "Dinlenme Nabzı", "value": "X bpm", "status": "✓"}},
+                {{"name": "Kan Basıncı", "value": "X/Y mmHg", "status": "✓"}}
+            ]
+        }},
+        "metabolic_health": {{
+            "status": "[Mükemmel/İyi/Orta/Kötü]",
+            "metrics": [
+                {{"name": "HbA1c", "value": "X%", "status": "✓/⚠️"}},
+                {{"name": "Açlık Glukozu", "value": "X mg/dL", "status": "✓/⚠️"}}
+            ]
+        }},
+        "inflammation_profile": {{
+            "status": "[Mükemmel/İyi/Orta/Kötü]",
+            "metrics": [
+                {{"name": "hs-CRP", "value": "X mg/L", "status": "✓/⚠️"}},
+                {{"name": "Homosistein", "value": "X μmol/L", "status": "✓/⚠️"}}
+            ]
+        }},
+        "hormonal_balance": {{
+            "status": "[Mükemmel/İyi/Orta/Kötü]",
+            "metrics": [
+                {{"name": "Tiroid (TSH)", "value": "X mIU/L", "status": "✓/⚠️"}},
+                {{"name": "Vitamin D", "value": "X ng/mL", "status": "✓/⚠️"}}
+            ]
+        }},
+        "cognitive_health": {{
+            "status": "[Mükemmel/İyi/Orta/Kötü]",
+            "metrics": [
+                {{"name": "B12 Vitamini", "value": "X pg/mL", "status": "✓/⚠️"}},
+                {{"name": "Omega-3 İndeksi", "value": "X%", "status": "✓/⚠️"}}
+            ]
+        }},
+        "body_composition": {{
+            "status": "[Mükemmel/İyi/Orta/Kötü]",
+            "metrics": [
+                {{"name": "BMI", "value": "X", "status": "✓/⚠️"}},
+                {{"name": "Vücut Yağ Oranı", "value": "X%", "status": "✓/⚠️"}},
+                {{"name": "Kas Kütlesi", "value": "İdeal/Düşük/Yüksek", "status": "✓/⚠️"}}
+            ]
+        }}
+    }},
+    "personalized_improvements": [
+        {{
+            "category": "Kategori adı",
+            "recommendation": "Öneri metni",
+            "priority": "high/medium/low"
+        }}
+    ]
 }}
 
 ÖNEMLİ:
@@ -3148,22 +3203,11 @@ Sadece JSON formatında yanıt ver.""",
                 "analysis_summary": "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız 35, metabolik yaşınız 37 olarak ölçülmüştür. Bu 2 yaşlık fark, metabolizmanızın kronolojik yaşınızdan biraz daha hızlı yaşlandığını göstermektedir. Mevcut risk faktörleri (stres, egzersiz eksikliği) ve koruyucu faktörler (dengeli beslenme, düzenli uyku) dikkate alındığında, longevity skorunuz 75 olarak hesaplanmıştır. Bu skor, orta düzeyde sağlıklı yaşam süresi beklentisi anlamına gelmektedir. Stres yönetimi ve düzenli egzersiz programı ile metabolik yaşınızı iyileştirme potansiyeliniz bulunmaktadır."
             }
         
-        # Response oluştur
+        # Response oluştur - Yeni format
         response_data = {
             "success": True,
-            "message": "Metabolik yaş analizi tamamlandı",
-            "chronological_age": result.get("chronological_age", req.chronological_age),
-            "metabolic_age": result.get("metabolic_age", req.chronological_age),
-            "age_difference": result.get("age_difference", 0),
-            "biological_age_status": result.get("biological_age_status", "normal"),
-            "longevity_score": result.get("longevity_score", 75),
-            "health_span_prediction": result.get("health_span_prediction", "Analiz tamamlandı"),
-            "risk_factors": result.get("risk_factors", []),
-            "protective_factors": result.get("protective_factors", []),
-            "longevity_factors": result.get("longevity_factors", []),
-            "personalized_recommendations": result.get("personalized_recommendations", []),
-            "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
-            "analysis_summary": result.get("analysis_summary", "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi. Mevcut risk faktörleri ve koruyucu faktörler dikkate alınarak longevity skoru hesaplanmıştır. Detaylı analiz ve öneriler aşağıda sunulmuştur."),
+            "message": "Longevity raporu hazırlandı",
+            "report": result,
             "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
         }
         
