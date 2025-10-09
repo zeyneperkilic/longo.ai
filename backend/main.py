@@ -3046,20 +3046,20 @@ JSON Format (AYNEN BU YAPIYI KULLAN):
         {{
             "priority": 1,
             "title": "Enflamasyon Yönetimi",
-            "description": "hs-CRP seviyeniz hafif yüksek. Kronik enflamasyonu azaltmak longevity için kritik.",
-            "actions": ["Anti-enflamatuvar diyet", "Omega-3 takviyesi", "Stres yönetimi"]
+            "description": "hs-CRP hafif yüksek. Enflamasyonu azalt.",
+            "actions": ["Anti-enflamatuvar diyet", "Omega-3 (1000mg)", "Stres yönetimi"]
         }},
         {{
             "priority": 2,
-            "title": "Kardiyovasküler Optimizasyon",
-            "description": "Kardiyovasküler sağlığınız mükemmel, bu durumu korumak önemli.",
-            "actions": ["Haftada 150 dk kardiyo", "Zone 2 antrenmanları", "CoQ10 takviyesi"]
+            "title": "Kardiyovasküler Koruma",
+            "description": "Mükemmel durumu koru.",
+            "actions": ["150 dk/hafta kardiyo", "Zone 2 antrenman", "CoQ10 takviye"]
         }},
         {{
             "priority": 3,
-            "title": "Mitokondriyal Sağlık",
-            "description": "Hücresel enerji üretimini optimize edin.",
-            "actions": ["Aralıklı oruç 16:8", "PQQ ve CoQ10 takviyesi", "Soğuk maruziyeti"]
+            "title": "Mitokondriyal Destek",
+            "description": "Hücre enerjisini optimize et.",
+            "actions": ["16:8 oruç", "CoQ10 takviye", "Soğuk duş"]
         }}
     ],
     "personalized_recommendations": ["Öneri 1", "Öneri 2", "Öneri 3"],
@@ -3070,12 +3070,14 @@ JSON Format (AYNEN BU YAPIYI KULLAN):
 KRİTİK KURALLAR:
 - Sadece JSON formatında yanıt ver, başka hiçbir şey yazma
 - Her kategoriyi (6 tane) doldur
-- Her kategori için en az 1-2 metrik ver
+- Her kategori için SADECE 1-2 metrik ver (fazla değil!)
 - improvement_priorities'de 3 öncelik ver
+- Her öncelikte 2-3 aksiyon yeter (kısa tut!)
 - Gerçekçi değerler kullan
-- analysis_summary'de 4-5 cümle detaylı analiz yaz
+- analysis_summary'de 3-4 cümle yaz (kısa ve öz!)
 - JSON syntax'ına DİKKAT ET: Son element'ten sonra virgül KULLANMA
 - Tüm string'leri çift tırnak ile yaz
+- KISA VE ÖZ TUT! Uzun açıklamalar yapma!
 - Geçerli JSON formatı kullan
 """
     
