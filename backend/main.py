@@ -2999,63 +2999,101 @@ LAB TEST SONUÇLARI (Biyokimyasal Durum):
     
     ai_context += f"""
 
-GÖREV: Bu kullanıcının metabolik yaş testi sonucunu analiz et ve longevity raporu oluştur.
+GÖREV: Bu kullanıcının metabolik yaş testi sonucunu analiz et ve DETAYLI longevity raporu oluştur.
 
 Aşağıdaki JSON formatında yanıt ver:
 
 {{
     "chronological_age": {req.chronological_age},
     "metabolic_age": {req.metabolic_age},
+    "biological_age": [biyolojik yaş hesapla],
     "age_difference": {req.metabolic_age - req.chronological_age},
     "biological_age_status": "[genç/yaşlı/normal]",
     "longevity_score": [0-100 arası skor],
+    "longevity_score_status": "[Çok İyi/İyi/Orta/Zayıf]",
     "health_span_prediction": "[sağlıklı yaşam süresi tahmini]",
+    "detailed_analysis": {{
+        "cardiovascular_health": {{
+            "status": "[Mükemmel/İyi/Orta/Zayıf]",
+            "metrics": [
+                {{"name": "VO2 Max", "value": "45 ml/kg/dk", "status": "Mükemmel"}},
+                {{"name": "Dinlenme Nabzı", "value": "58 bpm", "status": "İyi"}}
+            ]
+        }},
+        "metabolic_health": {{
+            "status": "[Mükemmel/İyi/Orta/Zayıf]",
+            "metrics": [
+                {{"name": "HbA1c", "value": "5.2%", "status": "İyi"}},
+                {{"name": "Açlık Glukozu", "value": "88 mg/dL", "status": "Optimal"}}
+            ]
+        }},
+        "inflammation_profile": {{
+            "status": "[Düşük/Orta/Yüksek]",
+            "metrics": []
+        }},
+        "hormonal_balance": {{
+            "status": "[Optimal/İyi/Orta/Zayıf]",
+            "metrics": []
+        }},
+        "cognitive_health": {{
+            "status": "[Mükemmel/İyi/Orta/Zayıf]",
+            "metrics": []
+        }},
+        "body_composition": {{
+            "status": "[İdeal/İyi/Orta/Zayıf]",
+            "metrics": []
+        }}
+    }},
     "risk_factors": ["risk faktörü 1", "risk faktörü 2"],
     "protective_factors": ["koruyucu faktör 1", "koruyucu faktör 2"],
-    "longevity_factors": [
+    "improvement_priorities": [
         {{
-            "factor_name": "Faktör adı",
-            "current_status": "Mevcut durum",
-            "impact_score": [1-10 arası],
-            "recommendation": "Öneri"
+            "priority": 1,
+            "title": "Öncelik başlığı",
+            "description": "Detaylı açıklama",
+            "actions": ["Aksiyon 1", "Aksiyon 2", "Aksiyon 3"]
         }}
     ],
     "personalized_recommendations": ["öneri 1", "öneri 2"],
     "future_health_outlook": "[gelecek sağlık durumu tahmini]",
-    "analysis_summary": "[genel analiz özeti paragrafı]"
+    "analysis_summary": "[DETAYLI genel analiz özeti paragrafı - en az 3-4 cümle]"
 }}
 
 ÖNEMLİ:
-- Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) analiz et
-- Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
-- Risk ve koruyucu faktörleri belirle
-- Kişiselleştirilmiş öneriler ver
-- Gelecek sağlık durumunu tahmin et
+- DETAYLI analiz yap, her kategori için spesifik metrikler ver
+- Kardiyovasküler, Metabolik, Enflamasyon, Hormonal, Bilişsel ve Vücut Kompozisyonu kategorilerini doldur
+- improvement_priorities'de öncelik sırasına göre 3 öneri ver
+- analysis_summary'de DETAYLI ANALİZ yaz (en az 3-4 cümle)
 """
     
     # AI çağrısı
     try:
         from backend.openrouter_client import get_ai_response
         ai_response = await get_ai_response(
-            system_prompt="""Sen bir longevity uzmanısın. Kullanıcının metabolik yaş testi sonucunu analiz ederek detaylı longevity raporu oluşturuyorsun.
+            system_prompt="""Sen bir longevity uzmanısın. Kullanıcının metabolik yaş testi sonucunu analiz ederek DETAYLI, KATEGORİ BAZLI longevity raporu oluşturuyorsun.
 
 GÖREV:
 - Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) kapsamlı analiz et
+- Biyolojik yaşı hesapla (metabolik yaş + diğer faktörler)
 - Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
+- 6 kategori için detaylı analiz yap: Kardiyovasküler, Metabolik, Enflamasyon, Hormonal, Bilişsel, Vücut Kompozisyonu
+- Her kategori için spesifik metrikler ver (ör: VO2 Max, HbA1c, hs-CRP)
 - Risk ve koruyucu faktörleri detaylı belirle
-- Kişiselleştirilmiş öneriler ver
+- İyileştirme önceliklerini sırala (Öncelik 1, 2, 3)
+- Her öncelik için: başlık, açıklama, 3-4 aksiyon adımı
 - Gelecek sağlık durumunu tahmin et
 - analysis_summary'de DETAYLI ANALİZ PARAGRAFI yaz
 
 ÖNEMLİ KURALLAR:
-- analysis_summary'de en az 3-4 cümlelik detaylı analiz paragrafı yaz
+- detailed_analysis'de 6 kategoriyi doldur, her birinde status + metrikler olmalı
+- improvement_priorities'de 3 öncelik ver, her birinde detaylı açıklama + aksiyonlar
+- analysis_summary'de en az 4-5 cümlelik detaylı analiz paragrafı yaz
 - Metabolik yaş farkının anlamını açıkla
 - Longevity skorunun gerekçesini belirt
-- Risk faktörlerinin etkilerini detaylandır
-- Koruyucu faktörlerin faydalarını açıkla
-- Gelecek projeksiyonunu gerekçelendir
+- Metrikler için gerçekçi değerler ver
+- Her kategori için spesifik öneriler ver
 
-Sadece JSON formatında yanıt ver.""",
+Sadece JSON formatında yanıt ver, markdown kullanma.""",
             user_message=ai_context
         )
         
