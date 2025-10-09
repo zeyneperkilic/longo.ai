@@ -1903,57 +1903,41 @@ VERİ ANALİZİ:
 
 YANIT FORMATI - SADECE JSON:
 {{
-  "current_status_analysis": {{
-    "health_profile": "Quiz verilerinden çıkarılan sağlık profili",
-    "lab_findings": "Lab sonuçlarından tespit edilen eksiklikler/riskler",
-    "overall_health": "Genel sağlık durumu değerlendirmesi",
-    "risk_factors": ["Risk faktörü 1", "Risk faktörü 2"]
+  "current_status": {{
+    "health_profile": "Kullanıcının genel sağlık profili özeti",
+    "key_findings": "Önemli bulgular (lab + quiz birleşimi)",
+    "nutrition_goals": ["Hedef 1", "Hedef 2"]
   }},
-  "detailed_nutrition_recommendations": {{
-    "macro_distribution": {{
-      "protein": "X-Y gram/gün (Neden önemli açıklaması)",
-      "carbohydrate": "X-Y gram/gün (Neden önemli açıklaması)",
-      "fat": "X-Y gram/gün (Neden önemli açıklaması)"
-    }},
-    "deficiency_foods": [
-      {{
-        "nutrient": "Vitamin/mineral adı",
-        "reason": "Neden gerekli",
-        "food_sources": ["Besin 1", "Besin 2"],
-        "daily_target": "Hedef miktar"
-      }}
-    ],
-    "meal_planning": {{
-      "breakfast": ["Öneri 1", "Öneri 2"],
-      "lunch": ["Öneri 1", "Öneri 2"],
-      "dinner": ["Öneri 1", "Öneri 2"],
-      "snacks": ["Öneri 1", "Öneri 2"]
-    }},
-    "hydration": "Su tüketimi ve hidrasyon stratejileri",
-    "food_combinations": ["Emilim ipucu 1", "Emilim ipucu 2"]
+  "macro_recommendations": {{
+    "protein": "Günlük hedef ve genel açıklama",
+    "carbohydrate": "Günlük hedef ve genel açıklama",
+    "fat": "Günlük hedef ve genel açıklama"
   }},
-  "weekly_menu": {{
-    "sample_day": {{
-      "breakfast": "Kahvaltı menüsü (porsiyon ile)",
-      "lunch": "Öğle yemeği menüsü (porsiyon ile)",
-      "dinner": "Akşam yemeği menüsü (porsiyon ile)"
+  "food_recommendations": [
+    {{
+      "category": "Kategori (Protein, Vitamin vb.)",
+      "foods": ["Besin 1", "Besin 2", "Besin 3"],
+      "reason": "Neden önemli",
+      "tips": "Tüketim önerisi"
     }}
-  }},
-  "performance_nutrition": {{
-    "energy_foods": ["Besin 1", "Besin 2"],
-    "muscle_building": ["Protein kaynağı 1", "Protein kaynağı 2"],
-    "anti_inflammatory": ["Besin 1", "Besin 2"],
-    "immune_boosting": ["Besin 1", "Besin 2"]
-  }},
-  "practical_tips": ["Uygulanabilir öneri 1", "Uygulanabilir öneri 2"]
+  ],
+  "hydration": "Genel su ve sıvı tüketimi önerisi",
+  "meal_timing": [
+    "Genel öğün zamanlaması önerisi 1",
+    "Genel öğün zamanlaması önerisi 2"
+  ],
+  "practical_tips": [
+    "Uygulanabilir genel öneri 1",
+    "Uygulanabilir genel öneri 2"
+  ]
 }}
 
 ÖNEMLİ KURALLAR:
 - SADECE JSON formatında yanıt ver
 - Markdown kullanma (###, **, - gibi)
 - KESINLIKLE link verme
+- GENEL öneriler ver, spesifik günlük menü/program verme
 - Her öneri için NEDEN açıkla
-- Detaylı ve kapsamlı analiz yap
 - Uygulanabilir ve pratik öneriler ver
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
@@ -1981,32 +1965,12 @@ KULLANICI BİLGİLERİ:
     # Lab analizlerini ekle
     if lab_tests:
         user_message += f"\nLAB ANALİZLERİ:\n"
-        for test in lab_tests[:2]:  # İlk 2 test
+        for test in lab_tests[:5]:  # İlk 5 test
             user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
-    
-    # Global context'ten tüm verileri ekle
-    if user_context:
-        # Quiz verilerini ekle - TÜM quiz verilerini ekle
-        quiz_data_found = False
-        for key, value in user_context.items():
-            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
-                if not quiz_data_found:
-                    user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
-                    quiz_data_found = True
-                user_message += f"- {key.upper()}: {value}\n"
-        
-        # Lab verilerini ekle - TÜM lab verilerini ekle
-        lab_data_found = False
-        for key, value in user_context.items():
-            if value and key.startswith(('lab_', 'son_lab_', 'test_', 'vitamin_', 'mineral_')):
-                if not lab_data_found:
-                    user_message += f"\nGLOBAL LAB VERİLERİ:\n"
-                    lab_data_found = True
-                user_message += f"- {key.upper()}: {value}\n"
     
     user_message += f"""
 
-Lütfen bu kullanıcı için DETAYLI beslenme önerileri hazırla. Sadece beslenme odaklı, kapsamlı ve uygulanabilir öneriler ver."""
+Lütfen bu kullanıcı için GENEL beslenme önerileri hazırla. Spesifik günlük menü verme, genel beslenme prensipleri ver."""
 
     # AI çağrısı
     try:
@@ -2140,68 +2104,49 @@ VERİ ANALİZİ:
 
 YANIT FORMATI - SADECE JSON:
 {{
-  "current_status_analysis": {{
-    "fitness_profile": "Quiz verilerinden çıkarılan fitness profili",
-    "health_status": "Lab sonuçlarından tespit edilen sağlık durumu",
-    "current_condition": "Mevcut kondisyon seviyesi değerlendirmesi",
-    "exercise_goals": ["Hedef 1", "Hedef 2"],
-    "limitations": ["Kısıtlama 1", "Kısıtlama 2"]
+  "current_status": {{
+    "fitness_profile": "Kullanıcının genel fitness profili özeti",
+    "key_findings": "Önemli bulgular (lab + quiz birleşimi)",
+    "exercise_goals": ["Hedef 1", "Hedef 2"]
   }},
-  "detailed_exercise_program": {{
-    "weekly_schedule": {{
-      "frequency": "Haftada X gün",
-      "duration": "Her seans Y dakika",
-      "structure": "Program yapısı açıklaması"
-    }},
+  "exercise_recommendations": {{
     "strength_training": {{
-      "exercises": [
-        {{
-          "name": "Egzersiz adı",
-          "sets": "X set",
-          "reps": "Y tekrar",
-          "reason": "Neden önemli",
-          "tips": "Form ve teknik önerileri"
-        }}
-      ],
-      "muscle_groups": ["Grup 1", "Grup 2"],
-      "progression": "Progresyon stratejisi"
+      "overview": "Genel güç antrenmanı yaklaşımı",
+      "frequency": "Haftada kaç gün",
+      "key_exercises": ["Egzersiz türü 1", "Egzersiz türü 2", "Egzersiz türü 3"],
+      "progression_tips": "Genel progresyon stratejisi"
     }},
     "cardiovascular": {{
+      "overview": "Genel kardiyovasküler antrenman yaklaşımı",
+      "frequency": "Haftada kaç gün",
       "activities": ["Aktivite 1", "Aktivite 2"],
-      "intensity": "HIIT ve steady-state dengesi",
-      "heart_rate_zones": "Kalp atış hızı hedefleri",
-      "duration": "Süre önerileri"
+      "intensity_guide": "Yoğunluk rehberi"
     }},
-    "flexibility_mobility": {{
-      "stretching": ["Stretching 1", "Stretching 2"],
-      "daily_routine": ["Rutin 1", "Rutin 2"],
-      "recovery": "Recovery egzersizleri"
+    "flexibility": {{
+      "overview": "Esneklik ve mobilite önerisi",
+      "activities": ["Aktivite 1", "Aktivite 2"]
     }}
   }},
-  "weekly_plan": {{
-    "monday": "Pazartesi programı",
-    "tuesday": "Salı programı",
-    "wednesday": "Çarşamba programı",
-    "thursday": "Perşembe programı",
-    "friday": "Cuma programı",
-    "saturday": "Cumartesi programı",
-    "sunday": "Pazar programı"
-  }},
-  "performance_recovery": {{
-    "pre_workout": ["Öneri 1", "Öneri 2"],
-    "post_workout": ["Öneri 1", "Öneri 2"],
-    "sleep": "Uyku önerileri",
-    "injury_prevention": ["Öneri 1", "Öneri 2"]
-  }},
-  "practical_tips": ["Motivasyon ipucu 1", "Sürdürülebilirlik ipucu 2"]
+  "recovery_tips": [
+    "Genel toparlanma önerisi 1",
+    "Genel toparlanma önerisi 2"
+  ],
+  "safety_considerations": [
+    "Güvenlik önerisi 1",
+    "Güvenlik önerisi 2"
+  ],
+  "practical_tips": [
+    "Uygulanabilir genel öneri 1",
+    "Uygulanabilir genel öneri 2"
+  ]
 }}
 
 ÖNEMLİ KURALLAR:
 - SADECE JSON formatında yanıt ver
 - Markdown kullanma (###, **, - gibi)
 - KESINLIKLE link verme
+- GENEL öneriler ver, spesifik günlük/haftalık program verme
 - Her öneri için NEDEN açıkla
-- Spesifik egzersiz hareketleri ve set/tekrar sayıları ver
 - Güvenlik öncelikli yaklaşım
 
 DİL: SADECE TÜRKÇE YANIT VER!"""
@@ -2229,32 +2174,12 @@ KULLANICI BİLGİLERİ:
     # Lab analizlerini ekle
     if lab_tests:
         user_message += f"\nLAB ANALİZLERİ:\n"
-        for test in lab_tests[:2]:  # İlk 2 test
+        for test in lab_tests[:5]:  # İlk 5 test
             user_message += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
-    
-    # Global context'ten tüm verileri ekle
-    if user_context:
-        # Quiz verilerini ekle - TÜM quiz verilerini ekle
-        quiz_data_found = False
-        for key, value in user_context.items():
-            if value and key.startswith(('yas', 'cinsiyet', 'hedef', 'aktivite', 'boy', 'kilo', 'quiz_', 'beslenme', 'hastalik', 'ilac')):
-                if not quiz_data_found:
-                    user_message += f"\nGLOBAL QUIZ VERİLERİ:\n"
-                    quiz_data_found = True
-                user_message += f"- {key.upper()}: {value}\n"
-        
-        # Lab verilerini ekle - TÜM lab verilerini ekle
-        lab_data_found = False
-        for key, value in user_context.items():
-            if value and key.startswith(('lab_', 'son_lab_', 'test_', 'vitamin_', 'mineral_')):
-                if not lab_data_found:
-                    user_message += f"\nGLOBAL LAB VERİLERİ:\n"
-                    lab_data_found = True
-                user_message += f"- {key.upper()}: {value}\n"
     
     user_message += f"""
 
-Lütfen bu kullanıcı için DETAYLI egzersiz önerileri hazırla. Sadece egzersiz odaklı, kapsamlı ve uygulanabilir öneriler ver."""
+Lütfen bu kullanıcı için GENEL egzersiz önerileri hazırla. Spesifik günlük/haftalık program verme, genel egzersiz prensipleri ver."""
 
     # AI çağrısı
     try:
