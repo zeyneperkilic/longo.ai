@@ -2131,41 +2131,72 @@ VERİ ANALİZİ:
 
 YANIT FORMATI - SADECE JSON:
 {{
-  "current_status": {{
-    "fitness_profile": "Kullanıcının genel fitness profili özeti",
-    "key_findings": "Önemli bulgular (lab + quiz birleşimi)",
-    "exercise_goals": ["Hedef 1", "Hedef 2"]
-  }},
-  "exercise_recommendations": {{
-    "strength_training": {{
-      "overview": "Genel güç antrenmanı yaklaşımı",
-      "frequency": "Haftada kaç gün",
-      "key_exercises": ["Egzersiz türü 1", "Egzersiz türü 2", "Egzersiz türü 3"],
-      "progression_tips": "Genel progresyon stratejisi"
+  "general_advice": "Kullanıcının durumuna göre genel egzersiz önerisi paragrafı (2-3 cümle)",
+  "lifestyle_tips": {{
+    "sleep_recovery": {{
+      "title": "Uyku ve Toparlanma",
+      "target": "7-9 saat kaliteli uyku",
+      "tips": [
+        "Aynı saatlerde yatıp kalkın",
+        "Yatak odası serin, karanlık ve sessiz olmalı",
+        "Yatmadan 2 saat önce ekran kullanımını azaltın"
+      ]
     }},
-    "cardiovascular": {{
-      "overview": "Genel kardiyovasküler antrenman yaklaşımı",
-      "frequency": "Haftada kaç gün",
-      "activities": ["Aktivite 1", "Aktivite 2"],
-      "intensity_guide": "Yoğunluk rehberi"
+    "daily_activity": {{
+      "title": "Günlük Aktivite",
+      "tips": [
+        "Günde en az 8000-10000 adım hedefleyin",
+        "Oturma süresini her saat bölün (5 dk hareket)",
+        "Merdiven kullanmayı tercih edin",
+        "Parkta daha uzağa park edin"
+      ]
     }},
-    "flexibility": {{
-      "overview": "Esneklik ve mobilite önerisi",
-      "activities": ["Aktivite 1", "Aktivite 2"]
+    "stress_management": {{
+      "title": "Stres Yönetimi",
+      "tips": [
+        "Günlük 10 dakika meditasyon veya nefes egzersizi",
+        "Doğada vakit geçirin",
+        "Hobilerinize zaman ayırın",
+        "Sosyal bağlantılarınızı güçlendirin"
+      ]
+    }},
+    "hydration": {{
+      "title": "Hidrasyon",
+      "tips": [
+        "Günde en az 2-3 litre su için",
+        "Antrenman sırasında sık sık su için",
+        "Kafein alımını dengeleyin"
+      ]
+    }},
+    "consistency": {{
+      "title": "Düzenlilik",
+      "tips": [
+        "Egzersiz rutininize sadık kalın",
+        "Kaçırılan günleri telafi etmeye çalışmayın",
+        "İlerlemenizi kaydedin",
+        "Haftalık hedefler belirleyin"
+      ]
+    }},
+    "body_awareness": {{
+      "title": "Vücut Dinleme",
+      "tips": [
+        "Aşırı yorgunluk hissediyorsanız ekstra dinlenme alın",
+        "Ağrı ve rahatsızlıkları ciddiye alın",
+        "Kademeli ilerleme prensibine uyun",
+        "Overtraining belirtilerine dikkat edin"
+      ]
+    }},
+    "motivation": {{
+      "title": "Motivasyon İpuçları",
+      "tips": [
+        "Gerçekçi hedefler belirleyin",
+        "İlerlemenizi fotoğraflarla kaydedin",
+        "Egzersiz arkadaşı bulun",
+        "Başarılarınızı kutlayın",
+        "Çeşitlilik katın, sıkılmayın"
+      ]
     }}
-  }},
-  "recovery_tips": [
-    "Genel toparlanma önerisi 1",
-    "Genel toparlanma önerisi 2"
-  ],
-  "safety_considerations": [
-    "Güvenlik önerisi 1",
-    "Güvenlik önerisi 2"
-  ],
-  "practical_tips": [
-    "Uygulanabilir genel öneri 1",
-    "Uygulanabilir genel öneri 2"
-  ]
+  }}
 }}
 
 ÖNEMLİ KURALLAR:
