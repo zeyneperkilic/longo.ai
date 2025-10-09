@@ -3178,4 +3178,91 @@ Sadece JSON formatında yanıt ver.""",
             "longevity_factors": result.get("longevity_factors", []),
             "personalized_recommendations": result.get("personalized_recommendations", []),
             "future_health_outlook": result.get("future_health_outlook", "Analiz tamamlandı"),
-            "analysis_summary": result.get("analysi
+            "analysis_summary": result.get("analysis_summary", "Metabolik yaş analizi tamamlandı. Kronolojik yaşınız ile metabolik yaşınız arasındaki fark değerlendirildi. Mevcut risk faktörleri ve koruyucu faktörler dikkate alınarak longevity skoru hesaplanmıştır. Detaylı analiz ve öneriler aşağıda sunulmuştur."),
+            "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+        }
+        
+        # AI mesajını kaydet
+        create_ai_message(
+            db=db,
+            external_user_id=x_user_id,
+            message_type="metabolic_age_test",
+            request_payload=req.model_dump(),
+            response_payload=response_data,
+            model_used="metabolic_age_ai"
+        )
+        
+        return response_data
+        
+    except Exception as e:
+        print(f"Metabolik yaş testi hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Metabolik yaş analizi sırasında hata: {str(e)}")
+
+# Video Call Endpoints
+@app.post("/ai/premium-plus/video-call/join")
+async def join_video_call(
+    payload: dict = Body(...),
+    current_user: str = Depends(get_current_user),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None)
+):
+    """Video call'a katılmak için Daily.co token oluştur"""
+    try:
+        # Premium Plus kontrolü
+        user_plan = get_user_plan_from_headers(x_user_level)
+        if user_plan != "premium_plus":
+            raise HTTPException(status_code=403, detail="Bu özellik sadece Premium Plus üyeler için")
+        
+        meeting_id = payload.get("meeting_id")
+        if not meeting_id:
+            raise HTTPException(status_code=400, detail="meeting_id gerekli")
+        
+        # Daily.co API key (environment variable'dan alınacak)
+        daily_api_key = os.getenv("DAILY_API_KEY")
+        print(f"🔍 DEBUG: Daily API Key var mı: {bool(daily_api_key)}")
+        print(f"🔍 DEBUG: Daily API Key uzunluğu: {len(daily_api_key) if daily_api_key else 0}")
+        if not daily_api_key:
+            raise HTTPException(status_code=500, detail="Daily.co API key bulunamadı")
+        
+        # Mock room name (gerçekte database'den alınacak)
+        room_name = f"longopass-meeting-{meeting_id}"
+        
+        # Daily.co meeting token oluştur
+        import requests
+        print(f"🔍 DEBUG: Room name: {room_name}")
+        print(f"🔍 DEBUG: API key başlangıcı: {daily_api_key[:10] if daily_api_key else 'YOK'}...")
+        
+        token_response = requests.post(
+            "https://api.daily.co/v1/meeting-tokens",
+            headers={
+                "Authorization": f"Bearer {daily_api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "properties": {
+                    "room_name": room_name,
+                    "is_owner": False,
+                    "user_name": "Hasta"
+                }
+            }
+        )
+        
+        print(f"🔍 DEBUG: Daily.co response status: {token_response.status_code}")
+        print(f"🔍 DEBUG: Daily.co response text: {token_response.text}")
+        
+        if token_response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Daily.co token oluşturulamadı: {token_response.status_code} - {token_response.text}")
+        
+        token_data = token_response.json()
+        print(f"🔍 DEBUG: Token data: {token_data}")
+        
+        return {
+            "success": True,
+            "meetingUrl": f"https://longopass.daily.co/{room_name}",
+            "token": token_data.get("token")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Video call hatası: {str(e)}")
