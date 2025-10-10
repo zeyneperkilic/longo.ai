@@ -829,7 +829,8 @@ async def chat_message(req: ChatMessageRequest,
     xml_products = get_xml_products()
     supplements_list = xml_products
     
-    # Selamlama sonrası özel yanıt kontrolü (txt zaten yukarıda tanımlı)
+    # Selamlama sonrası özel yanıt kontrolü
+    txt = message_text.lower().strip()
     pure_greeting_keywords = [
         "selam", "naber", "günaydın", "merhaba",
         "iyi akşamlar", "iyi aksamlar", "iyi geceler", "iyi günler", "iyi gunler"
