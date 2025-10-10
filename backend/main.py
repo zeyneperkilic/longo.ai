@@ -801,6 +801,11 @@ async def chat_message(req: ChatMessageRequest,
     # Health Guard ile kategori kontrolü
     ok, msg = guard_or_message(message_text)
     
+    # XML'den supplement listesini ekle - Premium chat'te de ürün önerileri için
+    # XML'den ürünleri çek (free chat'teki gibi)
+    xml_products = get_xml_products()
+    supplements_list = xml_products
+    
     # Hafıza soruları artık HEALTH kategorisinde, özel işlem yok
     memory_bypass = False
     if not ok:
@@ -952,8 +957,9 @@ async def chat_message(req: ChatMessageRequest,
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
 
     # XML'den supplement listesini ekle - AI'ya ürün önerileri için
-    from backend.config import SUPPLEMENTS_LIST
-    supplements_list = SUPPLEMENTS_LIST
+    # XML'den ürünleri çek (free chat'teki gibi)
+    xml_products = get_xml_products()
+    supplements_list = xml_products
     
     # Supplement listesi kuralları (quiz'deki gibi)
     system_prompt += "\n- Sakın ürünlerin id'lerini kullanıcıya gösterme!"
@@ -1034,6 +1040,25 @@ async def chat_message(req: ChatMessageRequest,
     
     # Kullanıcının güncel mesajını ekle
     history.append({"role": "user", "content": message_text})
+    
+    # XML supplement listesini context olarak ekle (free chat'teki gibi)
+    categories = list(set([s['category'] for s in supplements_list]))
+    supplements_info = f"\n\nTOPLAM ÜRÜN: {len(supplements_list)} supplement\n"
+    supplements_info += f"KATEGORİLER: {', '.join(categories)}\n"
+    supplements_info += " AI: Aşağıdaki kategorilere göre gruplandırılmış ürünlerden en uygun olanları seç!\n\n"
+    
+    # Her kategori için ürünleri grupla
+    for category in categories:
+        category_products = [s for s in supplements_list if s['category'] == category]
+        supplements_info += f" {category.upper()} ({len(category_products)} ürün):\n"
+        for i, supplement in enumerate(category_products, 1):
+            supplements_info += f"  {i}. {supplement['name']}\n"
+        supplements_info += "\n"
+    
+    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin için listedeki', 'listede var', 'Senin listende' gibi ifadeler kullanma! Link verme! Ürün ID'lerini kullanıcıya gösterme!\n\n🎯 SUPPLEMENT ÖNERİSİ KURALLARI:\n- SADECE kullanıcının gerçek ihtiyacı olan supplementleri öner!\n- Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme!\n- Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al!\n- Riskli durumlar varsa o supplement'i önerme!\n- Kullanıcı özel olarak supplement istemiyorsa, sadece gerçekten gerekli olanları öner!\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
+    
+    # Supplement listesini context olarak ekle
+    history.append({"role": "user", "content": supplements_info})
 
     # parallel chat with synthesis
     start = time.time()
