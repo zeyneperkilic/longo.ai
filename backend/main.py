@@ -746,6 +746,11 @@ async def chat_message(req: ChatMessageRequest,
     # Plan kontrolü
     user_plan = get_user_plan_from_headers(x_user_level)
     
+    # DEBUG: User level ve plan kontrolü
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"🔍 DEBUG CHAT: x_user_level={x_user_level}, user_plan={user_plan}")
+    
     is_premium = user_plan in ["premium", "premium_plus"]
     
     # Guest ve Free kullanıcılar için limiting
