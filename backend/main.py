@@ -798,27 +798,32 @@ async def chat_message(req: ChatMessageRequest,
     if not message_text:
         raise HTTPException(400, "Mesaj metni gerekli")
     
-    # Health Guard ile kategori kontrolü
-    ok, msg = guard_or_message(message_text)
+    # Ekstra kontrol: "Sen kimsin, adın ne" gibi basit AI kimlik sorularını health guard'dan önce kontrol et
+    txt = message_text.lower().strip()
+    ai_identity_keywords = [
+        "sen kimsin", "kimsin", "sen kimsin?", "kimsin?", 
+        "adın ne", "adın ne?", "ismin ne", "ismin ne?",
+        "sen nesin", "sen ne yapıyorsun", "neler yapabiliyorsun",
+        "ne yapabilirsin", "hangi konularda yardımcı olabilirsin"
+    ]
+    
+    # Bu sorular için health guard'ı bypass et
+    bypass_health_guard = any(kw in txt for kw in ai_identity_keywords)
+    
+    # Health Guard ile kategori kontrolü (kimlik soruları için bypass)
+    if not bypass_health_guard:
+        ok, msg = guard_or_message(message_text)
+        if not ok:
+            # Fixed message - sadece ai_messages'a kaydedilecek
+            reply = msg
+            return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
     
     # XML'den supplement listesini ekle - Premium chat'te de ürün önerileri için
     # XML'den ürünleri çek (free chat'teki gibi)
     xml_products = get_xml_products()
     supplements_list = xml_products
     
-    # Hafıza soruları artık HEALTH kategorisinde, özel işlem yok
-    memory_bypass = False
-    if not ok:
-        # Fixed message - sadece ai_messages'a kaydedilecek
-        reply = msg
-        return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
-    
-    # Hafıza soruları artık normal AI model ile yanıtlanıyor
-
-    
-    
-    # Selamlama sonrası özel yanıt kontrolü
-    txt = message_text.lower().strip()
+    # Selamlama sonrası özel yanıt kontrolü (txt zaten yukarıda tanımlı)
     pure_greeting_keywords = [
         "selam", "naber", "günaydın", "merhaba",
         "iyi akşamlar", "iyi aksamlar", "iyi geceler", "iyi günler", "iyi gunler"
