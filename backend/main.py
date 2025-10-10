@@ -748,10 +748,13 @@ async def chat_message(req: ChatMessageRequest,
     
     # DEBUG: User level ve plan kontrolü
     import logging
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
+    print(f"🔍 DEBUG CHAT: x_user_level={x_user_level}, user_plan={user_plan}")
     logger.info(f"🔍 DEBUG CHAT: x_user_level={x_user_level}, user_plan={user_plan}")
     
     is_premium = user_plan in ["premium", "premium_plus"]
+    print(f"🔍 DEBUG CHAT: is_premium={is_premium}")
     
     # Guest ve Free kullanıcılar için limiting
     client_ip = request.client.host if request else "unknown"
