@@ -1027,13 +1027,17 @@ async def chat_message(req: ChatMessageRequest,
     # Kullanıcının güncel mesajını ekle
     history.append({"role": "user", "content": message_text})
     
-    # XML supplement listesini context olarak ekle (free chat gibi basit format)
-    supplements_info = f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(supplements_list)} ürün):\n"
-    for i, product in enumerate(supplements_list, 1):
-        category = product.get('category', 'Kategori Yok')
-        supplements_info += f"{i}. {product['name']} ({category})\n"
-    supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
-    history.append({"role": "user", "content": supplements_info})
+    # XML supplement listesini SADECE kullanıcı istediğinde ekle
+    supplement_keywords = ["supplement", "takviye", "vitamin", "öner", "öneri", "hangi", "ne alayım", "ürün", "mineral", "besin", "ne önerirsin"]
+    is_supplement_request = any(keyword in message_text.lower() for keyword in supplement_keywords)
+    
+    if is_supplement_request:
+        supplements_info = f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(supplements_list)} ürün):\n"
+        for i, product in enumerate(supplements_list, 1):
+            category = product.get('category', 'Kategori Yok')
+            supplements_info += f"{i}. {product['name']} ({category})\n"
+        supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
+        history.append({"role": "user", "content": supplements_info})
 
     # parallel chat with synthesis
     start = time.time()
