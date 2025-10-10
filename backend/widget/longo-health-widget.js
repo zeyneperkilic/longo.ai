@@ -6,7 +6,9 @@
     function initWidget() {
         // Siteden userLevel gelip gelmediğini kontrol et
         // Ideasoft'ta gerçek değerler gelecek, yoksa guest (null) olarak ayarla
+        console.log('🔍 DEBUG: window.longoUserLevel before:', window.longoUserLevel);
         window.longoUserLevel = window.longoUserLevel || null; // Siteden gelmezse null (guest)
+        console.log('🔍 DEBUG: window.longoUserLevel after:', window.longoUserLevel);
         window.longoRealUserId = window.longoRealUserId || null; // Premium kullanıcılar için gerçek user ID
         
         // User plan'ı user level'a göre otomatik belirle
