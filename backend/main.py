@@ -842,16 +842,17 @@ async def chat_message(req: ChatMessageRequest,
         return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
 
     # Chat history'yi ai_messages'tan al (Message tablosu yerine)
+    # TÜM chat mesajlarını al - conversation_id'ye bakmadan (premium özellik: her şeyi hatırlar)
     chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=CHAT_HISTORY_LIMIT)
     
-    # ai_messages formatını history formatına çevir - sadece bu conversation'a ait
+    # ai_messages formatını history formatına çevir - conversation_id'ye bakmadan
     rows = []
     for msg in chat_messages:
-        # User message - conversation_id kontrolü (string/int karşılaştırması)
-        if msg.request_payload and "message" in msg.request_payload and str(msg.request_payload.get("conversation_id")) == str(conversation_id):
+        # User message
+        if msg.request_payload and "message" in msg.request_payload:
             rows.append({"role": "user", "content": msg.request_payload["message"], "created_at": msg.created_at})
-        # Assistant message - aynı conversation_id'ye ait olmalı
-        if msg.response_payload and "reply" in msg.response_payload and msg.request_payload and str(msg.request_payload.get("conversation_id")) == str(conversation_id):
+        # Assistant message
+        if msg.response_payload and "reply" in msg.response_payload:
             rows.append({"role": "assistant", "content": msg.response_payload["reply"], "created_at": msg.created_at})
     
     # Conversation history'yi tarih sırasına göre sırala
