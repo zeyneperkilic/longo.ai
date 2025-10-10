@@ -30,8 +30,18 @@ def classify_topic_simple(text: str) -> str:
     """LLM-Centric 2 kategorili sınıflandırma: SAFE vs BLOCK"""
     txt = (text or "").lower().strip()
     
-    # SADECE çok net, kısa selamlamalar için hızlı izin
-    if txt in ["naber", "günaydın", "gunaydin", "selam", "merhaba", "sen kimsin", "kimsin", "sen kimsin?", "kimsin?"]:
+    # SADECE çok net, kısa selamlamalar ve AI kimlik soruları için hızlı izin
+    safe_quick_list = [
+        "naber", "günaydın", "gunaydin", "selam", "merhaba",
+        "sen kimsin", "kimsin", "sen kimsin?", "kimsin?",
+        "adın ne", "adın ne?", "ismin ne", "ismin ne?",
+        "senin adın ne", "senin ismin ne", "adın", "ismin",
+        "sen ne", "ne yapıyorsun", "kim",
+        "beni tanıyor musun", "beni tanıyor musun?",
+        "benim adım ne", "benim adım ne?", "benim ismim ne", "benim ismim ne?",
+        "tanıyor musun", "tanıyor musun?"
+    ]
+    if txt in safe_quick_list:
         return "SAFE"
     
 
@@ -49,6 +59,7 @@ def classify_topic_simple(text: str) -> str:
         "- Onay/red cümleleri ('evet', 'hayır', 'isterim', 'istemem', 'tamam', 'olur')\n"
         "- Normal sohbet cümleleri ('nasılsın', 'iyi misin', 'teşekkürler', 'rica ederim')\n"
         "- AI yetenek soruları ('ne yapabiliyorsun', 'neler yapabiliyorsun', 'hangi konularda yardımcı olabilirsin')\n"
+        "- AI kimlik soruları ('sen kimsin', 'kimsin', 'adın ne', 'ismin ne', 'sen ne yapıyorsun')\n"
         "- Genel konuşma cümleleri (sağlık dışı ama zararsız sohbet)\n"
         "- Sağlıkla ilgili her şey ama riskli konular dışında (ilaç, doz, antidepresan, teşhis vb.)\n\n"
         "🔴 BLOCK (örnekler):\n"
