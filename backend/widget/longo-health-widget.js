@@ -7,7 +7,59 @@
         // Siteden userLevel gelip gelmediğini kontrol et
         // Ideasoft'ta gerçek değerler gelecek, yoksa guest (null) olarak ayarla
         console.log('🔍 DEBUG: window.longoUserLevel before:', window.longoUserLevel);
-        window.longoUserLevel = window.longoUserLevel || null; // Siteden gelmezse null (guest)
+        
+        // Eğer window.longoUserLevel set edilmemişse, asıl siteden tespit etmeye çalış
+        if (!window.longoUserLevel) {
+            // Ideasoft'ta user level'ı tespit etmeye çalış
+            // Console'da "Level: 3" gibi mesajları ara
+            const consoleMessages = [];
+            const originalLog = console.log;
+            console.log = function(...args) {
+                consoleMessages.push(args.join(' '));
+                originalLog.apply(console, arguments);
+            };
+            
+            // Bir saniye bekle ve console mesajlarını kontrol et
+            setTimeout(() => {
+                console.log = originalLog; // Orijinal console.log'u geri yükle
+                
+                // Console mesajlarında "Level:" ara
+                for (const msg of consoleMessages) {
+                    const levelMatch = msg.match(/Level:\s*(\d+)/i);
+                    if (levelMatch) {
+                        window.longoUserLevel = parseInt(levelMatch[1]);
+                        console.log('🔍 DEBUG: User level tespit edildi:', window.longoUserLevel);
+                        break;
+                    }
+                }
+                
+                // Hala bulunamadıysa, Ideasoft'ta yaygın değişkenleri kontrol et
+                if (!window.longoUserLevel) {
+                    // Ideasoft'ta yaygın user level değişkenleri
+                    const possibleLevelVars = [
+                        'userLevel', 'user_level', 'level', 'userLevelValue',
+                        'membershipLevel', 'userType', 'accountLevel'
+                    ];
+                    
+                    for (const varName of possibleLevelVars) {
+                        if (window[varName] !== undefined) {
+                            window.longoUserLevel = parseInt(window[varName]);
+                            console.log('🔍 DEBUG: User level değişkenden tespit edildi:', varName, '=', window.longoUserLevel);
+                            break;
+                        }
+                    }
+                }
+                
+                // Hala bulunamadıysa null (guest)
+                if (!window.longoUserLevel) {
+                    window.longoUserLevel = null;
+                    console.log('🔍 DEBUG: User level tespit edilemedi, guest olarak ayarlandı');
+                }
+            }, 1000);
+        } else {
+            console.log('🔍 DEBUG: window.longoUserLevel zaten set edilmiş:', window.longoUserLevel);
+        }
+        
         console.log('🔍 DEBUG: window.longoUserLevel after:', window.longoUserLevel);
         window.longoRealUserId = window.longoRealUserId || null; // Premium kullanıcılar için gerçek user ID
         
