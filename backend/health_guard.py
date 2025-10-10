@@ -31,7 +31,7 @@ def classify_topic_simple(text: str) -> str:
     txt = (text or "").lower().strip()
     
     # SADECE çok net, kısa selamlamalar için hızlı izin
-    if txt in ["naber", "günaydın", "gunaydin", "selam", "merhaba"]:
+    if txt in ["naber", "günaydın", "gunaydin", "selam", "merhaba", "sen kimsin", "kimsin", "sen kimsin?", "kimsin?"]:
         return "SAFE"
     
 
