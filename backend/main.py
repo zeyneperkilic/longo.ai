@@ -206,36 +206,39 @@ def detect_language_simple(message: str) -> str:
 
 def build_chat_system_prompt() -> str:
     """Chat için system prompt oluştur"""
-    return """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!
+    return """Sen Longo AI'sın - sağlık ve supplement konularında yardımcı olan dost canlısı bir asistan.
 
-🚨 ÇOK ÖNEMLİ: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler var. Bu bilgiler kullanıcının yazdığı DEĞİL! Bunlar senin hafızanda olan geçmiş veriler! Kullanıcı sadece son cümlesini yazdı, diğer bilgiler senin hafızandan.
+🎯 GÖREVİN: Sadece sağlık, supplement, beslenme ve laboratuvar konularında yanıt ver.
 
-❌ YANLIŞ İFADELER KULLANMA:
-- "paylaştığın için teşekkür ederim" 
-- "sen yazdın"
-- "sen söyledin"
-- "sen belirttin"
+🏷️ MARKA BİLGİSİ: Tüm supplement ve sağlık ürünleri LONGOPASS markasıdır. Marka sorulduğunda "Longopass markalı ürünler" de. Başka marka yok!
 
-✅ DOĞRU İFADELER KULLAN:
-- "Geçmiş quiz sonuçlarına göre..."
-- "Lab sonuçlarında gördüğüm kadarıyla..."
-- "Hafızamda olan verilere göre..."
-- "Önceki analizlerde..."
+🚫 KISITLAMALAR: 
+- Sağlık dışında konulardan bahsetme
+- Off-topic soruları kibarca sağlık alanına yönlendir
+- Kaynak link'leri veya referans'lar ekleme
+- Web sitelerinden link verme
+- Liste hakkında konuşma (kullanıcı listeyi görmemeli)
 
-🚨 SAĞLIK YÖNLENDİRME KURALI: Her konuyu sağlık ve supplement alanına çek! Kullanıcı off-topic bir şey söylerse, kibarca sağlık konusuna yönlendir ve supplement önerisi yap!
+✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
-❌ OFF-TOPIC BİLGİ VERME: Sağlık dışında konularda bilgi verme ve detaya girme! Kısa ve net cevaplar ver, sadece sağlık konusuna odaklan!
+💡 YANIT STİLİ: Kısa, net ve anlaşılır ol. Sadece sağlık konusuna odaklan!
 
-💡 YANIT STİLİ: 
-- Kullanıcı sadece selamladıysa, önce selamlaş, sonra geçmiş verilerini hatırladığını göster
-- Öneri istemediği sürece agresif supplement önerisi yapma
-- Doğal ve akıcı konuş
-- Geçmiş sağlık quizprofili/lab verileri varsa, bunları kullanarak kişiselleştirilmiş yanıt ver
-- Sürekli bilgi isteme
-- Sohbetin devamını sağla, her mesajda yeni konuşma başlatma
-- Kullanıcının önceki mesajlarına referans ver ve bağlantı kur
-- Önceki mesajlarda ne konuştuğunu hatırla ve devam et
-- Aynı konuyu tekrar tekrar sorma, önceki cevapları kullan"""
+🎯 ÜRÜN ÖNERİSİ: SADECE kullanıcı açıkça "supplement öner", "ne alayım", "hangi ürünleri alayım" gibi öneri isterse ya da bir şikayeti varsa öner. Diğer durumlarda öneri yapma! Liste hakkında konuşma! Konuşmanın devamlılığını sağla, sürekli "ne önermemi istersin?" sorma!
+
+🚫 KESIN KURALLAR:
+- SADECE kullanıcı açıkça öneri isterse ya da bir şikayeti varsa supplement öner
+- Kullanıcı sormadan supplement önerisi yapma
+- SADECE aşağıdaki listedeki ürünleri öner
+- Liste dışından hiçbir ürün önerme
+- Sağlık ve supplement dışında hiçbir konuşma yapma
+- Off-topic soruları kesinlikle reddet
+- Web sitelerinden link verme
+- Liste hakkında konuşma (kullanıcı listeyi görmemeli)
+- "Senin listende", "listende var", "Senin verdiğin liste" gibi ifadeler kullanma
+- Sürekli "ne önermemi istersin?" sorma, konuşmanın devamlılığını sağla
+- Sadece ürün isimlerini öner, gereksiz açıklama yapma
+
+🚨 HAFıZA KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler senin hafızandan! Bunlar için "hafızamdaki verilerine göre", "geçmiş analizlerine göre" de. "Paylaştığın/gönderdiğin" deme!"""
 
 def add_user_context_to_prompt(system_prompt: str, user_context: dict) -> str:
     """Kullanıcı bilgilerini system prompt'a ekle"""
@@ -888,28 +891,41 @@ async def chat_message(req: ChatMessageRequest,
     logger.info(f"🔍 DEBUG: Detected language: {detected_language} for message: {message_text}")
     system_prompt = build_chat_system_prompt()
     
-    # Eğer İngilizce algılandıysa, system prompt'a dil talimatı ekle
+    # Eğer İngilizce algılandıysa, system prompt'u tamamen İngilizce yap
     if detected_language == "en":
-        system_prompt = """Sen Longo AI'sın. SADECE sağlık/supplement/lab konularında yanıt ver. Off-topic'te kibarca reddet. KAYNAK EKLEME: Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!
+        system_prompt = """You are Longo AI - a friendly assistant helping with health and supplement topics.
 
-🚨 ÇOK ÖNEMLİ: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler var. Bu bilgiler kullanıcının yazdığı DEĞİL! Bunlar senin hafızanda olan geçmiş veriler! Kullanıcı sadece son cümlesini yazdı, diğer bilgiler senin hafızandan.
+🎯 YOUR TASK: Only respond to health, supplement, nutrition and laboratory topics.
 
-❌ YANLIŞ İFADELER KULLANMA:
-- "paylaştığın için teşekkür ederim" 
-- "gönderdiğin için teşekkür ederim"
-- "paylaştığın veriler"
-- "gönderdiğin sonuçlar"
+🏷️ BRAND INFO: All supplements and health products are LONGOPASS brand. When asked about brands, say "Longopass branded products". No other brands!
 
-✅ DOĞRU İFADELER KULLAN:
-- "hafızamdaki verilerine göre"
-- "geçmiş analizlerine göre"
-- "daha önceki test sonuçlarına göre"
+🚫 RESTRICTIONS: 
+- Don't talk about topics outside of health
+- Politely redirect off-topic questions to health area
+- Don't add source links or references
+- Don't provide links from websites
+- Don't talk about the list (user shouldn't see the list)
 
-🚨 ÜRÜN ÖNERİLERİ:
-- SADECE bizim listedeki ürünleri öner
-- Ürün ID'lerini gösterme
-- Liste hakkında konuşma
-- Link verme, kaynak gösterme
+✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
+
+💡 RESPONSE STYLE: Be short, clear and understandable. Focus only on health topics!
+
+🎯 PRODUCT RECOMMENDATION: ONLY recommend when user explicitly asks "recommend supplements", "what should I take", "which products should I buy" or has a complaint. Don't recommend in other cases! Don't talk about the list! Maintain conversation flow, don't constantly ask "what do you want me to recommend?"
+
+🚫 STRICT RULES:
+- ONLY recommend supplements when user explicitly asks or has a complaint
+- Don't recommend supplements without being asked
+- ONLY recommend products from the list below
+- Don't recommend any products outside the list
+- Don't talk about anything other than health and supplements
+- Strictly reject off-topic questions
+- Don't provide links from websites
+- Don't talk about the list (user shouldn't see the list)
+- Don't use phrases like "in your list", "from your list", "the list you provided"
+- Don't constantly ask "what do you want me to recommend?", maintain conversation flow
+- Only recommend product names, don't give unnecessary explanations
+
+🚨 MEMORY RULE: Messages with "🚨 LAB RESULTS" or "🚨 HEALTH QUIZ PROFILE" are from your memory! Use phrases like "based on your previous data", "according to past analyses". Don't say "you shared/sent"!
 
 🌍 LANGUAGE: The user is writing in English. You MUST respond in English only! Do not use Turkish at all!"""
         logger.info("🔍 DEBUG: Added English language instruction to system prompt")
@@ -961,63 +977,12 @@ async def chat_message(req: ChatMessageRequest,
                         system_prompt += f"  Test: {analysis.response_payload['test_name']}\n"
         system_prompt += "\nBu bilgileri kullanarak daha kişiselleştirilmiş yanıtlar ver."
 
-    # XML'den supplement listesini ekle - AI'ya ürün önerileri için
-    # XML'den ürünleri çek (free chat'teki gibi)
+    # XML'den supplement listesini ekle - AI'ya ürün önerileri için (free chat gibi basit tut)
     xml_products = get_xml_products()
     supplements_list = xml_products
     
-    # Supplement listesi kuralları (quiz'deki gibi)
-    system_prompt += "\n- Sakın ürünlerin id'lerini kullanıcıya gösterme!"
-    system_prompt += "\n- Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin listende', 'listende var' gibi ifadeler kullanma!"
-    system_prompt += "\n- Otomatik olarak kaynak link'leri, referans'lar veya citation'lar ekleme!"
-    system_prompt += "\n- DİL: SADECE TÜRKÇE YANIT VER!"
-    system_prompt += "\n\n🎯 SAĞLIK YÖNLENDİRME STRATEJİSİ:"
-    system_prompt += "\n- Off-topic konularda: 'Bu konu sağlıkla ilgili değil ama sana sağlık önerisi verebilirim'"
-    system_prompt += "\n- Her durumda Supplement önerisi yapma sadece ihtiyaç varsa yap ve sağlık konusuna çek"
-    system_prompt += "\n- Örnek: 'Hava durumu yerine D vitamini eksikliği hakkında konuşalım'"
-    system_prompt += "\n- Uzun açıklamalar yapma!"
-    system_prompt += "\n- Quiz sonucu istenirse: Kullanıcının quiz geçmişini otomatik incele!"
-    system_prompt += "\n- Mevcut verileri analiz et ve öneri yap!"
-    system_prompt += "\n- 'Ne alayım?', 'Bana bir şey öner', 'Ne yapayım?' gibi belirsiz sorular → HEMEN SAĞLIK!"
-    system_prompt += "\n- 'Supplement öner', 'Hangi ürünleri alayım?' şeklinde yönlendir!"
-    system_prompt += "\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!\n- Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme!\n- Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al!\n- Riskli durumlar varsa o supplement'i önerme!\n- Kullanıcı özel olarak supplement istemiyorsa, sadece gerçekten gerekli olanları öner!"
-    system_prompt += "\n- E-ticaret stratejisi: 4 DEFAULT + 2-3 PROBLEME ÖZEL = 6-7 Supplement!"
-    system_prompt += "\n- Değerler iyiyse veya kullanıcı Longevity derse Longevity ürünler öner, kötüyse problem çözücü öner!"
-    
-    # Lab ve quiz verilerini user message için hazırla
-    lab_info, quiz_info = get_user_context_for_message(user_context, user_analyses)
-    
-    # Supplement listesini user message olarak ekle (quiz'deki gibi)
-    # Kategori bazlı gruplandırma - token tasarrufu için
-    categories = list(set([s['category'] for s in supplements_list]))
-    supplements_info = f"\n\nTOPLAM ÜRÜN: {len(supplements_list)} supplement\n"
-    supplements_info += f"KATEGORİLER: {', '.join(categories)}\n"
-    supplements_info += " AI: Aşağıdaki kategorilere göre gruplandırılmış ürünlerden en uygun olanları seç!\n\n"
-    
-    # Her kategori için ürünleri grupla
-    for category in categories:
-        category_products = [s for s in supplements_list if s['category'] == category]
-        supplements_info += f" {category.upper()} ({len(category_products)} ürün):\n"
-        for i, supplement in enumerate(category_products, 1):
-            supplements_info += f"  {i}. {supplement['name']}\n"
-        supplements_info += "\n"
-    
-    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin için listedeki', 'listede var', 'Senin listende' gibi ifadeler kullanma! Link verme! Ürün ID'lerini kullanıcıya gösterme!\n\n🎯 SUPPLEMENT ÖNERİSİ KURALLARI:\n- SADECE kullanıcının gerçek ihtiyacı olan supplementleri öner!\n- Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme!\n- Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al!\n- Riskli durumlar varsa o supplement'i önerme!\n- Kullanıcı özel olarak supplement istemiyorsa, sadece gerçekten gerekli olanları öner!\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
-    
-    # Context'i ilk message'a ekle
-    
     # System message hazır
-    
     history = [{"role": "system", "content": system_prompt, "context_data": user_context}]
-    
-    # Lab verilerini user message olarak ekle
-    if lab_info:
-        history.append({"role": "user", "content": lab_info})
-    
-    # Supplement listesi sadece supplement önerisi istenirse ekle - daha esnek
-    supplement_keywords = ["vitamin", "supplement", "takviye", "öner", "hangi", "ne önerirsin", "ürün", "besin", "mineral"]
-    if any(keyword in message_text.lower() for keyword in supplement_keywords):
-        history.append({"role": "user", "content": supplements_info})
     
     # Quiz verilerini ai_messages'tan çek
     quiz_messages = get_user_ai_messages_by_type(db, x_user_id, "quiz", limit=QUIZ_LAB_MESSAGES_LIMIT)
@@ -1046,23 +1011,12 @@ async def chat_message(req: ChatMessageRequest,
     # Kullanıcının güncel mesajını ekle
     history.append({"role": "user", "content": message_text})
     
-    # XML supplement listesini context olarak ekle (free chat'teki gibi)
-    categories = list(set([s['category'] for s in supplements_list]))
-    supplements_info = f"\n\nTOPLAM ÜRÜN: {len(supplements_list)} supplement\n"
-    supplements_info += f"KATEGORİLER: {', '.join(categories)}\n"
-    supplements_info += " AI: Aşağıdaki kategorilere göre gruplandırılmış ürünlerden en uygun olanları seç!\n\n"
-    
-    # Her kategori için ürünleri grupla
-    for category in categories:
-        category_products = [s for s in supplements_list if s['category'] == category]
-        supplements_info += f" {category.upper()} ({len(category_products)} ürün):\n"
-        for i, supplement in enumerate(category_products, 1):
-            supplements_info += f"  {i}. {supplement['name']}\n"
-        supplements_info += "\n"
-    
-    supplements_info += "🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Kullanıcı listeyi vermiyor, ona söyleme! 'Senin için listedeki', 'listede var', 'Senin listende' gibi ifadeler kullanma! Link verme! Ürün ID'lerini kullanıcıya gösterme!\n\n🎯 SUPPLEMENT ÖNERİSİ KURALLARI:\n- SADECE kullanıcının gerçek ihtiyacı olan supplementleri öner!\n- Kullanıcıya hiçbir şekilde ihtiyacı olmayan supplement önerme!\n- Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al!\n- Riskli durumlar varsa o supplement'i önerme!\n- Kullanıcı özel olarak supplement istemiyorsa, sadece gerçekten gerekli olanları öner!\n- Boşuna supplement önerme! Sadece gerçekten işe yarayacak olanları öner!"
-    
-    # Supplement listesini context olarak ekle
+    # XML supplement listesini context olarak ekle (free chat gibi basit format)
+    supplements_info = f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(supplements_list)} ürün):\n"
+    for i, product in enumerate(supplements_list, 1):
+        category = product.get('category', 'Kategori Yok')
+        supplements_info += f"{i}. {product['name']} ({category})\n"
+    supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
     history.append({"role": "user", "content": supplements_info})
 
     # parallel chat with synthesis
