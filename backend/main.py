@@ -212,6 +212,14 @@ def build_chat_system_prompt() -> str:
 
 🏷️ MARKA BİLGİSİ: Tüm supplement ve sağlık ürünleri LONGOPASS markasıdır. Marka sorulduğunda "Longopass markalı ürünler" de. Başka marka yok!
 
+📱 LONGOPASS HAKKINDA:
+- Longopass, kişiselleştirilmiş sağlık ve supplement platformudur
+- Kullanıcıların sağlık bilincini geliştirmelerine yardımcı olur
+- Lab test sonuçlarını ve sağlık verilerini takip etmelerini sağlar
+- Kişiye özel supplement önerileri sunar
+- Quiz ve lab analizleriyle detaylı sağlık değerlendirmesi yapar
+- Kullanıcı "Longopass nedir?", "Neden Longopass kullanmalıyım?" gibi sorular sorduğunda yukarıdaki bilgileri paylaş
+
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
 - Off-topic soruları kibarca sağlık alanına yönlendir
@@ -809,25 +817,12 @@ async def chat_message(req: ChatMessageRequest,
     if not message_text:
         raise HTTPException(400, "Mesaj metni gerekli")
     
-    # Ekstra kontrol: "Sen kimsin, adın ne" gibi basit AI kimlik sorularını health guard'dan önce kontrol et
-    txt = message_text.lower().strip()
-    ai_identity_keywords = [
-        "sen kimsin", "kimsin", "sen kimsin?", "kimsin?", 
-        "adın ne", "adın ne?", "ismin ne", "ismin ne?",
-        "sen nesin", "sen ne yapıyorsun", "neler yapabiliyorsun",
-        "ne yapabilirsin", "hangi konularda yardımcı olabilirsin"
-    ]
-    
-    # Bu sorular için health guard'ı bypass et
-    bypass_health_guard = any(kw in txt for kw in ai_identity_keywords)
-    
-    # Health Guard ile kategori kontrolü (kimlik soruları için bypass)
-    if not bypass_health_guard:
-        ok, msg = guard_or_message(message_text)
-        if not ok:
-            # Fixed message - sadece ai_messages'a kaydedilecek
-            reply = msg
-            return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
+    # Health Guard ile kategori kontrolü
+    ok, msg = guard_or_message(message_text)
+    if not ok:
+        # Fixed message - sadece ai_messages'a kaydedilecek
+        reply = msg
+        return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
     
     # XML'den supplement listesini ekle - Premium chat'te de ürün önerileri için
     # XML'den ürünleri çek (free chat'teki gibi)
@@ -906,6 +901,14 @@ async def chat_message(req: ChatMessageRequest,
 🎯 YOUR TASK: Only respond to health, supplement, nutrition and laboratory topics.
 
 🏷️ BRAND INFO: All supplements and health products are LONGOPASS brand. When asked about brands, say "Longopass branded products". No other brands!
+
+📱 ABOUT LONGOPASS:
+- Longopass is a personalized health and supplement platform
+- Helps users develop health awareness
+- Enables tracking of lab test results and health data
+- Provides personalized supplement recommendations
+- Offers detailed health assessments through quizzes and lab analyses
+- When users ask "What is Longopass?", "Why should I use Longopass?", share the above information
 
 🚫 RESTRICTIONS: 
 - Don't talk about topics outside of health

@@ -44,11 +44,15 @@ def classify_topic_simple(text: str) -> str:
     if txt in safe_quick_list:
         return "SAFE"
     
+    # Longopass kelimesi geçiyorsa direkt SAFE
+    if "longopass" in txt or "longo pass" in txt:
+        return "SAFE"
 
     sys = (
         "Sen bir sağlık ve supplement AI moderatörüsün. Sadece 2 kategorili sınıflandır: Sağlıkla ve kişisel bilgilerle ilgili şeyler SAFE, off topic şeyler Block\n\n"
         "🔵 SAFE (örnekler):\n"
         "- Sağlık, supplement, beslenme, hafıza, tahlil, kan testi, lab\n"
+        "- LONGOPASS marka adı ve ürünleri → HER ZAMAN SAFE!\n"
         "- Kişisel bilgi, hastalık bilgisi, alerji\n"
         "- İlaç bilgisi (sadece supplement dozu), ameliyat bilgisi\n"
         "- Çok kısa selamlamalar (naber, günaydın, selam, merhaba)\n"
@@ -67,6 +71,7 @@ def classify_topic_simple(text: str) -> str:
         "- Kültür, tarih, kelime anlamı, etimoloji\n"
         "- İlaç dozu (reçeteli ilaçlar), teşhis\n"
         "- Tamamen sağlık dışı konular\n\n"
+        "⚠️ ÖNEMLİ: 'Longopass', 'LONGOPASS' içeren her mesaj HER ZAMAN SAFE!\n\n"
         "SADECE 'SAFE' veya 'BLOCK' döndür!"
     )
     
