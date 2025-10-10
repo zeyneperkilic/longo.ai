@@ -218,7 +218,29 @@ def build_chat_system_prompt() -> str:
 - Lab test sonuçlarını ve sağlık verilerini takip etmelerini sağlar
 - Kişiye özel supplement önerileri sunar
 - Quiz ve lab analizleriyle detaylı sağlık değerlendirmesi yapar
-- Kullanıcı "Longopass nedir?", "Neden Longopass kullanmalıyım?" gibi sorular sorduğunda yukarıdaki bilgileri paylaş
+
+🎁 ÜYELİK PAKETLERİ:
+**LONGO ESSENTIAL (Genel Sağlık ve Takip Paketi)**
+- Ev ve İşyerinde Test İmkanı
+- Yıllık Tam Kapsamlı Test Paneli ile İleri Düzey Sağlık Analizi
+- Kritik Değerler için 4 Ayda Bir Takip Testleri
+- Gelişmiş Kişisel Sağlık Paneli ile Sonuçlara Tam Erişim
+- Size Özel Kişiselleştirilmiş Ürün ve Test Önerileri
+- AI Destekli Sağlık Modüllerine Tam Erişim (Chat, Quiz, Lab Analiz)
+- Tüm Longopass Ürünlerinde %2,5 İndirim
+
+**LONGO ULTIMATE (İleri Sağlık, Takip ve Longevity Paketi)**
+- Longo Essential'ın Tüm İçerikleri
+- Kritik Değerler için 3 Ayda Bir Takip Testleri (Essential'da 4 ayda bir)
+- Yılda Bir Defa Ücretsiz Metabolik Yaş Testi Paneli
+- Doktor Online Görüşme İmkanı
+- VIP Üyelik Desteği
+- Beslenme Önerileri ve Destekleri
+- Spor & Egzersiz Destekleri
+- Test Sonucuna Bağlı AI Destekli Longevity Raporu
+- Tüm Longopass Ürünlerinde %5 İndirim
+
+Kullanıcı paketler hakkında soru sorduğunda yukarıdaki bilgileri paylaş. Hangisinin kendisi için daha uygun olduğunu sorduğunda, sağlık hedeflerine ve ihtiyaçlarına göre öner.
 
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
@@ -910,7 +932,29 @@ async def chat_message(req: ChatMessageRequest,
 - Enables tracking of lab test results and health data
 - Provides personalized supplement recommendations
 - Offers detailed health assessments through quizzes and lab analyses
-- When users ask "What is Longopass?", "Why should I use Longopass?", share the above information
+
+🎁 MEMBERSHIP PACKAGES:
+**LONGO ESSENTIAL (General Health and Tracking Package)**
+- Home and Office Testing Option
+- Annual Comprehensive Test Panel with Advanced Health Analysis
+- Follow-up Tests Every 4 Months for Critical Values
+- Full Access to Advanced Personal Health Dashboard
+- Personalized Product and Test Recommendations
+- Full Access to AI-Powered Health Modules (Chat, Quiz, Lab Analysis)
+- 2.5% Discount on All Longopass Products
+
+**LONGO ULTIMATE (Advanced Health, Tracking and Longevity Package)**
+- All Longo Essential Features
+- Follow-up Tests Every 3 Months for Critical Values (vs 4 months in Essential)
+- One Free Metabolic Age Test Panel Per Year
+- Online Doctor Consultation Option
+- VIP Membership Support
+- Nutrition Recommendations and Support
+- Sports & Exercise Support
+- AI-Powered Longevity Report Based on Test Results
+- 5% Discount on All Longopass Products
+
+When users ask about packages, share the above information. When they ask which is better for them, recommend based on their health goals and needs.
 
 🚫 RESTRICTIONS: 
 - Don't talk about topics outside of health
