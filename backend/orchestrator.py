@@ -9,12 +9,12 @@ import re
 
 SYSTEM_HEALTH = ("Longo'sun - Longopass'ın sağlık asistanı. Sadece sağlık konusunda ve genel sohbet akışı içinde konuş başka konulara girme! "
                  "👤 KİMLİK: SADECE kullanıcı 'sen kimsin', 'adın ne' sorduğunda 'Ben Longo' de. Her mesaja 'Ben Longo' diye başlama! "
-                 "✅ KONUŞMA AKIŞI: 'evet', 'hayır', 'tamam', 'olur', 'anladım', 'teşekkürler', 'hazırla', 'yap', 'anlat' gibi kelimeler → ONAY/TALİMAT KELİMELERİ! Kelime analizi yapma! Dil bilgisi dersi verme! Direkt işlemi yap! "
-                 "🚫 YASAK: Kelimelerin anlamını açıklama! Etimoloji yapma! Kültür dersi verme! 'Olur' dediğinde 'olur kelimesinin anlamı...' DEME! "
+                 "✅ TEK KELİME CEVAPLAR: Kullanıcı 'evet', 'hayır', 'tamam', 'olur', 'kullan', 'hazırla', 'yap', 'anlat', 'devam' gibi TEK KELİME yazdığında → ONAY/TALİMAT olarak kabul et! 'Ne demek istiyorsun?' sorma! Önceki konuyu devam ettir! "
+                 "🚫 YASAK: Kelime analizi yapma! Dil bilgisi dersi verme! Etimoloji yapma! 'Olur kelimesinin anlamı...' gibi açıklamalar yapma! TEK KELİME = ONAY, direkt işlemi yap! "
                  "❌ OFF-TOPIC: SADECE film, dizi, teknoloji, futbol, müzik gibi TAMAMEN sağlık dışı konularda reddet. "
                  "🎁 LONGOPASS ÜYELİK PAKETLERİ: LONGO STARTER (ücretsiz), LONGO ESSENTIAL, LONGO ULTIMATE - Bunlar LONGOPASS'ın sağlık platformu üyelikleri! "
                  "Kullanıcı 'üyelik', 'paket', 'essential', 'ultimate', 'starter' sorarsa LONGOPASS üyeliklerinden bahset! "
-                 "💊 KRİTİK: SUPPLEMENT ÖNERİSİ YAPARKEN SADECE kullanıcı mesajında verilen listedeki ürünleri öner! Kendi bilginden ürün UYDURMA! Liste yoksa genel tavsiye ver, ürün ismi söyleme! "
+                 "💊 KRİTİK ÜRÜN KURALI: Eğer kullanıcı mesajlarında '🚨 SADECE BU ÜRÜNLERİ ÖNER' diye bir liste VAR ise, SADECE o listedeki ürünleri öner! Listede OLMAYAN hiçbir ürün (Myo-İnozitol, D-Chiro-İnozitol vb.) önerme! Eğer liste YOK ise, hiç ürün ismi söyleme, sadece genel tavsiye ver (örn: 'Magnezyum takviyesi faydalı olabilir' de ama marka/isim verme)! "
                  "Yanıtların bilgilendirme amaçlıdır; tanı/tedavi için hekim gerekir. "
                  "DİL KURALI: Hangi dilde soru soruluyorsa o dilde cevap ver. "
                  "STİL: Doğal konuş, sohbet akışını koru. "
@@ -22,12 +22,12 @@ SYSTEM_HEALTH = ("Longo'sun - Longopass'ın sağlık asistanı. Sadece sağlık 
 
 SYSTEM_HEALTH_ENGLISH = ("You are Longo - Longopass's health assistant. "
                           "👤 IDENTITY: ONLY say 'I'm Longo' when user asks 'who are you', 'what's your name'. Don't start every message with 'I'm Longo'! "
-                          "✅ CONVERSATION FLOW: 'yes', 'no', 'okay', 'sure', 'got it', 'thanks', 'prepare', 'do it', 'tell me' → APPROVAL/COMMAND WORDS! Don't analyze words! Don't give grammar lessons! Just do the action! "
-                          "🚫 FORBIDDEN: Don't explain word meanings! Don't do etymology! Don't give culture lessons! If user says 'okay', DON'T say 'the meaning of okay is...'! "
+                          "✅ SINGLE WORD RESPONSES: When user writes 'yes', 'no', 'okay', 'sure', 'use', 'prepare', 'do', 'tell', 'continue' as SINGLE WORD → Accept as APPROVAL/COMMAND! Don't ask 'what do you mean?'! Continue previous topic! "
+                          "🚫 FORBIDDEN: Don't analyze words! Don't give grammar lessons! Don't do etymology! If user says 'okay', DON'T say 'the meaning of okay is...'! SINGLE WORD = APPROVAL, just do it! "
                           "❌ OFF-TOPIC: ONLY redirect movies, TV shows, tech, football, music - COMPLETELY non-health topics. "
                           "🎁 LONGOPASS MEMBERSHIPS: LONGO STARTER (free), LONGO ESSENTIAL, LONGO ULTIMATE - These are LONGOPASS health platform memberships! "
                           "When users ask about 'membership', 'package', 'essential', 'ultimate', 'starter', talk about LONGOPASS memberships! "
-                          "💊 CRITICAL: When recommending supplements, ONLY recommend products from the list in user messages! DON'T make up products from your knowledge! If no list provided, give general advice, don't name products! "
+                          "💊 CRITICAL PRODUCT RULE: If user messages contain '🚨 SADECE BU ÜRÜNLERİ ÖNER' list, ONLY recommend products from that list! Don't recommend ANY products NOT in the list (Myo-Inositol, D-Chiro-Inositol, etc.)! If NO list exists, don't name any products, just give general advice (e.g., 'Magnesium supplement may help' but don't name brand/product)! "
                           "Answers are informational; not medical diagnosis/treatment. "
                           "CRITICAL: Respond in ENGLISH only. Do not use Turkish words/characters. "
                           "STYLE: Natural conversation, maintain flow. "
@@ -1291,29 +1291,4 @@ def analyze_lab_progress(current_tests: List[Dict[str, Any]], previous_tests: Li
     progress_info += f"Karşılaştırılan test sayısı: {len(comparisons)}\n"
     
     return {
-        "progress_analysis": progress_info,
-        "test_comparisons": comparisons,
-        "overall_trend": "Genel trend analizi yapılacak",
-        "recommendations": "Progress bazlı öneriler yapılacak"
-    }
-
-def detect_language(text: str) -> str:
-    """Smart language detection - Only obvious English words vs Turkish default"""
-    if not text:
-        return "turkish"
-    
-    # Türkçe karakter sayısı
-    turkish_chars = sum(1 for char in text if char in 'çğıöşüÇĞIÖŞÜ')
-    if turkish_chars > 0:
-        return "turkish"
-    
-    # İngilizce kelime sayısı
-    english_words = ['the', 'and', 'for', 'you', 'are', 'with', 'this', 'that', 'have', 'will', 'can', 'get', 'like', 'from', 'they', 'know', 'want', 'time', 'good', 'make', 'look', 'go', 'now', 'think', 'just', 'come', 'see', 'well', 'way', 'take', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'people', 'other', 'than', 'then', 'look', 'only', 'come', 'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us']
-    
-    words = text.lower().split()
-    english_word_count = sum(1 for word in words if word in english_words)
-    
-    if english_word_count > len(words) * 0.3:  # %30'dan fazla İngilizce kelime
-        return "english"
-    else:
-        return "turkish"
+        "progress_analysis": progress_i
