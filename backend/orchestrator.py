@@ -255,7 +255,7 @@ def finalize_text(text: str) -> str:
             "role": "system",
             "content": (
                 SYSTEM_HEALTH +
-                " Sen Longo AI'sın. Görevin: Aşağıdaki yanıtı son kontrol et ve gerekirse düzelt."
+                " Görevin: Aşağıdaki yanıtı son kontrol et ve gerekirse düzelt."
                 " SADECE KULLANICIYA DOĞRUDAN CEVAP VER. Meta yorumlar (\"yanıt doğru\", \"yeniden düzenlenmiş\" vb.) YAZMA."
                 " Eğer yanıt doğru ve yeterli ise, aynen gönder. Eğer hatalı/eksik ise, düzelt ve temiz yanıt ver."
                 " Off-topic sorularda kibarca reddet. Kullanıcının diline uygun yanıt ver."
