@@ -10,7 +10,7 @@ import re
 SYSTEM_HEALTH = ("Adın Longo. Sağlık, supplement ve laboratuvar konularında yardımcı ol. "
                  "✅ SİMPLE CHAT: 'naber', 'nasılsın', 'nasıl yani', 'anladım', 'tamam', 'teşekkürler', 'evet', 'hayır' → NORMAL CEVAP VER! 'oraya giremiyorum' DEME! "
                  "❌ OFF-TOPIC: SADECE film, dizi, teknoloji, futbol, müzik gibi TAMAMEN sağlık dışı konularda reddet. "
-                 "🎁 LONGOPASS ÜYELİK PAKETLERİ: LONGO STARTER (ücretsiz), LONGO ESSENTIAL, LONGO ULTIMATE - Bunlar LONGOPASS'ın sağlık platformu üyelikleri! Oyun/TV üyelikleri DEĞİL! "
+                 "🎁 LONGOPASS ÜYELİK PAKETLERİ: LONGO STARTER (ücretsiz), LONGO ESSENTIAL, LONGO ULTIMATE - Bunlar LONGOPASS'ın sağlık platformu üyelikleri!"
                  "Kullanıcı 'üyelik', 'paket', 'essential', 'ultimate', 'starter' sorarsa LONGOPASS üyeliklerinden bahset! "
                  "Yanıtların bilgilendirme amaçlıdır; tanı/tedavi için hekim gerekir. "
                  "DİL KURALI: Hangi dilde soru soruluyorsa o dilde cevap ver. "
@@ -20,7 +20,7 @@ SYSTEM_HEALTH = ("Adın Longo. Sağlık, supplement ve laboratuvar konularında 
 SYSTEM_HEALTH_ENGLISH = ("Your name is Longo. Help with health, supplements and lab topics. "
                           "✅ SIMPLE CHAT: 'how are you', 'what do you mean', 'I see', 'okay', 'thanks', 'yes', 'no' → ANSWER NORMALLY! DON'T say 'I can't go there'! "
                           "❌ OFF-TOPIC: ONLY redirect movies, TV shows, tech, football, music - COMPLETELY non-health topics. "
-                          "🎁 LONGOPASS MEMBERSHIPS: LONGO STARTER (free), LONGO ESSENTIAL, LONGO ULTIMATE - These are LONGOPASS health platform memberships! NOT gaming/TV subscriptions! "
+                          "🎁 LONGOPASS MEMBERSHIPS: LONGO STARTER (free), LONGO ESSENTIAL, LONGO ULTIMATE - These are LONGOPASS health platform memberships!"
                           "When users ask about 'membership', 'package', 'essential', 'ultimate', 'starter', talk about LONGOPASS memberships! "
                           "Answers are informational; not medical diagnosis/treatment. "
                           "CRITICAL: Respond in ENGLISH only. Do not use Turkish words/characters. "
@@ -30,33 +30,29 @@ SYSTEM_HEALTH_ENGLISH = ("Your name is Longo. Help with health, supplements and 
 def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     """Run parallel chat with multiple models, then synthesize with GPT-5"""
     try:
+        # Main.py'den gelen system prompt'u koru (detaylı paket bilgileri içeriyor)
+        existing_system_prompt = ""
+        if messages and messages[0]["role"] == "system":
+            existing_system_prompt = messages[0]["content"]
+        
         # Dil algılama
         user_message = messages[-1]["content"] if messages else ""
         user_language = detect_language(user_message)
         
-        if user_language == "english":
-            system_prompt = SYSTEM_HEALTH_ENGLISH
+        # Eğer main.py'den detaylı prompt geldiyse onu kullan, yoksa varsayılanı kullan
+        if existing_system_prompt:
+            system_prompt = existing_system_prompt
+            # Sadece dil kontrolü ekle (eğer yoksa)
+            if user_language == "english" and "ENGLISH" not in system_prompt:
+                system_prompt += f"\n\n{SYSTEM_HEALTH_ENGLISH}"
         else:
-            system_prompt = SYSTEM_HEALTH
+            # Fallback: orchestrator'ın kendi prompt'u
+            if user_language == "english":
+                system_prompt = SYSTEM_HEALTH_ENGLISH
+            else:
+                system_prompt = SYSTEM_HEALTH
         
-        # Context'i system prompt'a ekle (main.py'den gelen context)
-        if "context_data" in messages[0] and messages[0]["context_data"]:
-            context = messages[0]["context_data"]
-            system_prompt += "\n\nKULLANICI BİLGİLERİ:\n"
-            if "isim" in context:
-                system_prompt += f"İsim: {context['isim']}\n"
-            if "tercihler" in context:
-                system_prompt += f"Tercihler: {', '.join(context['tercihler'])}\n"
-            # Tüm context verilerini ekle - esnek
-            for key, value in context.items():
-                if value and key.startswith(('hastalik', 'yas', 'cinsiyet', 'isim', 'tercih', 'alerji')):
-                    if isinstance(value, list):
-                        system_prompt += f"{key.title()}: {', '.join(value)}\n"
-                    else:
-                        system_prompt += f"{key.title()}: {value}\n"
-            system_prompt += "\n\n🎯 KRİTİK KİŞİSEL ASİSTAN TALİMATI: Bu kullanıcı bilgilerini MUTLAKA dikkate al ve her yanıtında kullan! Eğer kullanıcının hastalıkları, alerjileri veya tercihleri varsa, bunları göz ardı etme. Her supplement önerisinde bu bilgileri dikkate al ve güvenli tavsiyeler ver. Context'i kullanmazsan yanıtın eksik olur. Sen bu kullanıcının kişisel sağlık asistanısın - önceki konuşmaları hatırla ve kişiselleştirilmiş yanıtlar ver!"
-        
-        # Update system message with detected language - system prompt'u her zaman ilk sıraya ekle
+        # Update system message - system prompt'u her zaman ilk sıraya ekle
         updated_messages = [{"role": "system", "content": system_prompt}] + [
             msg for msg in messages if msg["role"] != "system"
         ]
