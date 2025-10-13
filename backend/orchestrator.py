@@ -1291,4 +1291,29 @@ def analyze_lab_progress(current_tests: List[Dict[str, Any]], previous_tests: Li
     progress_info += f"Karşılaştırılan test sayısı: {len(comparisons)}\n"
     
     return {
-        "progress_analysis": progress_i
+        "progress_analysis": progress_info,
+        "test_comparisons": comparisons,
+        "overall_trend": "Genel trend analizi yapılacak",
+        "recommendations": "Progress bazlı öneriler yapılacak"
+    }
+
+def detect_language(text: str) -> str:
+    """Smart language detection - Only obvious English words vs Turkish default"""
+    if not text:
+        return "turkish"
+    
+    # Türkçe karakter sayısı
+    turkish_chars = sum(1 for char in text if char in 'çğıöşüÇĞIÖŞÜ')
+    if turkish_chars > 0:
+        return "turkish"
+    
+    # İngilizce kelime sayısı
+    english_words = ['the', 'and', 'for', 'you', 'are', 'with', 'this', 'that', 'have', 'will', 'can', 'get', 'like', 'from', 'they', 'know', 'want', 'time', 'good', 'make', 'look', 'go', 'now', 'think', 'just', 'come', 'see', 'well', 'way', 'take', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'people', 'other', 'than', 'then', 'look', 'only', 'come', 'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us']
+    
+    words = text.lower().split()
+    english_word_count = sum(1 for word in words if word in english_words)
+    
+    if english_word_count > len(words) * 0.3:  # %30'dan fazla İngilizce kelime
+        return "english"
+    else:
+        return "turkish"
