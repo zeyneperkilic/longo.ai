@@ -815,29 +815,21 @@ async def chat_message(req: ChatMessageRequest,
     # Guest ve Free kullanıcılar için limiting
     client_ip = request.client.host if request else "unknown"
     
-    if not x_user_level:  # Guest (null/undefined)
-        # İlk mesajda kayıt olma pop-up'ı göster
-        can_chat, remaining = check_ip_daily_limit(client_ip)
-        
-        # Eğer ilk mesajsa (limit dolmamışsa ve yeni kullanıcıysa) kayıt olma önerisi göster
-        if remaining == 9:  # İlk mesaj (10'dan 9'a düştü)
-            return ChatResponse(
-                conversation_id=req.conversation_id or 1,
-                reply="LIMIT_POPUP:🎯 Longo AI'yı kullanabilmek için ücretsiz kayıt olun! Premium özelliklere erişmek ve sınırsız soru sormak için üyelik paketlerimize göz atın.",
-                latency_ms=0
-            )
-        
-        if not can_chat:
-            raise HTTPException(
-                status_code=429, 
-                detail=f"Günlük soru limitiniz aşıldı. 24 saat sonra tekrar deneyin. (Kalan: {remaining})"
-            )
-    elif x_user_level == 1:  # Free (hesap var)
+    if not x_user_level:  # Guest (null/undefined) - HİÇ KONUŞAMASIN
+        # Guest kullanıcılar hiç konuşamaz, her zaman kayıt olma pop-up'ı göster
+        return ChatResponse(
+            conversation_id=req.conversation_id or 1,
+            reply="LIMIT_POPUP:🎯 Longo AI'yı kullanabilmek için ücretsiz kayıt olun! Premium özelliklere erişmek ve sınırsız soru sormak için üyelik paketlerimize göz atın.",
+            latency_ms=0
+        )
+    elif x_user_level == 1:  # Free (hesap var) - Günde 10 mesaj
         can_chat, remaining = check_user_daily_limit(x_user_id, client_ip)
         if not can_chat:
-            raise HTTPException(
-                status_code=429, 
-                detail=f"Günlük soru limitiniz aşıldı. 24 saat sonra tekrar deneyin. (Kalan: {remaining})"
+            # Limit doldu pop-up'ı
+            return ChatResponse(
+                conversation_id=req.conversation_id or 1,
+                reply="LIMIT_POPUP:🎯 Günlük 10 soru limitiniz doldu! Yarın tekrar konuşmaya devam edebilirsiniz. 💡 Premium plana geçerek sınırsız soru sorma imkanına sahip olun!",
+                latency_ms=0
             )
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
