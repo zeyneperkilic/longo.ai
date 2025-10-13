@@ -816,7 +816,17 @@ async def chat_message(req: ChatMessageRequest,
     client_ip = request.client.host if request else "unknown"
     
     if not x_user_level:  # Guest (null/undefined)
+        # İlk mesajda kayıt olma pop-up'ı göster
         can_chat, remaining = check_ip_daily_limit(client_ip)
+        
+        # Eğer ilk mesajsa (limit dolmamışsa ve yeni kullanıcıysa) kayıt olma önerisi göster
+        if remaining == 9:  # İlk mesaj (10'dan 9'a düştü)
+            return ChatResponse(
+                conversation_id=req.conversation_id or 1,
+                reply="LIMIT_POPUP:🎯 Longo AI'yı kullanabilmek için ücretsiz kayıt olun! Premium özelliklere erişmek ve sınırsız soru sormak için üyelik paketlerimize göz atın.",
+                latency_ms=0
+            )
+        
         if not can_chat:
             raise HTTPException(
                 status_code=429, 
