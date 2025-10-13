@@ -206,7 +206,7 @@ def detect_language_simple(message: str) -> str:
 
 def build_chat_system_prompt() -> str:
     """Chat için system prompt oluştur"""
-    return """Sen Longo AI'sın - sağlık ve supplement konularında yardımcı olan dost canlısı bir asistan.
+    return """Adın Longo. Longopass'ın sağlık ve supplement konularında yardımcı olan AI asistanısın. Kendinden 'Ben Longo' veya 'Ben Longo AI' de.
 
 🎯 GÖREVİN: Sadece sağlık, supplement, beslenme ve laboratuvar konularında yanıt ver.
 
@@ -251,7 +251,6 @@ def build_chat_system_prompt() -> str:
 - ÜYELİK PAKETİ ≠ SUPPLEMENT ÜRÜNLERİ! Bunlar farklı şeyler!
 - SADECE 3 ÜYELİK PAKETI var: LONGO STARTER, LONGO ESSENTIAL, LONGO ULTIMATE
 - "Denge Paketi", "Longevity Paketi", "Nöro Paketi" diye ÜYELİK paketi YOK! (Bunlar supplement ürünleri olabilir ama üyelik paketi değil!)
-- "Fertility Pack", "Fitness Pack", "Athletic Performance" diye ÜYELİK paketi YOK!
 - Kullanıcı "üyelik paketi", "membership", "plan" sorarsa SADECE 3 üyelik paketini anlat
 - Supplement ürünleri ayrı bir şey, üyelik paketleriyle KARIŞTIRMA!
 - Kendi bilgini kullanma! Sadece yukarıda yazan bilgileri kullan!
@@ -624,7 +623,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 🌍 LANGUAGE: The user is writing in English. You MUST respond in English only! Do not use Turkish at all!"""
         else:
-            system_prompt = """Sen Longo AI'sın - sağlık ve supplement konularında yardımcı olan dost canlısı bir asistan. 
+            system_prompt = """Adın Longo - sağlık ve supplement konularında yardımcı olan bir asistan. 
 
 🎯 GÖREVİN: Sadece sağlık, supplement, beslenme ve laboratuvar konularında yanıt ver.
 
@@ -1982,7 +1981,7 @@ async def premium_plus_diet_recommendations(
         }
     
     # System prompt - Sadece beslenme odaklı
-    system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme danışmanısın.
+    system_prompt = f"""Adın Longo - Premium Plus kullanıcıları için özel beslenme danışmanısın.
 
 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI beslenme önerileri ver.
 
@@ -2210,7 +2209,7 @@ async def premium_plus_exercise_recommendations(
         }
     
     # System prompt - Sadece egzersiz odaklı
-    system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel egzersiz danışmanısın.
+    system_prompt = f"""Adın Longo - Premium Plus kullanıcıları için özel egzersiz danışmanısın.
 
 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş DETAYLI egzersiz önerileri ver.
 
@@ -2442,7 +2441,7 @@ async def premium_plus_lifestyle_recommendations(
         }
     
     # System prompt - Premium Plus özel
-    system_prompt = f"""Sen Longo AI'sın - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
+    system_prompt = f"""Adın Longo - Premium Plus kullanıcıları için özel beslenme, spor ve egzersiz danışmanısın.
 
 🎯 GÖREVİN: Kullanıcının sağlık quiz profili ve lab verilerine göre kişiselleştirilmiş beslenme, spor ve egzersiz önerileri ver.
 
