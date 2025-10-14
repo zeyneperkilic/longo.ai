@@ -1223,7 +1223,7 @@ async def chat_message(req: ChatMessageRequest,
         if ai_recommending_products and not ai_asking_for_info:
             # AI'ın önerdiği ürünleri tespit et (basit keyword matching)
             recommended_products = []
-            for product in supplements_list[:10]:  # İlk 10 ürün
+            for product in supplements_list:  # TÜM ürünleri kontrol et
                 product_name = product.get('name', '').lower()
                 product_category = product.get('category', '').lower()
                 
