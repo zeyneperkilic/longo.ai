@@ -1210,17 +1210,10 @@ async def chat_message(req: ChatMessageRequest,
             "şu ürün", "bu ürün", "şu takviye", "bu takviye", "şu supplement", "bu supplement"
         ])
         
-        # AI'ın bilgi istediğini kontrol et
-        ai_asking_for_info = any(keyword in final.lower() for keyword in [
-            "bilgi ver", "hedefin ne", "nasıl", "hangi", "ne istiyorsun", "açıkla",
-            "detay", "önce", "sonra", "daha", "kişiselleştir"
-        ])
-        
         print(f"🔍 DEBUG: AI ürün öneriyor mu: {ai_recommending_products}")
-        print(f"🔍 DEBUG: AI bilgi istiyor mu: {ai_asking_for_info}")
         
-        # Sadece AI gerçekten ürün öneriyorsa ve bilgi istemiyorsa
-        if ai_recommending_products and not ai_asking_for_info:
+        # AI ürün öneriyorsa sepete ekle butonları göster
+        if ai_recommending_products:
             # AI'ın önerdiği ürünleri tespit et (basit keyword matching)
             recommended_products = []
             for product in supplements_list:  # TÜM ürünleri kontrol et
@@ -1245,7 +1238,7 @@ async def chat_message(req: ChatMessageRequest,
             print(f"🔍 DEBUG: Toplam {len(recommended_products)} ürün önerildi")
             print(f"🔍 DEBUG: Önerilen ürünler: {recommended_products}")
         else:
-            print(f"🔍 DEBUG: AI ürün önermiyor veya bilgi istiyor, butonlar gösterilmeyecek")
+            print(f"🔍 DEBUG: AI ürün önermiyor, butonlar gösterilmeyecek")
     
     print(f"🔍 DEBUG: Response'a gönderilen products: {recommended_products}")
     print(f"🔍 DEBUG: Products count: {len(recommended_products) if recommended_products else 0}")
