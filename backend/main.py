@@ -1154,8 +1154,9 @@ async def chat_message(req: ChatMessageRequest,
         supplements_info = f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(supplements_list)} ürün):\n"
         for i, product in enumerate(supplements_list, 1):
             category = product.get('category', 'Kategori Yok')
-            supplements_info += f"{i}. {product['name']} ({category})\n"
-        supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme!"
+            product_id = product.get('id', '')
+            supplements_info += f"{i}. {product['name']} ({category}) [ID: {product_id}]\n"
+        supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken hem isim hem ID'yi belirt!"
         history.append({"role": "user", "content": supplements_info})
 
     # parallel chat with synthesis
@@ -1226,9 +1227,12 @@ async def chat_message(req: ChatMessageRequest,
                 product_name = product.get('name', '').lower()
                 product_category = product.get('category', '').lower()
                 
-                # Daha esnek matching
+                # ID ve isim matching
+                product_id = product.get('id', '')
                 if (product_name in final.lower() or 
                     product_category in final.lower() or
+                    f"[id: {product_id}]" in final.lower() or
+                    f"id: {product_id}" in final.lower() or
                     any(word in final.lower() for word in product_name.split()) or
                     any(word in final.lower() for word in product_category.split())):
                     
