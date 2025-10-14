@@ -1247,6 +1247,9 @@ async def chat_message(req: ChatMessageRequest,
         else:
             print(f"🔍 DEBUG: AI ürün önermiyor veya bilgi istiyor, butonlar gösterilmeyecek")
     
+    print(f"🔍 DEBUG: Response'a gönderilen products: {recommended_products}")
+    print(f"🔍 DEBUG: Products count: {len(recommended_products) if recommended_products else 0}")
+    
     return ChatResponse(
         conversation_id=conversation_id, 
         reply=final, 
