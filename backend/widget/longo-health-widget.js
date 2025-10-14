@@ -4,6 +4,8 @@
     
     // DOM hazır olunca widget'ı başlat
     function initWidget() {
+        // Cache busting için version ekle
+        console.log('🔍 DEBUG: Widget version 2.0 - Cart integration enabled');
         // Siteden userLevel gelip gelmediğini kontrol et
         // Ideasoft'ta gerçek değerler gelecek, yoksa guest (null) olarak ayarla
         console.log('🔍 DEBUG: window.longoUserLevel before:', window.longoUserLevel);
@@ -1313,6 +1315,8 @@
             
             console.log('🔍 DEBUG: AI Response:', result);
             console.log('🔍 DEBUG: Products:', products);
+            console.log('🔍 DEBUG: Products length:', products ? products.length : 'null');
+            console.log('🔍 DEBUG: Products type:', typeof products);
             
             // Limit popup kontrolü
             if (reply.startsWith('LIMIT_POPUP:')) {

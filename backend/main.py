@@ -1225,6 +1225,7 @@ async def chat_message(req: ChatMessageRequest,
                 print(f"🔍 DEBUG: Ürün eklendi: {product.get('name', '')}")
         
         print(f"🔍 DEBUG: Toplam {len(recommended_products)} ürün önerildi")
+        print(f"🔍 DEBUG: Önerilen ürünler: {recommended_products}")
     
     return ChatResponse(
         conversation_id=conversation_id, 
