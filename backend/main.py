@@ -1162,7 +1162,7 @@ async def chat_message(req: ChatMessageRequest,
             product_id = product.get('id', '')
             supplements_info += f"{i}. {product['name']} ({category}) [ID: {product_id}]\n"
         supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken hem isim hem ID'yi belirt!"
-    history.append({"role": "user", "content": supplements_info})
+        history.append({"role": "user", "content": supplements_info})
 
     # parallel chat with synthesis
     start = time.time()
