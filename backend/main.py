@@ -1100,17 +1100,45 @@ async def chat_message(req: ChatMessageRequest,
             lab_info += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} {test.get('unit', '')} (Referans: {test.get('reference_range', 'N/A')})\n"
         history.append({"role": "user", "content": lab_info})
     
-    # Chat history'yi context olarak ekle (free chat gibi)
+    # Akıllı context ekleme - sadece gerekli olduğunda
+    needs_context = False
+    
     if rows:
+        # 1. Tek kelime/fiil kontrolü
+        single_words = ["devam", "açıkla", "anlat", "edelim", "yapalım", "kullan", "hazırla", "tamam", "olur", "evet", "hayır", "anladım", "teşekkürler"]
+        if message_text.strip().lower() in single_words:
+            needs_context = True
+        
+        # 2. Soru kelimeleri kontrolü (bağlam gerektirir)
+        question_words = ["nasıl", "neden", "ne", "hangi", "kim", "nerede", "ne zaman", "kaç"]
+        if any(word in message_text.lower() for word in question_words):
+            needs_context = True
+        
+        # 3. Önceki mesajda supplement/ürün bahsedilmişse
+        last_assistant_msg = ""
+        for r in reversed(rows):
+            if r['role'] == 'assistant':
+                last_assistant_msg = r['content'].lower()
+                break
+        
+        if any(word in last_assistant_msg for word in ["ürün", "supplement", "takviye", "öner", "kombinasyon"]):
+            needs_context = True
+        
+        # 4. Kullanıcı "bu", "şu", "o" gibi referans kelimeler kullanmışsa
+        reference_words = ["bu", "şu", "o", "bunun", "şunun", "onun", "buna", "şuna", "ona"]
+        if any(word in message_text.lower() for word in reference_words):
+            needs_context = True
+    
+    if needs_context and rows:
         context_message = "\n\n=== ÖNCEKİ KONUŞMA ===\n"
-        for r in rows[-(CHAT_HISTORY_MAX-1):]:
+        for r in rows[-3:]:  # Son 3 mesaj yeterli
             if r['role'] == 'user':
                 context_message += f"KULLANICI: {r['content']}\n"
             else:
                 context_message += f"ASISTAN: {r['content']}\n"
         context_message += "\n=== ŞİMDİKİ SORU ===\n"
         message_text = context_message + message_text
-        print(f"🔍 DEBUG: Premium kullanıcı için {len(rows)} mesaj geçmişi eklendi")
+        print(f"🔍 DEBUG: Premium kullanıcı için akıllı context eklendi")
     
     # Kullanıcının güncel mesajını ekle
     history.append({"role": "user", "content": message_text})
