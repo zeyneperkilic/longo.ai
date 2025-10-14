@@ -1400,10 +1400,23 @@
     // Ürün butonlarını göster
     function showProductButtons(products) {
         console.log('🔍 DEBUG: showProductButtons çağrıldı, products:', products);
-        const messagesDiv = document.querySelector('.longo-messages');
-        console.log('🔍 DEBUG: messagesDiv bulundu mu?', !!messagesDiv);
+        
+        // Farklı selector'ları dene
+        let messagesDiv = document.querySelector('.longo-messages');
         if (!messagesDiv) {
-            console.log('🔍 DEBUG: messagesDiv bulunamadı!');
+            messagesDiv = document.querySelector('#longo-chat-messages');
+        }
+        if (!messagesDiv) {
+            messagesDiv = document.querySelector('.longo-chat-messages');
+        }
+        if (!messagesDiv) {
+            messagesDiv = document.querySelector('[id*="longo"][id*="message"]');
+        }
+        
+        console.log('🔍 DEBUG: messagesDiv bulundu mu?', !!messagesDiv);
+        console.log('🔍 DEBUG: messagesDiv element:', messagesDiv);
+        if (!messagesDiv) {
+            console.log('🔍 DEBUG: messagesDiv bulunamadı! Tüm selector\'lar denendi.');
             return;
         }
         
