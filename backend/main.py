@@ -1227,14 +1227,11 @@ async def chat_message(req: ChatMessageRequest,
                 product_name = product.get('name', '').lower()
                 product_category = product.get('category', '').lower()
                 
-                # ID ve isim matching
+                # SADECE ID matching - daha kesin
                 product_id = product.get('id', '')
-                if (product_name in final.lower() or 
-                    product_category in final.lower() or
-                    f"[id: {product_id}]" in final.lower() or
+                if (f"[id: {product_id}]" in final.lower() or
                     f"id: {product_id}" in final.lower() or
-                    any(word in final.lower() for word in product_name.split()) or
-                    any(word in final.lower() for word in product_category.split())):
+                    f"(id: {product_id})" in final.lower()):
                     
                     recommended_products.append({
                         "id": product.get('id', f"product_{len(recommended_products)}"),
