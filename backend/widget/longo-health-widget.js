@@ -1311,6 +1311,9 @@
             const reply = result.reply;
             const products = result.products; // Sepete ekleme için ürünler
             
+            console.log('🔍 DEBUG: AI Response:', result);
+            console.log('🔍 DEBUG: Products:', products);
+            
             // Limit popup kontrolü
             if (reply.startsWith('LIMIT_POPUP:')) {
                 const cleanReply = reply.replace('LIMIT_POPUP:', '');
@@ -1321,7 +1324,10 @@
                 
                 // Eğer ürün önerileri varsa sepete ekle butonları göster
                 if (products && products.length > 0) {
+                    console.log('🔍 DEBUG: Ürün butonları gösteriliyor:', products);
                     showProductButtons(products);
+                } else {
+                    console.log('🔍 DEBUG: Ürün bulunamadı, butonlar gösterilmiyor');
                 }
             }
             

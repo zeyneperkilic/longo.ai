@@ -1200,18 +1200,31 @@ async def chat_message(req: ChatMessageRequest,
     # Eğer supplement isteği varsa, önerilen ürünleri döndür
     recommended_products = None
     if is_supplement_request and supplements_list:
+        print(f"🔍 DEBUG: Supplement isteği tespit edildi, {len(supplements_list)} ürün var")
+        print(f"🔍 DEBUG: AI yanıtı: {final[:200]}...")
+        
         # AI'ın önerdiği ürünleri tespit et (basit keyword matching)
         recommended_products = []
-        for product in supplements_list[:5]:  # İlk 5 ürün
+        for product in supplements_list[:10]:  # İlk 10 ürün
             product_name = product.get('name', '').lower()
-            if any(keyword in final.lower() for keyword in [product_name, product.get('category', '').lower()]):
+            product_category = product.get('category', '').lower()
+            
+            # Daha esnek matching
+            if (product_name in final.lower() or 
+                product_category in final.lower() or
+                any(word in final.lower() for word in product_name.split()) or
+                any(word in final.lower() for word in product_category.split())):
+                
                 recommended_products.append({
-                    "id": product.get('id', ''),
+                    "id": product.get('id', f"product_{len(recommended_products)}"),
                     "name": product.get('name', ''),
                     "category": product.get('category', ''),
                     "price": "299.99",  # Placeholder - gerçek fiyat XML'den gelecek
                     "image": f"https://longopass.myideasoft.com/images/{product.get('id', '')}.jpg"
                 })
+                print(f"🔍 DEBUG: Ürün eklendi: {product.get('name', '')}")
+        
+        print(f"🔍 DEBUG: Toplam {len(recommended_products)} ürün önerildi")
     
     return ChatResponse(
         conversation_id=conversation_id, 
