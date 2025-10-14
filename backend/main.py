@@ -1100,9 +1100,13 @@ async def chat_message(req: ChatMessageRequest,
             lab_info += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} {test.get('unit', '')} (Referans: {test.get('reference_range', 'N/A')})\n"
         history.append({"role": "user", "content": lab_info})
     
-    # Chat history
-    for r in rows[-(CHAT_HISTORY_MAX-1):]:
-        history.append({"role": r["role"], "content": r["content"]})
+    # Chat history'yi context olarak ekle (free chat gibi)
+    if rows:
+        context_message = "\n\n=== KONUŞMA GEÇMİŞİ ===\n"
+        for r in rows[-(CHAT_HISTORY_MAX-1):]:
+            context_message += f"{r['role'].upper()}: {r['content']}\n"
+        message_text = context_message + "\n" + message_text
+        print(f"🔍 DEBUG: Premium kullanıcı için {len(rows)} mesaj geçmişi eklendi")
     
     # Kullanıcının güncel mesajını ekle
     history.append({"role": "user", "content": message_text})
