@@ -1102,10 +1102,14 @@ async def chat_message(req: ChatMessageRequest,
     
     # Chat history'yi context olarak ekle (free chat gibi)
     if rows:
-        context_message = "\n\n=== KONUŞMA GEÇMİŞİ ===\n"
+        context_message = "\n\n=== ÖNCEKİ KONUŞMA ===\n"
         for r in rows[-(CHAT_HISTORY_MAX-1):]:
-            context_message += f"{r['role'].upper()}: {r['content']}\n"
-        message_text = context_message + "\n" + message_text
+            if r['role'] == 'user':
+                context_message += f"KULLANICI: {r['content']}\n"
+            else:
+                context_message += f"ASISTAN: {r['content']}\n"
+        context_message += "\n=== ŞİMDİKİ SORU ===\n"
+        message_text = context_message + message_text
         print(f"🔍 DEBUG: Premium kullanıcı için {len(rows)} mesaj geçmişi eklendi")
     
     # Kullanıcının güncel mesajını ekle
