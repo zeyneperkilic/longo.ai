@@ -1401,17 +1401,8 @@
     function showProductButtons(products) {
         console.log('🔍 DEBUG: showProductButtons çağrıldı, products:', products);
         
-        // Farklı selector'ları dene
-        let messagesDiv = document.querySelector('.longo-messages');
-        if (!messagesDiv) {
-            messagesDiv = document.querySelector('#longo-chat-messages');
-        }
-        if (!messagesDiv) {
-            messagesDiv = document.querySelector('.longo-chat-messages');
-        }
-        if (!messagesDiv) {
-            messagesDiv = document.querySelector('[id*="longo"][id*="message"]');
-        }
+        // Doğru selector'ı kullan
+        const messagesDiv = document.getElementById('longo-chat-messages');
         
         console.log('🔍 DEBUG: messagesDiv bulundu mu?', !!messagesDiv);
         console.log('🔍 DEBUG: messagesDiv element:', messagesDiv);
