@@ -1197,35 +1197,54 @@ async def chat_message(req: ChatMessageRequest,
     except Exception as e:
         pass  # Silent fail for production
     
-    # Eğer supplement isteği varsa, önerilen ürünleri döndür
+    # AI'ın gerçekten ürün önerip önermediğini kontrol et
     recommended_products = None
     if is_supplement_request and supplements_list:
         print(f"🔍 DEBUG: Supplement isteği tespit edildi, {len(supplements_list)} ürün var")
         print(f"🔍 DEBUG: AI yanıtı: {final[:200]}...")
         
-        # AI'ın önerdiği ürünleri tespit et (basit keyword matching)
-        recommended_products = []
-        for product in supplements_list[:10]:  # İlk 10 ürün
-            product_name = product.get('name', '').lower()
-            product_category = product.get('category', '').lower()
-            
-            # Daha esnek matching
-            if (product_name in final.lower() or 
-                product_category in final.lower() or
-                any(word in final.lower() for word in product_name.split()) or
-                any(word in final.lower() for word in product_category.split())):
-                
-                recommended_products.append({
-                    "id": product.get('id', f"product_{len(recommended_products)}"),
-                    "name": product.get('name', ''),
-                    "category": product.get('category', ''),
-                    "price": "299.99",  # Placeholder - gerçek fiyat XML'den gelecek
-                    "image": f"https://longopass.myideasoft.com/images/{product.get('id', '')}.jpg"
-                })
-                print(f"🔍 DEBUG: Ürün eklendi: {product.get('name', '')}")
+        # AI'ın gerçekten ürün önerip önermediğini kontrol et
+        ai_recommending_products = any(keyword in final.lower() for keyword in [
+            "öneriyorum", "öneririm", "öner", "kombinasyon", "ürün", "takviye", "supplement",
+            "şu ürün", "bu ürün", "şu takviye", "bu takviye", "şu supplement", "bu supplement"
+        ])
         
-        print(f"🔍 DEBUG: Toplam {len(recommended_products)} ürün önerildi")
-        print(f"🔍 DEBUG: Önerilen ürünler: {recommended_products}")
+        # AI'ın bilgi istediğini kontrol et
+        ai_asking_for_info = any(keyword in final.lower() for keyword in [
+            "bilgi ver", "hedefin ne", "nasıl", "hangi", "ne istiyorsun", "açıkla",
+            "detay", "önce", "sonra", "daha", "kişiselleştir"
+        ])
+        
+        print(f"🔍 DEBUG: AI ürün öneriyor mu: {ai_recommending_products}")
+        print(f"🔍 DEBUG: AI bilgi istiyor mu: {ai_asking_for_info}")
+        
+        # Sadece AI gerçekten ürün öneriyorsa ve bilgi istemiyorsa
+        if ai_recommending_products and not ai_asking_for_info:
+            # AI'ın önerdiği ürünleri tespit et (basit keyword matching)
+            recommended_products = []
+            for product in supplements_list[:10]:  # İlk 10 ürün
+                product_name = product.get('name', '').lower()
+                product_category = product.get('category', '').lower()
+                
+                # Daha esnek matching
+                if (product_name in final.lower() or 
+                    product_category in final.lower() or
+                    any(word in final.lower() for word in product_name.split()) or
+                    any(word in final.lower() for word in product_category.split())):
+                    
+                    recommended_products.append({
+                        "id": product.get('id', f"product_{len(recommended_products)}"),
+                        "name": product.get('name', ''),
+                        "category": product.get('category', ''),
+                        "price": "299.99",  # Placeholder - gerçek fiyat XML'den gelecek
+                        "image": f"https://longopass.myideasoft.com/images/{product.get('id', '')}.jpg"
+                    })
+                    print(f"🔍 DEBUG: Ürün eklendi: {product.get('name', '')}")
+            
+            print(f"🔍 DEBUG: Toplam {len(recommended_products)} ürün önerildi")
+            print(f"🔍 DEBUG: Önerilen ürünler: {recommended_products}")
+        else:
+            print(f"🔍 DEBUG: AI ürün önermiyor veya bilgi istiyor, butonlar gösterilmeyecek")
     
     return ChatResponse(
         conversation_id=conversation_id, 
