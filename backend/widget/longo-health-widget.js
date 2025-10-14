@@ -1309,6 +1309,7 @@
             
             // AI yanıtını göster
             const reply = result.reply;
+            const products = result.products; // Sepete ekleme için ürünler
             
             // Limit popup kontrolü
             if (reply.startsWith('LIMIT_POPUP:')) {
@@ -1317,6 +1318,11 @@
                 showLimitPopup();
             } else {
                 longoAddMessage('assistant', reply);
+                
+                // Eğer ürün önerileri varsa sepete ekle butonları göster
+                if (products && products.length > 0) {
+                    showProductButtons(products);
+                }
             }
             
         } catch (error) {
@@ -1374,6 +1380,56 @@
             }, 300);
         }
     }
+    
+    // Ürün butonlarını göster
+    function showProductButtons(products) {
+        const messagesDiv = document.querySelector('.longo-messages');
+        if (!messagesDiv) return;
+        
+        const productDiv = document.createElement('div');
+        productDiv.className = 'longo-message assistant';
+        productDiv.style.marginTop = '10px';
+        
+        let productHTML = '<div class="longo-product-buttons">';
+        productHTML += '<div style="font-size: 12px; color: #666; margin-bottom: 8px;">🛒 Önerilen Ürünler:</div>';
+        
+        products.forEach(product => {
+            productHTML += `
+                <div class="longo-product-item" style="margin-bottom: 8px; padding: 8px; border: 1px solid #e0e0e0; border-radius: 6px; background: #f9f9f9;">
+                    <div style="font-weight: 500; font-size: 13px; margin-bottom: 4px;">${product.name}</div>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 6px;">${product.category}</div>
+                    <button onclick="addToCart('${product.id}')" 
+                            style="background: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
+                        🛒 Sepete Ekle - ${product.price}₺
+                    </button>
+                </div>
+            `;
+        });
+        
+        productHTML += '</div>';
+        productDiv.innerHTML = productHTML;
+        
+        messagesDiv.appendChild(productDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    
+    // Sepete ekleme fonksiyonu
+    window.addToCart = function(productId) {
+        // Ana siteye sepete ekleme isteği gönder
+        console.log('Sepete ekleniyor:', productId);
+        
+        // Ideasoft'a sepete ekleme isteği
+        if (window.addToCart && typeof window.addToCart === 'function') {
+            // Ana sitenin sepete ekleme fonksiyonunu kullan
+            window.addToCart(productId);
+        } else {
+            // Fallback: Ana siteye yönlendir
+            window.open(`https://longopass.com/urun/${productId}`, '_blank');
+        }
+        
+        // Başarı mesajı göster
+        longoAddMessage('assistant', '✅ Ürün sepete eklendi! Ana sitede alışverişinize devam edebilirsiniz.');
+    };
     
     // Widget'ı başlat
     createWidget();

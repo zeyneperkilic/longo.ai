@@ -1197,7 +1197,28 @@ async def chat_message(req: ChatMessageRequest,
     except Exception as e:
         pass  # Silent fail for production
     
-    return ChatResponse(conversation_id=conversation_id, reply=final, latency_ms=latency_ms)
+    # Eğer supplement isteği varsa, önerilen ürünleri döndür
+    recommended_products = None
+    if is_supplement_request and supplements_list:
+        # AI'ın önerdiği ürünleri tespit et (basit keyword matching)
+        recommended_products = []
+        for product in supplements_list[:5]:  # İlk 5 ürün
+            product_name = product.get('name', '').lower()
+            if any(keyword in final.lower() for keyword in [product_name, product.get('category', '').lower()]):
+                recommended_products.append({
+                    "id": product.get('id', ''),
+                    "name": product.get('name', ''),
+                    "category": product.get('category', ''),
+                    "price": "299.99",  # Placeholder - gerçek fiyat XML'den gelecek
+                    "image": f"https://longopass.myideasoft.com/images/{product.get('id', '')}.jpg"
+                })
+    
+    return ChatResponse(
+        conversation_id=conversation_id, 
+        reply=final, 
+        latency_ms=latency_ms,
+        products=recommended_products
+    )
 
 # ---------- ANALYZE (FREE: one-time), LAB ----------
 

@@ -167,6 +167,7 @@ class ChatResponse(BaseModel):
     conversation_id: int
     reply: str
     latency_ms: int
+    products: Optional[List[Dict[str, Any]]] = Field(default=None, description="Önerilen ürünler (sepete ekleme için)")
     
     class Config:
         extra = "allow"
