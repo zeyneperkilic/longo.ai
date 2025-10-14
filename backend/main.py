@@ -206,7 +206,7 @@ def detect_language_simple(message: str) -> str:
 
 def build_chat_system_prompt() -> str:
     """Chat için system prompt oluştur"""
-    return """Adın Longo. Longopass'ın sağlık ve supplement konularında yardımcı olan AI asistanısın. Kendinden 'Ben Longo' veya 'Ben Longo AI' de.
+    return """Longopass'ın sağlık ve supplement konularında yardımcı olan AI asistanısın. Sadece 'sen kimsin' sorulduğunda 'Ben Longo' de.
 
 🎯 GÖREVİN: Sadece sağlık, supplement, beslenme ve laboratuvar konularında yanıt ver.
 
@@ -573,7 +573,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
     ]
     
     if any(kw == txt for kw in pure_greeting_keywords):
-        reply = "Merhaba! Ben Longo AI. Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
+        reply = "Merhaba! Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
         # User mesajını memory'ye ekle
         free_user_conversations[x_user_id]["messages"].append({"role": "user", "content": message_text})
         # AI yanıtını memory'ye ekle
@@ -592,7 +592,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
         
         # Free kullanıcılar için güzel prompt
         if detected_language == "en":
-            system_prompt = """You are Longo AI - a friendly assistant helping with health and supplement topics.
+            system_prompt = """You are Longopass's health assistant - helping with health and supplement topics.
 
 🎯 YOUR TASK: Only respond to health, supplement, nutrition and laboratory topics.
 
@@ -818,7 +818,7 @@ async def chat_message(req: ChatMessageRequest,
         # Guest kullanıcılar hiç konuşamaz, her zaman kayıt olma pop-up'ı göster
         return ChatResponse(
             conversation_id=req.conversation_id or 1,
-            reply="LIMIT_POPUP:🎯 Longo AI'yı kullanabilmek için ücretsiz kayıt olun! Premium özelliklere erişmek ve sınırsız soru sormak için üyelik paketlerimize göz atın.",
+            reply="LIMIT_POPUP:🎯 Chatbot'u kullanabilmek için ücretsiz kayıt olun! Premium özelliklere erişmek ve sınırsız soru sormak için üyelik paketlerimize göz atın.",
             latency_ms=0
         )
     elif x_user_level == 1:  # Free (hesap var) - Günde 10 mesaj
@@ -827,7 +827,7 @@ async def chat_message(req: ChatMessageRequest,
             # Limit doldu pop-up'ı
             return ChatResponse(
                 conversation_id=req.conversation_id or 1,
-                reply="LIMIT_POPUP:🎯 Günlük 10 soru limitiniz doldu! Yarın tekrar konuşmaya devam edebilirsiniz. 💡 Premium plana geçerek sınırsız soru sorma imkanına sahip olun!",
+                reply="LIMIT_POPUP:🎯 Günlük 10 soru limitiniz doldu! Yarın tekrar konuşmaya devam edebilirsiniz. Longo Essential veya Longo Ultimate planlarından birine geçerek sınırsız soru sorma imkanına sahip olun!",
                 latency_ms=0
             )
     
@@ -876,7 +876,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Eğer saf selamlama ise özel yanıt ver
     if any(kw == txt for kw in pure_greeting_keywords):
-        reply = "Merhaba! Ben Longo AI. Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
+        reply = "Merhaba! Sağlık, supplement ve laboratuvar konularında yardımcı olabilirim. Size nasıl yardımcı olabilirim?"
         return ChatResponse(conversation_id=conversation_id, reply=reply, latency_ms=0)
 
     # Chat history'yi ai_messages'tan al (Message tablosu yerine)
@@ -936,7 +936,7 @@ async def chat_message(req: ChatMessageRequest,
     
     # Eğer İngilizce algılandıysa, system prompt'u tamamen İngilizce yap
     if detected_language == "en":
-        system_prompt = """You are Longo AI - a friendly assistant helping with health and supplement topics.
+        system_prompt = """You are Longopass's health assistant - helping with health and supplement topics.
 
 🎯 YOUR TASK: Only respond to health, supplement, nutrition and laboratory topics.
 
