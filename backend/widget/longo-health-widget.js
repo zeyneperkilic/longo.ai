@@ -1411,17 +1411,22 @@
             return;
         }
         
+        // Unique ID'ler oluştur
+        const uniqueId = 'product-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        const productListId = 'product-list-' + uniqueId;
+        const toggleIconId = 'product-toggle-icon-' + uniqueId;
+        
         const productDiv = document.createElement('div');
         productDiv.className = 'longo-message assistant';
         productDiv.style.marginTop = '10px';
         
         let productHTML = '<div class="longo-product-buttons">';
         productHTML += `
-            <div class="longo-product-header" style="font-size: 12px; color: #666; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px; background: #f0f0f0; border-radius: 6px; user-select: none;" onclick="toggleProductList()">
+            <div class="longo-product-header" style="font-size: 12px; color: #666; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px; background: #f0f0f0; border-radius: 6px; user-select: none;" onclick="toggleProductList('${productListId}', '${toggleIconId}')">
                 <span>🛒 Önerilen Ürünler (${products.length})</span>
-                <span id="product-toggle-icon" style="font-size: 14px; transition: transform 0.3s ease;">▼</span>
+                <span id="${toggleIconId}" style="font-size: 14px; transition: transform 0.3s ease;">▼</span>
             </div>
-            <div id="product-list" style="display: none; max-height: 300px; overflow-y: auto;">
+            <div id="${productListId}" style="display: none; max-height: 300px; overflow-y: auto;">
         `;
         
         products.forEach(product => {
@@ -1450,20 +1455,28 @@
     }
     
     // Ürün listesini aç/kapat
-    window.toggleProductList = function() {
-        const productList = document.getElementById('product-list');
-        const toggleIcon = document.getElementById('product-toggle-icon');
+    window.toggleProductList = function(productListId, toggleIconId) {
+        const productList = document.getElementById(productListId);
+        const toggleIcon = document.getElementById(toggleIconId);
+        
+        console.log('🔍 DEBUG: toggleProductList çağrıldı:', productListId, toggleIconId);
+        console.log('🔍 DEBUG: productList bulundu mu?', !!productList);
+        console.log('🔍 DEBUG: toggleIcon bulundu mu?', !!toggleIcon);
         
         if (productList && toggleIcon) {
             if (productList.style.display === 'none') {
                 productList.style.display = 'block';
                 toggleIcon.textContent = '▲';
                 toggleIcon.style.transform = 'rotate(0deg)';
+                console.log('🔍 DEBUG: Ürün listesi açıldı');
             } else {
                 productList.style.display = 'none';
                 toggleIcon.textContent = '▼';
                 toggleIcon.style.transform = 'rotate(0deg)';
+                console.log('🔍 DEBUG: Ürün listesi kapandı');
             }
+        } else {
+            console.log('🔍 DEBUG: Elementler bulunamadı!');
         }
     };
     
