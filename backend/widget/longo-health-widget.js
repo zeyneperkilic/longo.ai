@@ -1327,11 +1327,17 @@
                 longoAddMessage('assistant', reply);
                 
                 // Eğer ürün önerileri varsa sepete ekle butonları göster
+                console.log('🔍 DEBUG: Products kontrol ediliyor...');
+                console.log('🔍 DEBUG: products var mı?', !!products);
+                console.log('🔍 DEBUG: products length:', products ? products.length : 'null');
+                console.log('🔍 DEBUG: products type:', typeof products);
+                
                 if (products && products.length > 0) {
                     console.log('🔍 DEBUG: Ürün butonları gösteriliyor:', products);
                     showProductButtons(products);
                 } else {
                     console.log('🔍 DEBUG: Ürün bulunamadı, butonlar gösterilmiyor');
+                    console.log('🔍 DEBUG: products değeri:', products);
                 }
             }
             
@@ -1393,8 +1399,13 @@
     
     // Ürün butonlarını göster
     function showProductButtons(products) {
+        console.log('🔍 DEBUG: showProductButtons çağrıldı, products:', products);
         const messagesDiv = document.querySelector('.longo-messages');
-        if (!messagesDiv) return;
+        console.log('🔍 DEBUG: messagesDiv bulundu mu?', !!messagesDiv);
+        if (!messagesDiv) {
+            console.log('🔍 DEBUG: messagesDiv bulunamadı!');
+            return;
+        }
         
         const productDiv = document.createElement('div');
         productDiv.className = 'longo-message assistant';
@@ -1419,8 +1430,13 @@
         productHTML += '</div>';
         productDiv.innerHTML = productHTML;
         
+        console.log('🔍 DEBUG: Product HTML oluşturuldu:', productHTML);
+        console.log('🔍 DEBUG: Product div DOM\'a ekleniyor...');
+        
         messagesDiv.appendChild(productDiv);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        console.log('🔍 DEBUG: Product div başarıyla eklendi!');
     }
     
     // Sepete ekleme fonksiyonu
