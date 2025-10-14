@@ -1146,8 +1146,13 @@ async def chat_message(req: ChatMessageRequest,
     # Kullanıcının güncel mesajını ekle
     history.append({"role": "user", "content": message_text})
     
-    # XML supplement listesini SADECE kullanıcı istediğinde ekle
-    supplement_keywords = ["supplement", "takviye", "vitamin", "öner", "öneri", "hangi", "ne alayım", "ürün", "mineral", "besin", "ne önerirsin"]
+    # XML supplement listesini SADECE kullanıcı AÇIKÇA istediğinde ekle
+    supplement_keywords = [
+        "ne önerirsin", "ne öneriyorsun", "hangi ürün", "hangi takviye", "hangi supplement",
+        "ne alayım", "ne almalıyım", "hangi vitamin", "ürün öner", "takviye öner", 
+        "supplement öner", "ne kullanayım", "hangi marka", "önerdiğin ürün",
+        "önerdiğin takviye", "önerdiğin supplement", "hangi ürünleri", "ne tavsiye edersin"
+    ]
     is_supplement_request = any(keyword in message_text.lower() for keyword in supplement_keywords)
     
     if is_supplement_request:
@@ -1204,10 +1209,11 @@ async def chat_message(req: ChatMessageRequest,
         print(f"🔍 DEBUG: Supplement isteği tespit edildi, {len(supplements_list)} ürün var")
         print(f"🔍 DEBUG: AI yanıtı: {final[:200]}...")
         
-        # AI'ın gerçekten ürün önerip önermediğini kontrol et
+        # AI'ın gerçekten ürün önerip önermediğini kontrol et (daha sıkı)
         ai_recommending_products = any(keyword in final.lower() for keyword in [
-            "öneriyorum", "öneririm", "öner", "kombinasyon", "ürün", "takviye", "supplement",
-            "şu ürün", "bu ürün", "şu takviye", "bu takviye", "şu supplement", "bu supplement"
+            "öneriyorum", "öneririm", "öner", "şu ürün", "bu ürün", "şu takviye", "bu takviye", 
+            "şu supplement", "bu supplement", "ürünler:", "takviyeler:", "supplementler:",
+            "kombinasyon:", "şu kombinasyon", "bu kombinasyon", "ürün listesi", "takviye listesi"
         ])
         
         print(f"🔍 DEBUG: AI ürün öneriyor mu: {ai_recommending_products}")
