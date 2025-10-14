@@ -1137,7 +1137,10 @@ async def chat_message(req: ChatMessageRequest,
             else:
                 context_message += f"ASISTAN: {r['content']}\n"
         context_message += "\n=== ŞİMDİKİ SORU ===\n"
-        message_text = context_message + message_text
+        context_message += f"KULLANICI: {message_text}\n"
+        context_message += "\n=== TALİMAT ===\n"
+        context_message += "Yukarıdaki konuşmayı oku ve şimdiki soruyu bağlamda anla! Kimlik sorularına kimlik cevabı ver, supplement sorularına supplement cevabı ver!\n"
+        message_text = context_message
         print(f"🔍 DEBUG: Premium kullanıcı için akıllı context eklendi")
     
     # Kullanıcının güncel mesajını ekle
