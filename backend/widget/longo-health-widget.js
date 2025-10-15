@@ -1434,10 +1434,7 @@
                 <div class="longo-product-item" style="margin-bottom: 8px; padding: 8px; border: 1px solid #e0e0e0; border-radius: 6px; background: #f9f9f9;">
                     <div style="font-weight: 500; font-size: 13px; margin-bottom: 4px;">${product.name}</div>
                     <div style="font-size: 11px; color: #666; margin-bottom: 6px;">${product.category}</div>
-                    <button onclick="addToCart('${product.id}')" 
-                            style="background: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">
-                        🛒 Sepete Ekle - ${product.price}₺
-                    </button>
+                    <div style="font-size: 11px; color: #007bff; font-weight: 500;">${product.price}₺</div>
                 </div>
             `;
         });
@@ -1480,23 +1477,7 @@
         }
     };
     
-    // Sepete ekleme fonksiyonu
-    window.addToCart = function(productId) {
-        // Ana siteye sepete ekleme isteği gönder
-        console.log('Sepete ekleniyor:', productId);
-        
-        // Ideasoft'a sepete ekleme isteği
-        if (window.addToCart && typeof window.addToCart === 'function') {
-            // Ana sitenin sepete ekleme fonksiyonunu kullan
-            window.addToCart(productId);
-        } else {
-            // Fallback: Ana siteye yönlendir
-            window.open(`https://longopass.com/urun/${productId}`, '_blank');
-        }
-        
-        // Başarı mesajı göster
-        longoAddMessage('assistant', '✅ Ürün sepete eklendi! Ana sitede alışverişinize devam edebilirsiniz.');
-    };
+    // Sepete ekleme fonksiyonu kaldırıldı - Ideasoft entegrasyonu zor olduğu için
     
     // Widget'ı başlat
     createWidget();
