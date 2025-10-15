@@ -752,6 +752,9 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "Genel sağlık önerileri ver ama supplement önerisi verme. "
         "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "Sadece bilgilendirme amaçlı yorum yap, tıbbi tanı koyma. "
+        "\n\nKLİNİK ANLAM UZUNLUK KURALI: 'genel_saglik_yorumu' alanı EN AZ 6-8 CÜMLE (120-200 kelime) olmalı; \n"
+        "somut belirtiler, olası nedenler, günlük yaşam etkileri ve izlem önerilerini içermeli. \n"
+        "Kısa, tek cümlelik yanıt VERME! "
         "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"
         "\n- SADECE TÜRKÇE KULLAN!"
         "\n- İngilizce kelime, terim, cümle KULLANMA!"
@@ -759,8 +762,6 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "\n- Kategori adlarını Türkçe yaz: 'Vitaminler' (Vitamins değil)"
         "\n- Tüm açıklamaları Türkçe yap!"
         "\n- İngilizce referans, kaynak, terim EKLEME!"
-        "\n- Annotations'da bile İngilizce kullanma!"
-        "\n- Sadece Türkçe kelimeler ve terimler kullan!"
         "\n\nÖNEMLİ: Yanıtını SADECE JSON formatında ver! Aşağıdaki yapıyı kullan:"
         '\n{\n'
         '  "genel_saglik_yorumu": "Genel sağlık yorumu buraya",\n'
