@@ -753,7 +753,7 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "SUPPLEMENT ÖNERİSİ VERME! SADECE ANALİZ YAP! "
         "Sadece bilgilendirme amaçlı yorum yap, tıbbi tanı koyma. "
         "\n\nKLİNİK ANLAM UZUNLUK KURALI: 'genel_saglik_yorumu' alanı EN AZ 6-8 CÜMLE (120-200 kelime) olmalı; \n"
-        "somut belirtiler, olası nedenler, günlük yaşam etkileri ve izlem önerilerini içermeli. \n"
+        "somut belirtiler, olası nedenler, günlük yaşam etkileri ve izlem önerilerini içermeli. Asla refernas veya link verme!\n"
         "Kısa, tek cümlelik yanıt VERME! "
         "\n\nDİL KURALLARI - ÇOK ÖNEMLİ:"
         "\n- SADECE TÜRKÇE KULLAN!"
