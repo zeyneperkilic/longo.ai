@@ -761,7 +761,7 @@ def build_single_session_prompt(session_tests: List[Dict[str, Any]], session_dat
         "\n- Test adlarını Türkçe yaz: 'D Vitamini' (Vitamin D değil)"
         "\n- Kategori adlarını Türkçe yaz: 'Vitaminler' (Vitamins değil)"
         "\n- Tüm açıklamaları Türkçe yap!"
-        "\n- İngilizce referans, kaynak, terim EKLEME!"
+        "\n- referans, kaynak, link, terim EKLEME!"
         "\n\nÖNEMLİ: Yanıtını SADECE JSON formatında ver! Aşağıdaki yapıyı kullan:"
         '\n{\n'
         '  "genel_saglik_yorumu": "Genel sağlık yorumu buraya",\n'
