@@ -964,6 +964,15 @@ def parallel_single_lab_analyze(test_data: Dict[str, Any], historical_results: L
         
         # Tek model kullanıldığı için synthesis'e gerek yok - direkt response'u döndür
         cleaned_response = _sanitize_links(responses[0]["response"])
+        # JSON ise derin temizlik uygula
+        try:
+            txt = cleaned_response.strip()
+            if txt.startswith('{'):
+                obj = json.loads(txt)
+                obj = _sanitize_obj(obj)
+                cleaned_response = json.dumps(obj, ensure_ascii=False)
+        except Exception:
+            pass
         return {
             "content": cleaned_response,
             "model_used": responses[0]["model"],
