@@ -289,6 +289,19 @@ def _sanitize_links(text: str) -> str:
     cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
     return cleaned
 
+def _sanitize_obj(obj: Any) -> Any:
+    """Recursively remove links/URLs from strings inside JSON-like objects."""
+    try:
+        from collections.abc import Mapping, Sequence
+        if isinstance(obj, str):
+            return _sanitize_links(obj)
+        if isinstance(obj, Mapping):
+            return {k: _sanitize_obj(v) for k, v in obj.items()}
+        if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes, bytearray)):
+            return [_sanitize_obj(v) for v in obj]
+    except Exception:
+        pass
+    return obj
 
 
 def build_synthesis_prompt(responses: List[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -1059,6 +1072,8 @@ def parallel_single_session_analyze(session_tests: List[Dict[str, Any]], session
                 if not formatted_response["general_recommendations"]:
                     formatted_response["general_recommendations"] = ["Test sonuçlarınızı hekiminizle değerlendirin"]
                 
+                # sanitize any links the model may have added
+                formatted_response = _sanitize_obj(formatted_response)
                 return {
                     "content": json.dumps(formatted_response, ensure_ascii=False),
                     "models_used": [r["model"] for r in responses]
