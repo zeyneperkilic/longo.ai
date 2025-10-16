@@ -1178,20 +1178,20 @@ async def chat_message(req: ChatMessageRequest,
     ]
     is_supplement_request = any(keyword in message_text.lower() for keyword in supplement_keywords)
     
-    # Her zaman supplement listesini ekle
-    if supplements_list:
+    # SADECE supplement isteği varsa ürün listesini ekle
+    if is_supplement_request and supplements_list:
         supplements_info = f"\n\n🚨 MEVCUT ÜRÜNLER ({len(supplements_list)} ürün):\n"
         for i, product in enumerate(supplements_list, 1):
             category = product.get('category', 'Kategori Yok')
             product_id = product.get('id', '')
             supplements_info += f"{i}. {product['name']} ({category}) [ID: {product_id}]\n"
         
-        if is_supplement_request:
-            supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken hem isim hem ID'yi belirt!"
-        else:
-            supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünler mevcut! Başka hiçbir ürün önerme! Eğer ürün önerisi istenirse sadece bu listeden seç!"
+        supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken hem isim hem ID'yi belirt!"
         
         history.append({"role": "user", "content": supplements_info})
+        print(f"🔍 DEBUG: Supplement isteği tespit edildi, {len(supplements_list)} ürün eklendi")
+    else:
+        print(f"🔍 DEBUG: Supplement isteği yok, ürün listesi eklenmedi")
 
     # parallel chat with synthesis
     start = time.time()
@@ -3383,194 +3383,4 @@ Aşağıdaki JSON formatında yanıt ver:
             "status": "[Mükemmel/İyi/Orta/Kötü]",
             "metrics": [
                 {{"name": "BMI", "value": "X", "status": "✓/⚠️"}},
-                {{"name": "Vücut Yağ Oranı", "value": "X%", "status": "✓/⚠️"}},
-                {{"name": "Kas Kütlesi", "value": "İdeal/Düşük/Yüksek", "status": "✓/⚠️"}}
-            ]
-        }}
-    }},
-    "personalized_improvements": [
-        {{
-            "category": "Kategori adı",
-            "recommendation": "Öneri metni",
-            "priority": "high/medium/low"
-        }}
-    ]
-}}
-
-ÖNEMLİ:
-- Metabolik yaş testi sonucunu (kronolojik yaş vs metabolik yaş) analiz et
-- Quiz ve lab verilerini de dikkate alarak longevity skorunu 0-100 arasında ver
-- Risk ve koruyucu faktörleri belirle
-- Kişiselleştirilmiş öneriler ver
-- Gelecek sağlık durumunu tahmin et
-"""
-    
-    # AI çağrısı
-    try:
-        from backend.openrouter_client import get_ai_response
-        ai_response = await get_ai_response(
-            system_prompt="""Sen bir longevity uzmanısın. Kullanıcının metabolik yaş testi sonucunu analiz ederek detaylı longevity raporu oluşturuyorsun.
-
-GÖREV:
-- Verilen JSON formatında MUTLAKA yanıt ver
-- Kullanıcının lab verilerine göre detaylı sağlık kategorilerini (kardiyovasküler, metabolik, enflamasyon vb.) analiz et
-- Her kategori için "status" (Mükemmel/İyi/Orta/Kötü) ve "metrics" listesi oluştur
-- Mevcut lab verilerine göre gerçekçi değerler ver
-
-ÖNEMLİ KURALLAR:
-- SADECE JSON formatında yanıt ver, başka metin ekleme
-- Tüm field'ları doldur (boş bırakma)
-- Lab verilerinde olmayan metrikler için tahmin yap veya "Veri yok" de
-- Status değerleri: Mükemmel, İyi, Orta, Kötü
-- Metrics'te status: ✓ (normal) veya ⚠️ (dikkat)
-
-Sadece JSON formatında yanıt ver.""",
-            user_message=ai_context,
-            max_tokens=2500
-        )
-        
-        # JSON parse et
-        try:
-            # Markdown code block'ları temizle
-            if "```json" in ai_response:
-                ai_response = ai_response.split("```json")[1].split("```")[0]
-            elif "```" in ai_response:
-                ai_response = ai_response.split("```")[1].split("```")[0]
-            
-            # Son } karakterine kadar al
-            last_brace = ai_response.rfind("}")
-            if last_brace != -1:
-                ai_response = ai_response[:last_brace + 1]
-            
-            result = json.loads(ai_response.strip())
-        except json.JSONDecodeError as e:
-            print(f"JSON parse hatası: {e}")
-            print(f"AI Response: {ai_response}")
-            # Fallback response - Yeni format
-            result = {
-                "longevity_report": {
-                    "biological_age": {
-                        "value": req.metabolic_age,
-                        "real_age": req.chronological_age,
-                        "difference": req.metabolic_age - req.chronological_age,
-                        "status": "Normal"
-                    },
-                    "health_score": {
-                        "value": 75,
-                        "label": "İyi",
-                        "percentile": "Üst %50'de"
-                    },
-                    "longopass_development_score": {
-                        "value": 0,
-                        "note": "Birden fazla kapsamlı test analizi gerekmektedir"
-                    },
-                    "metabolic_age": {
-                        "value": req.metabolic_age,
-                        "status": "Normal"
-                    }
-                },
-                "detailed_analysis": {
-                    "cardiovascular_health": {"status": "İyi", "metrics": []},
-                    "metabolic_health": {"status": "İyi", "metrics": []},
-                    "inflammation_profile": {"status": "Orta", "metrics": []},
-                    "hormonal_balance": {"status": "İyi", "metrics": []},
-                    "cognitive_health": {"status": "İyi", "metrics": []},
-                    "body_composition": {"status": "İyi", "metrics": []}
-                },
-                "personalized_improvements": [
-                    {"category": "Yaşam Tarzı", "recommendation": "Düzenli egzersiz ve dengeli beslenme", "priority": "high"}
-                ]
-            }
-        
-        # Response oluştur - Yeni format
-        response_data = {
-            "success": True,
-            "message": "Longevity raporu hazırlandı",
-            "report": result,
-            "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
-        }
-        
-        # AI mesajını kaydet
-        create_ai_message(
-            db=db,
-            external_user_id=x_user_id,
-            message_type="metabolic_age_test",
-            request_payload=req.model_dump(),
-            response_payload=response_data,
-            model_used="metabolic_age_ai"
-        )
-        
-        return response_data
-        
-    except Exception as e:
-        print(f"Metabolik yaş testi hatası: {e}")
-        raise HTTPException(status_code=500, detail=f"Metabolik yaş analizi sırasında hata: {str(e)}")
-
-# Video Call Endpoints
-@app.post("/ai/premium-plus/video-call/join")
-async def join_video_call(
-    payload: dict = Body(...),
-    current_user: str = Depends(get_current_user),
-    x_user_id: str | None = Header(default=None),
-    x_user_level: int | None = Header(default=None)
-):
-    """Video call'a katılmak için Daily.co token oluştur"""
-    try:
-        # Premium Plus kontrolü
-        user_plan = get_user_plan_from_headers(x_user_level)
-        if user_plan != "premium_plus":
-            raise HTTPException(status_code=403, detail="Bu özellik sadece Premium Plus üyeler için")
-        
-        meeting_id = payload.get("meeting_id")
-        if not meeting_id:
-            raise HTTPException(status_code=400, detail="meeting_id gerekli")
-        
-        # Daily.co API key (environment variable'dan alınacak)
-        daily_api_key = os.getenv("DAILY_API_KEY")
-        print(f"🔍 DEBUG: Daily API Key var mı: {bool(daily_api_key)}")
-        print(f"🔍 DEBUG: Daily API Key uzunluğu: {len(daily_api_key) if daily_api_key else 0}")
-        if not daily_api_key:
-            raise HTTPException(status_code=500, detail="Daily.co API key bulunamadı")
-        
-        # Mock room name (gerçekte database'den alınacak)
-        room_name = f"longopass-meeting-{meeting_id}"
-        
-        # Daily.co meeting token oluştur
-        import requests
-        print(f"🔍 DEBUG: Room name: {room_name}")
-        print(f"🔍 DEBUG: API key başlangıcı: {daily_api_key[:10] if daily_api_key else 'YOK'}...")
-        
-        token_response = requests.post(
-            "https://api.daily.co/v1/meeting-tokens",
-            headers={
-                "Authorization": f"Bearer {daily_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "properties": {
-                    "room_name": room_name,
-                    "is_owner": False,
-                    "user_name": "Hasta"
-                }
-            }
-        )
-        
-        print(f"🔍 DEBUG: Daily.co response status: {token_response.status_code}")
-        print(f"🔍 DEBUG: Daily.co response text: {token_response.text}")
-        
-        if token_response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Daily.co token oluşturulamadı: {token_response.status_code} - {token_response.text}")
-        
-        token_data = token_response.json()
-        print(f"🔍 DEBUG: Token data: {token_data}")
-        
-        return {
-            "success": True,
-            "meetingUrl": f"https://longopass.daily.co/{room_name}",
-            "token": token_data.get("token")
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video call hatası: {str(e)}")
+                {{"name": "Vücut Yağ Ora
