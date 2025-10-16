@@ -981,5 +981,416 @@ curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/metabolic-age-test" 
   }'
 ```
 
+---
 
+## 🍎 Premium Plus - Beslenme Önerileri
+
+### **POST** `/ai/premium-plus/diet-recommendations`
+
+**Erişim:** Sadece Premium Plus (x-user-level: 3)
+
+Kullanıcının quiz ve lab verilerine göre kişiselleştirilmiş beslenme önerileri alır.
+
+#### Request Headers
+```http
+Content-Type: application/json
+username: longopass
+password: 123456
+x-user-id: user123
+x-user-level: 3
+```
+
+#### Request Body
+```json
+{}
+```
+*Not: Body boş gönderilir. Quiz ve lab verileri otomatik olarak kullanıcı ID'sine göre çekilir.*
+
+#### Response Format
+```json
+{
+  "success": true,
+  "message": "Beslenme önerileri hazırlandı",
+  "recommendations": {
+    "general_advice": "Kullanıcının durumuna göre genel beslenme önerisi paragrafı",
+    "daily_calories": {
+      "min": 2000,
+      "max": 2200,
+      "unit": "kcal"
+    },
+    "macro_distribution": {
+      "carbohydrate": {
+        "percentage": 40,
+        "label": "Karbonhidrat"
+      },
+      "protein": {
+        "percentage": 30,
+        "label": "Protein"
+      },
+      "fat": {
+        "percentage": 30,
+        "label": "Yağ"
+      }
+    },
+    "recommended_supplements": [
+      {
+        "name": "Vitamin D",
+        "dosage": "2000 IU",
+        "note": "Güneş ışığı eksikliği için"
+      },
+      {
+        "name": "Omega-3",
+        "dosage": "Balık yağı veya alg bazlı",
+        "note": "Kalp sağlığı için"
+      }
+    ],
+    "hydration": {
+      "daily_target": "2.5-3L",
+      "label": "Günlük Su Tüketimi",
+      "tips": [
+        "Sabah kalktığınızda 1-2 bardak su",
+        "Her öğün öncesi 1 bardak su",
+        "Egzersiz sonrası ekstra 500 ml",
+        "İdrar rengi açık sarı olmalı"
+      ]
+    },
+    "avoid_foods": [
+      "İşlenmiş gıdalar",
+      "Aşırı şeker tüketimi",
+      "Trans yağlar",
+      "Gazlı içecekler"
+    ],
+    "recommended_habits": [
+      "Düzenli öğün saatleri",
+      "Porsiyon kontrolü",
+      "Yavaş yemek yeme",
+      "Renkli sebze tüketimi"
+    ]
+  },
+  "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+}
+```
+
+#### cURL Örneği
+```bash
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/diet-recommendations" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: user123" \
+  -H "x-user-level: 3" \
+  -d '{}'
+```
+
+#### Özellikler
+- **Otomatik veri çekme:** Quiz ve lab sonuçları kullanıcı ID'sine göre otomatik alınır
+- **Kalori hesaplama:** Kişiye özel günlük kalori aralığı
+- **Makro dağılımı:** Yüzde bazlı karbonhidrat/protein/yağ oranları
+- **Supplement önerileri:** Eksikliklere göre takviye önerileri
+- **Hidrasyon rehberi:** Detaylı su tüketimi ipuçları
+- **Kaçınılacaklar/Önerilecekler:** Beslenme alışkanlıkları listeleri
+
+---
+
+## 🏃 Premium Plus - Egzersiz Önerileri
+
+### **POST** `/ai/premium-plus/exercise-recommendations`
+
+**Erişim:** Sadece Premium Plus (x-user-level: 3)
+
+Kullanıcının quiz ve lab verilerine göre kişiselleştirilmiş egzersiz ve yaşam tarzı önerileri alır.
+
+#### Request Headers
+```http
+Content-Type: application/json
+username: longopass
+password: 123456
+x-user-id: user123
+x-user-level: 3
+```
+
+#### Request Body
+```json
+{}
+```
+*Not: Body boş gönderilir. Quiz ve lab verileri otomatik olarak kullanıcı ID'sine göre çekilir.*
+
+#### Response Format
+```json
+{
+  "success": true,
+  "message": "Egzersiz önerileri hazırlandı",
+  "recommendations": {
+    "general_advice": "Kullanıcının durumuna göre genel egzersiz önerisi paragrafı",
+    "lifestyle_tips": {
+      "sleep_recovery": {
+        "title": "Uyku ve Toparlanma",
+        "target": "7-9 saat kaliteli uyku",
+        "tips": [
+          "Aynı saatlerde yatıp kalkın",
+          "Yatak odası serin, karanlık ve sessiz olmalı",
+          "Yatmadan 2 saat önce ekran kullanımını azaltın"
+        ]
+      },
+      "daily_activity": {
+        "title": "Günlük Aktivite",
+        "tips": [
+          "Günde en az 8000-10000 adım hedefleyin",
+          "Oturma süresini her saat bölün (5 dk hareket)",
+          "Merdiven kullanmayı tercih edin",
+          "Parkta daha uzağa park edin"
+        ]
+      },
+      "stress_management": {
+        "title": "Stres Yönetimi",
+        "tips": [
+          "Günlük 10 dakika meditasyon veya nefes egzersizi",
+          "Doğada vakit geçirin",
+          "Hobilerinize zaman ayırın",
+          "Sosyal bağlantılarınızı güçlendirin"
+        ]
+      },
+      "hydration": {
+        "title": "Hidrasyon",
+        "tips": [
+          "Günde en az 2-3 litre su için",
+          "Antrenman sırasında sık sık su için",
+          "Kafein alımını dengeleyin"
+        ]
+      },
+      "consistency": {
+        "title": "Düzenlilik",
+        "tips": [
+          "Egzersiz rutininize sadık kalın",
+          "Kaçırılan günleri telafi etmeye çalışmayın",
+          "İlerlemenizi kaydedin",
+          "Haftalık hedefler belirleyin"
+        ]
+      },
+      "body_awareness": {
+        "title": "Vücut Dinleme",
+        "tips": [
+          "Aşırı yorgunluk hissediyorsanaz ekstra dinlenme alın",
+          "Ağrı ve rahatsızlıkları ciddiye alın",
+          "Kademeli ilerleme prensibine uyun",
+          "Overtraining belirtilerine dikkat edin"
+        ]
+      },
+      "motivation": {
+        "title": "Motivasyon İpuçları",
+        "tips": [
+          "Gerçekçi hedefler belirleyin",
+          "İlerlemenizi fotoğraflarla kaydedin",
+          "Egzersiz arkadaşı bulun",
+          "Başarılarınızı kutlayın",
+          "Çeşitlilik katın, sıkılmayın"
+        ]
+      }
+    }
+  },
+  "disclaimer": "Bu öneriler bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+}
+```
+
+#### cURL Örneği
+```bash
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/exercise-recommendations" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: user123" \
+  -H "x-user-level: 3" \
+  -d '{}'
+```
+
+#### Özellikler
+- **Otomatik veri çekme:** Quiz ve lab sonuçları kullanıcı ID'sine göre otomatik alınır
+- **Yaşam tarzı kategorileri:** 7 farklı kategori (uyku, aktivite, stres, su, düzenlilik, vücut dinleme, motivasyon)
+- **Emoji destekli:** 😴, 🚶, 🧘, 💧, 📅, ❤️, 💡 ile frontend'de görsel gösterim
+- **Kişiselleştirilmiş:** Kullanıcının yaşı, hedefi ve lab sonuçlarına göre özel ipuçları
+
+---
+
+## 🧬 Premium Plus - Metabolik Yaş ve Longevity Raporu
+
+### **POST** `/ai/premium-plus/metabolic-age-test`
+
+**Erişim:** Sadece Premium Plus (x-user-level: 3)
+
+Kullanıcının metabolik yaş test sonucunu analiz ederek detaylı longevity raporu oluşturur.
+
+#### Request Headers
+```http
+Content-Type: application/json
+username: longopass
+password: 123456
+x-user-id: user123
+x-user-level: 3
+```
+
+#### Request Body
+```json
+{
+  "chronological_age": 40,
+  "metabolic_age": 35,
+  "gender": "male",
+  "height": 175,
+  "weight": 80,
+  "body_fat_percentage": 20,
+  "resting_heart_rate": 62,
+  "blood_pressure_systolic": 120,
+  "blood_pressure_diastolic": 78,
+  "sleep_hours": 7,
+  "stress_level": 5,
+  "exercise_frequency": 4,
+  "smoking": false,
+  "alcohol_consumption": 2,
+  "diet_quality": 7,
+  "family_history_diabetes": false,
+  "family_history_heart_disease": false,
+  "test_date": "2024-01-15",
+  "test_method": "Biyoimpedans analizi",
+  "test_notes": "Düzenli egzersiz yapıyor",
+  "additional_data": {
+    "vo2_max": 45,
+    "flexibility_score": 8
+  }
+}
+```
+
+#### Response Format
+```json
+{
+  "success": true,
+  "message": "Longevity raporu hazırlandı",
+  "report": {
+    "longevity_report": {
+      "biological_age": {
+        "value": 35,
+        "real_age": 40,
+        "difference": -5,
+        "status": "5 yaş daha genç"
+      },
+      "health_score": {
+        "value": 85,
+        "label": "Çok İyi",
+        "percentile": "Üst %15'te"
+      },
+      "longopass_development_score": {
+        "value": 78,
+        "note": "İlk ve son kapsamlı test panelleri karşılaştırılarak hesaplandı"
+      },
+      "metabolic_age": {
+        "value": 35,
+        "status": "Harika"
+      }
+    },
+    "detailed_analysis": {
+      "cardiovascular_health": {
+        "status": "İyi",
+        "metrics": [
+          {"name": "VO2 Max", "value": "42 ml/kg/dk", "status": "✓"},
+          {"name": "Dinlenme Nabzı", "value": "62 bpm", "status": "✓"},
+          {"name": "Kan Basıncı", "value": "120/78 mmHg", "status": "✓"}
+        ]
+      },
+      "metabolic_health": {
+        "status": "Mükemmel",
+        "metrics": [
+          {"name": "HbA1c", "value": "5.0%", "status": "✓"},
+          {"name": "Açlık Glukozu", "value": "88 mg/dL", "status": "✓"}
+        ]
+      },
+      "inflammation_profile": {
+        "status": "İyi",
+        "metrics": [
+          {"name": "hs-CRP", "value": "0.8 mg/L", "status": "✓"},
+          {"name": "Homosistein", "value": "8.5 μmol/L", "status": "✓"}
+        ]
+      },
+      "hormonal_balance": {
+        "status": "İyi",
+        "metrics": [
+          {"name": "Tiroid (TSH)", "value": "2.0 mIU/L", "status": "✓"},
+          {"name": "Vitamin D", "value": "38 ng/mL", "status": "✓"}
+        ]
+      },
+      "cognitive_health": {
+        "status": "İyi",
+        "metrics": [
+          {"name": "B12 Vitamini", "value": "380 pg/mL", "status": "✓"},
+          {"name": "Omega-3 İndeksi", "value": "6.5%", "status": "✓"}
+        ]
+      },
+      "body_composition": {
+        "status": "İyi",
+        "metrics": [
+          {"name": "BMI", "value": "26.1", "status": "✓"},
+          {"name": "Vücut Yağ Oranı", "value": "20%", "status": "✓"},
+          {"name": "Kas Kütlesi", "value": "İdeal", "status": "✓"}
+        ]
+      }
+    },
+    "personalized_improvements": [
+      {
+        "category": "Vitamin D ve Omega-3",
+        "recommendation": "Güneş maruziyetini artır veya D3+K2 takviyesi değerlendir",
+        "priority": "high"
+      },
+      {
+        "category": "Kardiyovasküler dayanıklılık",
+        "recommendation": "Haftada 3 gün 30-40 dk orta tempolu kardiyo ile VO2 Max'i artır",
+        "priority": "medium"
+      }
+    ]
+  },
+  "disclaimer": "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
+}
+```
+
+#### cURL Örneği
+```bash
+curl -X POST "https://longo-ai.onrender.com/ai/premium-plus/metabolic-age-test" \
+  -H "Content-Type: application/json" \
+  -H "username: longopass" \
+  -H "password: 123456" \
+  -H "x-user-id: user123" \
+  -H "x-user-level: 3" \
+  -d '{
+    "chronological_age": 40,
+    "metabolic_age": 35,
+    "gender": "male",
+    "height": 175,
+    "weight": 80,
+    "body_fat_percentage": 20,
+    "resting_heart_rate": 62,
+    "blood_pressure_systolic": 120,
+    "blood_pressure_diastolic": 78,
+    "sleep_hours": 7,
+    "stress_level": 5,
+    "exercise_frequency": 4,
+    "smoking": false,
+    "alcohol_consumption": 2,
+    "diet_quality": 7,
+    "family_history_diabetes": false,
+    "family_history_heart_disease": false
+  }'
+```
+
+#### Özellikler
+- **Longevity skoru:** Biyolojik yaş, sağlık skoru, metabolik yaş değerlendirmesi
+- **Longopass gelişim skoru:** En az 2 kapsamlı test paneli varsa ilk ve son testler karşılaştırılır (0-100 arası)
+- **6 kategori analiz:** Kardiyovasküler, Metabolik, Enflamasyon, Hormonal, Bilişsel, Vücut kompozisyonu
+- **Metrikler:** Her kategori için detaylı ölçümler (✓ normal, ⚠️ dikkat)
+- **Kişiselleştirilmiş iyileştirmeler:** Öncelik sıralamalı öneriler (high/medium/low)
+- **Quiz + Lab entegrasyonu:** Mevcut sağlık verileri otomatik dahil edilir
+
+#### Longopass Gelişim Skoru Nasıl Hesaplanır?
+- **0 puan:** Henüz en az 2 kapsamlı test paneli yapılmamış
+- **1-100 puan:** İlk ve son kapsamlı test panelleri karşılaştırılarak hesaplanır
+  - Değerlerde iyileşme varsa → Yüksek skor (70-100)
+  - Değerlerde kötüleşme varsa → Düşük skor (0-50)
+  - Karışık sonuçlar → Orta skor (50-70)
+
+---
 

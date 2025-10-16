@@ -332,8 +332,4 @@ class MetabolicAgeTestResponse(BaseModel):
     # Analiz paragrafı
     analysis_summary: str = Field(description="Genel analiz özeti")
     
-    disclaimer: str = "Bu analiz bilgilendirme amaçlıdır. Tıbbi kararlar için doktorunuza danışın."
-    
-    class Config:
-        extra = "allow"
-
+    disclaimer: str = "Bu analiz
