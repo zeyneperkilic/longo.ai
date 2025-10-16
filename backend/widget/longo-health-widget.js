@@ -1352,6 +1352,39 @@
         }
     };
     
+    // Typing effect fonksiyonu
+    function typeText(element, text, delay = 30) {
+        let index = 0;
+        const timer = setInterval(() => {
+            if (index < text.length) {
+                // HTML tag'leri için özel kontrol
+                if (text[index] === '<') {
+                    // HTML tag'ini bul ve tamamını ekle
+                    const tagEnd = text.indexOf('>', index);
+                    if (tagEnd !== -1) {
+                        const tag = text.substring(index, tagEnd + 1);
+                        element.innerHTML += tag;
+                        index = tagEnd + 1;
+                    } else {
+                        element.innerHTML += text[index];
+                        index++;
+                    }
+                } else {
+                    element.innerHTML += text[index];
+                    index++;
+                }
+                
+                // Scroll to bottom
+                const messagesDiv = document.getElementById('longo-chat-messages');
+                if (messagesDiv) {
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            } else {
+                clearInterval(timer);
+            }
+        }, delay);
+    }
+
     // Mesaj ekle
     function longoAddMessage(role, content, type = 'normal') {
         const messagesDiv = document.getElementById('longo-chat-messages');
@@ -1381,9 +1414,12 @@
             '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
         );
         
-        // innerHTML kullan ama sadece linkler için (XSS riski düşük çünkü regex ile kontrol ediyoruz)
-        paragraph.innerHTML = convertedContent;
+        // Typing effect için boş başlat
+        paragraph.innerHTML = '';
         messageDiv.appendChild(paragraph);
+        
+        // Typing effect - karakter karakter yaz
+        typeText(paragraph, convertedContent, 30); // 30ms delay
         
         // Başlangıçta görünmez yap
         messageDiv.style.opacity = '0';
