@@ -1414,12 +1414,19 @@
             '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
         );
         
-        // Typing effect için boş başlat
-        paragraph.innerHTML = '';
-        messageDiv.appendChild(paragraph);
-        
-        // Typing effect - karakter karakter yaz
-        typeText(paragraph, convertedContent, 30); // 30ms delay
+        // Sadece assistant mesajları için typing effect
+        if (role === 'assistant') {
+            // Typing effect için boş başlat
+            paragraph.innerHTML = '';
+            messageDiv.appendChild(paragraph);
+            
+            // Typing effect - karakter karakter yaz
+            typeText(paragraph, convertedContent, 30); // 30ms delay
+        } else {
+            // Kullanıcı mesajları normal göster
+            paragraph.innerHTML = convertedContent;
+            messageDiv.appendChild(paragraph);
+        }
         
         // Başlangıçta görünmez yap
         messageDiv.style.opacity = '0';
