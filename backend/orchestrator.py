@@ -100,9 +100,9 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         
         # Step 3: If only one response, return it directly
         if len(responses) == 1:
-            cleaned = _sanitize_links(responses[0]["response"]) 
+            # Premium chat için link sanitization yapmıyoruz (kullanıcı kaynak isterse gösterebilsin)
             return {
-                "content": cleaned,
+                "content": responses[0]["response"],
                 "model_used": responses[0]["model"]
             }
         
@@ -115,10 +115,9 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         # final_result["synthesis_model"] = SYNTHESIS_MODEL
         # return final_result
         
-        # Tek model kullanıldığında direkt response'u döndür
-        cleaned_multi = _sanitize_links(responses[0]["response"]) 
+        # Tek model kullanıldığında direkt response'u döndür (link sanitization kaldırıldı)
         return {
-            "content": cleaned_multi,
+            "content": responses[0]["response"],
             "model_used": responses[0]["model"]
         }
         

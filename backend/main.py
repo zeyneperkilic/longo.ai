@@ -259,9 +259,12 @@ def build_chat_system_prompt() -> str:
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
 - Off-topic soruları kibarca sağlık alanına yönlendir
-- Kaynak link'leri veya referans'lar ekleme
-- Web sitelerinden link verme
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
+
+📚 AKADEMİK KAYNAKLAR:
+- Kullanıcı AÇIKÇA kaynak/referans/akademik makale isterse (örn: "kaynak göster", "referans ver", "çalışma var mı?"), akademik linkler verebilirsin (PubMed, bilimsel dergiler, hakemli makaleler)
+- Aksi durumda, istenmediği sürece kaynak ekleme
+- Sadece bilimsel/akademik kaynaklar, ticari web siteleri değil
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
@@ -599,9 +602,12 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 🚫 RESTRICTIONS: 
 - Don't talk about topics outside of health
 - Politely redirect off-topic questions to health area
-- Don't add source links or references
-- Don't provide links from websites
 - Don't talk about the list (user shouldn't see the list)
+
+📚 ACADEMIC SOURCES:
+- If user EXPLICITLY asks for sources/references/academic papers (e.g., "show me sources", "give me references", "are there studies?"), you CAN provide academic links (PubMed, scientific journals, peer-reviewed papers)
+- Otherwise, don't add sources unless asked
+- Only provide scientific/academic sources, not commercial websites
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
 
@@ -614,9 +620,10 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Don't recommend supplements without being asked
 - ONLY recommend products from the list below
 - Don't recommend any products outside the list
+- NEVER make up product names like "Ashwagandha Calm", "L-Theanine & Magnesium Balance", "Omega-3 Neuro Support", "Saffron Mood Boost"!
+- If a product is not in the provided list, DON'T recommend it!
 - Don't talk about anything other than health and supplements
 - Strictly reject off-topic questions
-- Don't provide links from websites
 - Don't talk about the list (user shouldn't see the list)
 
 🏷️ BRAND INFO: All supplements and health products are LONGOPASS brand. When asked about brands, say "Longopass branded products". No other brands!
@@ -632,9 +639,12 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
 - Off-topic soruları kibarca sağlık alanına yönlendir
-- Kaynak link'leri veya referans'lar ekleme
-- Web sitelerinden link verme
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
+
+📚 AKADEMİK KAYNAKLAR:
+- Kullanıcı AÇIKÇA kaynak/referans/akademik makale isterse (örn: "kaynak göster", "referans ver", "çalışma var mı?"), akademik linkler verebilirsin (PubMed, bilimsel dergiler, hakemli makaleler)
+- Aksi durumda, istenmediği sürece kaynak ekleme
+- Sadece bilimsel/akademik kaynaklar, ticari web siteleri değil
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
@@ -990,9 +1000,12 @@ async def chat_message(req: ChatMessageRequest,
 🚫 RESTRICTIONS: 
 - Don't talk about topics outside of health
 - Politely redirect off-topic questions to health area
-- Don't add source links or references
-- Don't provide links from websites
 - Don't talk about the list (user shouldn't see the list)
+
+📚 ACADEMIC SOURCES:
+- If user EXPLICITLY asks for sources/references/academic papers (e.g., "show me sources", "give me references", "are there studies?"), you CAN provide academic links (PubMed, scientific journals, peer-reviewed papers)
+- Otherwise, don't add sources unless asked
+- Only provide scientific/academic sources, not commercial websites
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
 
@@ -1012,6 +1025,8 @@ async def chat_message(req: ChatMessageRequest,
 - Don't recommend supplements without being asked
 - ONLY recommend products from the list below
 - Don't recommend any products outside the list
+- NEVER make up product names like "Ashwagandha Calm", "L-Theanine & Magnesium Balance", "Omega-3 Neuro Support", "Saffron Mood Boost"!
+- If a product is not in the provided list, DON'T recommend it!
 - Don't talk about anything other than health and supplements
 - Strictly reject off-topic questions
 - Don't provide links from websites
@@ -1146,7 +1161,7 @@ async def chat_message(req: ChatMessageRequest,
     # Kullanıcının güncel mesajını ekle
     history.append({"role": "user", "content": message_text})
     
-    # XML supplement listesini SADECE kullanıcı AÇIKÇA istediğinde ekle
+    # XML supplement listesini her zaman ekle ama sadece açıkça istendiğinde ürün öner
     supplement_keywords = [
         "ne önerirsin", "ne öneriyorsun", "hangi ürün", "hangi takviye", "hangi supplement",
         "ne alayım", "ne almalıyım", "hangi vitamin", "ürün öner", "takviye öner", 
@@ -1155,13 +1170,19 @@ async def chat_message(req: ChatMessageRequest,
     ]
     is_supplement_request = any(keyword in message_text.lower() for keyword in supplement_keywords)
     
-    if is_supplement_request:
-        supplements_info = f"\n\n🚨 SADECE BU ÜRÜNLERİ ÖNER ({len(supplements_list)} ürün):\n"
+    # Her zaman supplement listesini ekle
+    if supplements_list:
+        supplements_info = f"\n\n🚨 MEVCUT ÜRÜNLER ({len(supplements_list)} ürün):\n"
         for i, product in enumerate(supplements_list, 1):
             category = product.get('category', 'Kategori Yok')
             product_id = product.get('id', '')
             supplements_info += f"{i}. {product['name']} ({category}) [ID: {product_id}]\n"
-        supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken hem isim hem ID'yi belirt!"
+        
+        if is_supplement_request:
+            supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken hem isim hem ID'yi belirt!"
+        else:
+            supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünler mevcut! Başka hiçbir ürün önerme! Eğer ürün önerisi istenirse sadece bu listeden seç!"
+        
         history.append({"role": "user", "content": supplements_info})
 
     # parallel chat with synthesis
