@@ -1151,6 +1151,8 @@ async def chat_message(req: ChatMessageRequest,
         reference_words = ["bu", "şu", "o", "bunun", "şunun", "onun", "buna", "şuna", "ona"]
         if any(word in message_text.lower() for word in reference_words):
             needs_context = True
+
+            
     
     if needs_context and rows:
         context_message = "\n\n=== ÖNCEKİ KONUŞMA ===\n"

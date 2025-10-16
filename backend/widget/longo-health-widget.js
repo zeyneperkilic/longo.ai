@@ -1364,4 +1364,196 @@
                     if (tagEnd !== -1) {
                         const tag = text.substring(index, tagEnd + 1);
                         element.innerHTML += tag;
-                  
+                        index = tagEnd + 1;
+                    } else {
+                        element.innerHTML += text[index];
+                        index++;
+                    }
+                } else {
+                    element.innerHTML += text[index];
+                    index++;
+                }
+                
+                // Scroll to bottom
+                const messagesDiv = document.getElementById('longo-chat-messages');
+                if (messagesDiv) {
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            } else {
+                clearInterval(timer);
+            }
+        }, delay);
+    }
+
+    // Mesaj ekle
+    function longoAddMessage(role, content, type = 'normal') {
+        const messagesDiv = document.getElementById('longo-chat-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `longo-message ${role} ${type}`;
+        
+        const paragraph = document.createElement('p');
+        
+        // Markdown formatlarını HTML'e çevir
+        let convertedContent = content;
+        
+        // Bold: **text** -> <strong>text</strong>
+        convertedContent = convertedContent.replace(
+            /\*\*([^*]+)\*\*/g,
+            '<strong style="font-weight: bold;">$1</strong>'
+        );
+        
+        // Italic: *text* -> <em>text</em>
+        convertedContent = convertedContent.replace(
+            /\*([^*]+)\*/g,
+            '<em style="font-style: italic;">$1</em>'
+        );
+        
+        // Links: [text](url) -> <a href="url" target="_blank">text</a>
+        convertedContent = convertedContent.replace(
+            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+            '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
+        );
+        
+        // Sadece assistant mesajları için typing effect
+        if (role === 'assistant') {
+            // Typing effect için boş başlat
+            paragraph.innerHTML = '';
+            messageDiv.appendChild(paragraph);
+            
+            // Typing effect - karakter karakter yaz
+            typeText(paragraph, convertedContent, 30); // 30ms delay
+        } else {
+            // Kullanıcı mesajları normal göster
+            paragraph.innerHTML = convertedContent;
+            messageDiv.appendChild(paragraph);
+        }
+        
+        // Başlangıçta görünmez yap
+        messageDiv.style.opacity = '0';
+        messageDiv.style.transform = 'translateY(20px)';
+        
+        messagesDiv.appendChild(messageDiv);
+        
+        // Animasyon ile göster
+        setTimeout(() => {
+            messageDiv.style.opacity = '1';
+            messageDiv.style.transform = 'translateY(0)';
+        }, 100);
+        
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        // Session history'ye ekle (free kullanıcılar için)
+        if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+            addToSessionChatHistory(role, content);
+        }
+    }
+    
+    // Loading mesajını kaldır
+    function longoRemoveLoadingMessage() {
+        const loadingMessage = document.querySelector('.longo-message.loading');
+        if (loadingMessage) {
+            loadingMessage.style.opacity = '0';
+            loadingMessage.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (loadingMessage.parentNode) {
+                    loadingMessage.remove();
+                }
+            }, 300);
+        }
+    }
+    
+    // Ürün butonlarını göster
+    function showProductButtons(products) {
+        console.log('🔍 DEBUG: showProductButtons çağrıldı, products:', products);
+        
+        // Doğru selector'ı kullan
+        const messagesDiv = document.getElementById('longo-chat-messages');
+        
+        console.log('🔍 DEBUG: messagesDiv bulundu mu?', !!messagesDiv);
+        console.log('🔍 DEBUG: messagesDiv element:', messagesDiv);
+        if (!messagesDiv) {
+            console.log('🔍 DEBUG: messagesDiv bulunamadı! Tüm selector\'lar denendi.');
+            return;
+        }
+        
+        // Unique ID'ler oluştur
+        const uniqueId = 'product-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        const productListId = 'product-list-' + uniqueId;
+        const toggleIconId = 'product-toggle-icon-' + uniqueId;
+        
+        const productDiv = document.createElement('div');
+        productDiv.className = 'longo-message assistant';
+        productDiv.style.marginTop = '10px';
+        
+        let productHTML = '<div class="longo-product-buttons">';
+        productHTML += `
+            <div class="longo-product-header" style="font-size: 12px; color: #666; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px; background: #f0f0f0; border-radius: 6px; user-select: none;" onclick="toggleProductList('${productListId}', '${toggleIconId}')">
+                <span>🛒 Önerilen Ürünler (${products.length})</span>
+                <span id="${toggleIconId}" style="font-size: 14px; transition: transform 0.3s ease;">▼</span>
+            </div>
+            <div id="${productListId}" style="display: none; max-height: 300px; overflow-y: auto;">
+        `;
+        
+        products.forEach(product => {
+            productHTML += `
+                <div class="longo-product-item" style="margin-bottom: 8px; padding: 8px; border: 1px solid #e0e0e0; border-radius: 6px; background: #f9f9f9;">
+                    <div style="font-weight: 500; font-size: 13px; margin-bottom: 4px;">${product.name}</div>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 6px;">${product.category}</div>
+                    <div style="font-size: 11px; color: #007bff; font-weight: 500;">${product.price}₺</div>
+                </div>
+            `;
+        });
+        
+        productHTML += '</div></div>';
+        productDiv.innerHTML = productHTML;
+        
+        console.log('🔍 DEBUG: Product HTML oluşturuldu:', productHTML);
+        console.log('🔍 DEBUG: Product div DOM\'a ekleniyor...');
+        
+        messagesDiv.appendChild(productDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        console.log('🔍 DEBUG: Product div başarıyla eklendi!');
+    }
+    
+    // Ürün listesini aç/kapat
+    window.toggleProductList = function(productListId, toggleIconId) {
+        const productList = document.getElementById(productListId);
+        const toggleIcon = document.getElementById(toggleIconId);
+        
+        console.log('🔍 DEBUG: toggleProductList çağrıldı:', productListId, toggleIconId);
+        console.log('🔍 DEBUG: productList bulundu mu?', !!productList);
+        console.log('🔍 DEBUG: toggleIcon bulundu mu?', !!toggleIcon);
+        
+        if (productList && toggleIcon) {
+            if (productList.style.display === 'none') {
+                productList.style.display = 'block';
+                toggleIcon.textContent = '▲';
+                toggleIcon.style.transform = 'rotate(0deg)';
+                console.log('🔍 DEBUG: Ürün listesi açıldı');
+            } else {
+                productList.style.display = 'none';
+                toggleIcon.textContent = '▼';
+                toggleIcon.style.transform = 'rotate(0deg)';
+                console.log('🔍 DEBUG: Ürün listesi kapandı');
+            }
+        } else {
+            console.log('🔍 DEBUG: Elementler bulunamadı!');
+        }
+    };
+    
+    // Sepete ekleme fonksiyonu kaldırıldı - Ideasoft entegrasyonu zor olduğu için
+    
+    // Widget'ı başlat
+    createWidget();
+    }
+    
+    // DOM hazır olunca widget'ı başlat
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWidget);
+    } else {
+        // DOM zaten hazır
+        initWidget();
+    }
+    
+})();
