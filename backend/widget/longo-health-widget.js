@@ -1360,8 +1360,23 @@
         
         const paragraph = document.createElement('p');
         
-        // Markdown linklerini HTML linklerine çevir: [text](url) -> <a href="url" target="_blank">text</a>
-        const convertedContent = content.replace(
+        // Markdown formatlarını HTML'e çevir
+        let convertedContent = content;
+        
+        // Bold: **text** -> <strong>text</strong>
+        convertedContent = convertedContent.replace(
+            /\*\*([^*]+)\*\*/g,
+            '<strong style="font-weight: bold;">$1</strong>'
+        );
+        
+        // Italic: *text* -> <em>text</em>
+        convertedContent = convertedContent.replace(
+            /\*([^*]+)\*/g,
+            '<em style="font-style: italic;">$1</em>'
+        );
+        
+        // Links: [text](url) -> <a href="url" target="_blank">text</a>
+        convertedContent = convertedContent.replace(
             /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
             '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
         );
