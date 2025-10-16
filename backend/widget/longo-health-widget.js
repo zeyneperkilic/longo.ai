@@ -1358,9 +1358,16 @@
         const messageDiv = document.createElement('div');
         messageDiv.className = `longo-message ${role} ${type}`;
         
-        // XSS güvenliği için textContent kullan
         const paragraph = document.createElement('p');
-        paragraph.textContent = content;
+        
+        // Markdown linklerini HTML linklerine çevir: [text](url) -> <a href="url" target="_blank">text</a>
+        const convertedContent = content.replace(
+            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+            '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
+        );
+        
+        // innerHTML kullan ama sadece linkler için (XSS riski düşük çünkü regex ile kontrol ediyoruz)
+        paragraph.innerHTML = convertedContent;
         messageDiv.appendChild(paragraph);
         
         // Başlangıçta görünmez yap

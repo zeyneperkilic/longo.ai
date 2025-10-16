@@ -262,9 +262,11 @@ def build_chat_system_prompt() -> str:
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
 
 📚 AKADEMİK KAYNAKLAR:
-- Kullanıcı AÇIKÇA kaynak/referans/akademik makale isterse (örn: "kaynak göster", "referans ver", "çalışma var mı?"), akademik linkler verebilirsin (PubMed, bilimsel dergiler, hakemli makaleler)
-- Aksi durumda, istenmediği sürece kaynak ekleme
-- Sadece bilimsel/akademik kaynaklar, ticari web siteleri değil
+- SADECE kullanıcı bilimsel/araştırma kanıtı isterse kaynak ver (örn: "çalışma göster", "araştırma ne diyor?", "bilimsel makale var mı?", "güncel araştırmalar neler?")
+- Genel sağlık tavsiyesi, supplement önerisi veya sohbet yanıtlarında kaynak verme
+- Kaynak verirken tıklanabilir markdown formatı kullan: [Çalışma Başlığı](https://pubmed.ncbi.nlm.nih.gov/...)
+- Sadece PubMed, hakemli dergiler veya güvenilir tıbbi veritabanlarından bilimsel kaynaklar ver
+- Açıkça istenmediği sürece kaynak ekleme
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
@@ -605,9 +607,11 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Don't talk about the list (user shouldn't see the list)
 
 📚 ACADEMIC SOURCES:
-- If user EXPLICITLY asks for sources/references/academic papers (e.g., "show me sources", "give me references", "are there studies?"), you CAN provide academic links (PubMed, scientific journals, peer-reviewed papers)
-- Otherwise, don't add sources unless asked
-- Only provide scientific/academic sources, not commercial websites
+- ONLY provide sources if user asks for scientific/research evidence (e.g., "show me studies", "what does research say?", "are there scientific papers?", "what's the latest research?")
+- DON'T provide sources for general health advice, supplement recommendations, or conversational responses
+- When providing sources, use clickable markdown format: [Study Title](https://pubmed.ncbi.nlm.nih.gov/...)
+- Only provide scientific/academic sources from PubMed, peer-reviewed journals, or reputable medical databases
+- Don't add sources unless explicitly requested
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
 
@@ -642,9 +646,11 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
 
 📚 AKADEMİK KAYNAKLAR:
-- Kullanıcı AÇIKÇA kaynak/referans/akademik makale isterse (örn: "kaynak göster", "referans ver", "çalışma var mı?"), akademik linkler verebilirsin (PubMed, bilimsel dergiler, hakemli makaleler)
-- Aksi durumda, istenmediği sürece kaynak ekleme
-- Sadece bilimsel/akademik kaynaklar, ticari web siteleri değil
+- SADECE kullanıcı bilimsel/araştırma kanıtı isterse kaynak ver (örn: "çalışma göster", "araştırma ne diyor?", "bilimsel makale var mı?", "güncel araştırmalar neler?")
+- Genel sağlık tavsiyesi, supplement önerisi veya sohbet yanıtlarında kaynak verme
+- Kaynak verirken tıklanabilir markdown formatı kullan: [Çalışma Başlığı](https://pubmed.ncbi.nlm.nih.gov/...)
+- Sadece PubMed, hakemli dergiler veya güvenilir tıbbi veritabanlarından bilimsel kaynaklar ver
+- Açıkça istenmediği sürece kaynak ekleme
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
@@ -1003,9 +1009,11 @@ async def chat_message(req: ChatMessageRequest,
 - Don't talk about the list (user shouldn't see the list)
 
 📚 ACADEMIC SOURCES:
-- If user EXPLICITLY asks for sources/references/academic papers (e.g., "show me sources", "give me references", "are there studies?"), you CAN provide academic links (PubMed, scientific journals, peer-reviewed papers)
-- Otherwise, don't add sources unless asked
-- Only provide scientific/academic sources, not commercial websites
+- ONLY provide sources if user asks for scientific/research evidence (e.g., "show me studies", "what does research say?", "are there scientific papers?", "what's the latest research?")
+- DON'T provide sources for general health advice, supplement recommendations, or conversational responses
+- When providing sources, use clickable markdown format: [Study Title](https://pubmed.ncbi.nlm.nih.gov/...)
+- Only provide scientific/academic sources from PubMed, peer-reviewed journals, or reputable medical databases
+- Don't add sources unless explicitly requested
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
 
