@@ -120,6 +120,31 @@
         }
         window.longoRealUserId = window.longoRealUserId || null;
         
+        // 5) membership_* scriptleri UserID'yi sadece console'a yazıyorsa, log'u hooklayıp yakala
+        (function hookConsoleForUserId(){
+            try {
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    try {
+                        if (!window.longoRealUserId) {
+                            for (const a of args) {
+                                if (typeof a === 'string') {
+                                    const m = a.match(/UserID\s*[:=]\s*(\d{1,20})/i);
+                                    if (m && m[1]) {
+                                        window.longoRealUserId = m[1];
+                                        try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
+                                        originalLog.call(console, '🔍 DEBUG: Real user id console.log ile yakalandı:', window.longoRealUserId);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) { /* ignore */ }
+                    return originalLog.apply(console, args);
+                };
+            } catch(e) { /* ignore */ }
+        })();
+        
         // User plan'ı user level'a göre otomatik belirle
         if (!window.longoUserLevel || window.longoUserLevel === 1) {
             window.longoUserPlan = 'free';
@@ -1339,8 +1364,39 @@
                 if (v !== undefined && v !== null && v !== '') {
                     window.longoRealUserId = String(v);
                     console.log('🔍 DEBUG: Real user id send öncesi tespit:', window.longoRealUserId);
+                    try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
                     break;
                 }
+            }
+            // localStorage / sessionStorage
+            if (!window.longoRealUserId) {
+                try {
+                    const lsKeys = ['user_id','USER_ID','customer_id','member_id','longo_user_id'];
+                    for (const k of lsKeys) {
+                        const val = localStorage.getItem(k) || sessionStorage.getItem(k);
+                        if (val && val !== 'null' && val !== 'undefined') {
+                            window.longoRealUserId = String(val).replace(/[^0-9a-zA-Z_-]/g, '');
+                            console.log('🔍 DEBUG: Real user id storage ile tespit:', k, '=>', window.longoRealUserId);
+                            try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
+                            break;
+                        }
+                    }
+                } catch(e) {}
+            }
+            // cookie
+            if (!window.longoRealUserId) {
+                try {
+                    const cookieKeys = ['user_id','USER_ID','customer_id','member_id'];
+                    for (const ck of cookieKeys) {
+                        const v = (typeof readCookie === 'function') ? readCookie(ck) : null;
+                        if (v) {
+                            window.longoRealUserId = String(v);
+                            console.log('🔍 DEBUG: Real user id cookie ile tespit:', ck, '=>', window.longoRealUserId);
+                            try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
+                            break;
+                        }
+                    }
+                } catch(e) {}
             }
             return window.longoRealUserId;
         }
