@@ -1384,6 +1384,34 @@
             }
         }, delay);
     }
+    
+    // Typing effect fonksiyonu - HTML'i doğru render etmek için
+    function typeTextWithHTML(element, text, delay = 30) {
+        // Önce tüm HTML'i render et
+        element.innerHTML = text;
+        
+        // Sonra karakter karakter typing effect yap
+        const originalHTML = text;
+        element.innerHTML = '';
+        
+        let index = 0;
+        const timer = setInterval(() => {
+            if (index < originalHTML.length) {
+                // Mevcut içeriği al ve bir karakter daha ekle
+                const currentText = originalHTML.substring(0, index + 1);
+                element.innerHTML = currentText;
+                index++;
+                
+                // Scroll to bottom
+                const messagesDiv = document.getElementById('longo-chat-messages');
+                if (messagesDiv) {
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            } else {
+                clearInterval(timer);
+            }
+        }, delay);
+    }
 
     // Mesaj ekle
     function longoAddMessage(role, content, type = 'normal') {
@@ -1437,8 +1465,8 @@
             paragraph.innerHTML = '';
             messageDiv.appendChild(paragraph);
             
-            // Typing effect - karakter karakter yaz
-            typeText(paragraph, convertedContent, 30); // 30ms delay
+            // Typing effect - HTML'i doğru render etmek için
+            typeTextWithHTML(paragraph, convertedContent, 30); // 30ms delay
         } else {
             // Kullanıcı mesajları normal göster
             paragraph.innerHTML = convertedContent;
