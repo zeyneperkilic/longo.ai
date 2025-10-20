@@ -1461,8 +1461,8 @@
         
         // Sadece assistant mesajları için typing effect
         if (role === 'assistant') {
-            // Link detection: <a tag'i veya target="_blank" attribute'u varsa
-            const hasLink = /<a\s/i.test(convertedContent) || /target="_blank"/i.test(convertedContent);
+            // Link detection: <a tag'i, target="_blank" attribute'u veya markdown link formatı varsa
+            const hasLink = /<a\s/i.test(convertedContent) || /target="_blank"/i.test(convertedContent) || /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g.test(convertedContent);
             // Link varsa typing effect'i kapatıp direkt render et (kliklenebilirlik için)
             if (hasLink) {
                 paragraph.innerHTML = convertedContent;
