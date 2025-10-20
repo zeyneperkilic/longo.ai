@@ -1421,7 +1421,7 @@
         
         const paragraph = document.createElement('p');
         
-        // Markdown formatlarını HTML'e çevir
+        // Backend'den gelen response'da zaten HTML var, sadece markdown formatındaki link'leri HTML'e çevir
         let convertedContent = content;
         
         // Bold: **text** -> <strong>text</strong>
@@ -1436,31 +1436,14 @@
             '<em style="font-style: italic;">$1</em>'
         );
         
-        // Links (markdown): [text](url) -> <a href="url" target="_blank">text</a>
         // Sadece markdown formatındaki link'leri HTML'e çevir, zaten HTML olanları dokunma
         if (!/<a\s/i.test(convertedContent)) {
+            // Links (markdown): [text](url) -> <a href="url" target="_blank">text</a>
             convertedContent = convertedContent.replace(
                 /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
                 '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
             );
         }
-        
-        // Links (bare URLs): https://... -> clickable
-        convertedContent = convertedContent.replace(
-            /(https?:\/\/[^\s)]+)/g,
-            '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
-        );
-        
-        // Links (bare domains): pubmed.ncbi.nlm.nih.gov or example.com/... -> clickable (prefix https)
-        // Avoid converting inside existing anchor tags
-        convertedContent = convertedContent.replace(
-            /(^|\s)(?![^<]*>|[^<]*<\/a>)([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]*)?/g,
-            function(match, prefix, domain, path) {
-                const href = 'https://' + domain + (path || '');
-                const text = domain + (path || '');
-                return prefix + '<a href="' + href + '" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">' + text + '</a>';
-            }
-        );
         
         // Sadece assistant mesajları için typing effect
         if (role === 'assistant') {

@@ -633,7 +633,8 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 - ONLY provide sources if user asks for scientific/research evidence (e.g., "show me studies", "what does research say?", "are there scientific papers?", "what's the latest research?")
 - DON'T provide sources for general health advice, supplement recommendations, or conversational responses
 - When providing sources, use clickable markdown format: [Study Title](https://pubmed.ncbi.nlm.nih.gov/...)
-- Only provide scientific/academic sources from PubMed, peer-reviewed journals, or reputable medical databases
+- ONLY provide scientific/academic sources from: PubMed, Nature, Science, The Lancet, NEJM, JAMA, Springer, Cambridge University Press, Oxford University Press
+- NEVER provide sources from: commercial websites, news sites, blogs, social media, or non-academic sources
 - Don't add sources unless explicitly requested
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
@@ -1035,7 +1036,8 @@ async def chat_message(req: ChatMessageRequest,
 - ONLY provide sources if user asks for scientific/research evidence (e.g., "show me studies", "what does research say?", "are there scientific papers?", "what's the latest research?")
 - DON'T provide sources for general health advice, supplement recommendations, or conversational responses
 - When providing sources, use clickable markdown format: [Study Title](https://pubmed.ncbi.nlm.nih.gov/...)
-- Only provide scientific/academic sources from PubMed, peer-reviewed journals, or reputable medical databases
+- ONLY provide scientific/academic sources from: PubMed, Nature, Science, The Lancet, NEJM, JAMA, Springer, Cambridge University Press, Oxford University Press
+- NEVER provide sources from: commercial websites, news sites, blogs, social media, or non-academic sources
 - Don't add sources unless explicitly requested
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
