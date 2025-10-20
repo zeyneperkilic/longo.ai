@@ -40,6 +40,13 @@ def _sanitize_json_links(data):
         s = re.sub(r"\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)", r"\1", s)
         # Remove bare URLs
         s = re.sub(r"https?:\/\/[^\s]+", "", s)
+        # Remove bare domains (e.g., cdc.gov, nhs.uk, domain.com/path)
+        s = re.sub(r"\b(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[\w\-./?%&=+#]*)?\b", "", s)
+        # Remove leftover empty parentheses or brackets produced by sanitization
+        s = re.sub(r"\(\s*\)", "", s)
+        s = re.sub(r"\[\s*\]", "", s)
+        # Collapse multiple spaces
+        s = re.sub(r"\s{2,}", " ", s).strip()
         return s
     if isinstance(data, dict):
         return {k: _sanitize_json_links(v) for k, v in data.items()}
