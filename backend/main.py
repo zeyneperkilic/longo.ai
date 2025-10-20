@@ -25,7 +25,7 @@ from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_a
 from backend.auth import get_db
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse
 from backend.health_guard import guard_or_message
-from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
+from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze, _deep_sanitize_json_links as _sanitize_json_links
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
 from backend.cache_utils import cache_supplements
 
@@ -1334,6 +1334,11 @@ async def analyze_quiz(body: QuizRequest,
     final_json = res["content"]
     
     data = parse_json_safe(final_json) or {}
+    # Remove any links for non-chat endpoints
+    try:
+        data = _sanitize_json_links(data)
+    except Exception:
+        pass
 
     if not data:
         # Fallback: Default response döndür
@@ -1618,6 +1623,11 @@ def analyze_single_lab(body: SingleLabRequest,
     res = parallel_single_lab_analyze(test_dict, historical_dict)
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
+    # Remove any links for non-chat endpoints
+    try:
+        data = _sanitize_json_links(data)
+    except Exception:
+        pass
     
     
     # Log to ai_messages
@@ -1686,6 +1696,11 @@ def analyze_single_session(body: SingleSessionRequest,
     res = parallel_single_session_analyze(tests_dict, session_date, laboratory)
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
+    # Remove any links for non-chat endpoints
+    try:
+        data = _sanitize_json_links(data)
+    except Exception:
+        pass
     
     # Database kaydı kaldırıldı - Asıl site zaten yapacak
     # Sadece AI yanıtını döndür
@@ -1835,6 +1850,11 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
     res = parallel_multiple_lab_analyze(tests_dict, total_sessions, supplements_dict, body.user_profile, quiz_data)
     final_json = res["content"]
     data = parse_json_safe(final_json) or {}
+    # Remove any links for non-chat endpoints
+    try:
+        data = _sanitize_json_links(data)
+    except Exception:
+        pass
     
     # Progress analysis kaldırıldı - Asıl site zaten yapacak
     
