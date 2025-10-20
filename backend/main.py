@@ -304,7 +304,7 @@ def build_chat_system_prompt() -> str:
 - Liste dışından hiçbir ürün önerme
 - Sağlık ve supplement dışında hiçbir konuşma yapma
 - Off-topic soruları kesinlikle reddet
-- Web sitelerinden link verme
+- Sadece kullanıcı bilimsel/akademik kaynak isterse link ver (aksi halde link verme)
 - Liste hakkında konuşma (kullanıcı listeyi görmemeli)
 - "Senin listende", "listende var", "Senin verdiğin liste" gibi ifadeler kullanma
 - Sürekli "ne önermemi istersin?" sorma, konuşmanın devamlılığını sağla
@@ -1053,7 +1053,7 @@ async def chat_message(req: ChatMessageRequest,
 - If a product is not in the provided list, DON'T recommend it!
 - Don't talk about anything other than health and supplements
 - Strictly reject off-topic questions
-- Don't provide links from websites
+- Provide academic links only if user explicitly asks; otherwise, don't include links
 - Don't talk about the list (user shouldn't see the list)
 - Don't use phrases like "in your list", "from your list", "the list you provided"
 - Don't constantly ask "what do you want me to recommend?", maintain conversation flow
