@@ -45,7 +45,7 @@
             // 1) Yaygın global değişkenler
             const possibleIdVars = [
                 'longoRealUserId',
-                'userId','user_id','userid','USER_ID',
+                'userId','user_id','userID','USER_ID',
                 'customerId','customer_id','memberId','member_id',
                 'accountId','account_id','currentUserId','current_user_id'
             ];
