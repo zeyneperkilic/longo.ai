@@ -25,13 +25,29 @@ from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_a
 from backend.auth import get_db
 from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse
 from backend.health_guard import guard_or_message
-from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze, _deep_sanitize_json_links as _sanitize_json_links
+from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
 from backend.cache_utils import cache_supplements
 
 
 
 
+# Local link sanitizer for non-chat endpoints (recursive)
+def _sanitize_json_links(data):
+    import re
+    def sanitize_str(s: str) -> str:
+        # Remove markdown links [text](url) -> text
+        s = re.sub(r"\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)", r"\1", s)
+        # Remove bare URLs
+        s = re.sub(r"https?:\/\/[^\s]+", "", s)
+        return s
+    if isinstance(data, dict):
+        return {k: _sanitize_json_links(v) for k, v in data.items()}
+    if isinstance(data, list):
+        return [_sanitize_json_links(v) for v in data]
+    if isinstance(data, str):
+        return sanitize_str(data)
+    return data
 # Basic Authentication
 def check_basic_auth(username: str, password: str):
     """Basit authentication kontrolü"""
