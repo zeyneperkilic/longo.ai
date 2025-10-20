@@ -41,6 +41,25 @@
             const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
             return match ? decodeURIComponent(match[1]) : null;
         }
+        function resolveFromWindowKeys() {
+            try {
+                const propNames = Object.getOwnPropertyNames(window);
+                const nameRegex = /(user.?id|member.?id|customer.?id|account.?id|current.?user.?id)/i;
+                for (const name of propNames) {
+                    if (!nameRegex.test(name)) continue;
+                    const val = window[name];
+                    if (val === undefined || val === null) continue;
+                    if (typeof val === 'string' || typeof val === 'number') {
+                        const str = String(val).trim();
+                        if (str && str !== 'undefined' && str !== 'null') {
+                            console.log('🔍 DEBUG: Real user id tespit edildi (window-scan):', name, '=', str);
+                            return str;
+                        }
+                    }
+                }
+            } catch(e) {}
+            return null;
+        }
         if (!window.longoRealUserId) {
             // 1) Yaygın global değişkenler
             const possibleIdVars = [
@@ -55,6 +74,10 @@
                     console.log('🔍 DEBUG: Real user id tespit edildi (global):', varName, '=', window.longoRealUserId);
                     break;
                 }
+            }
+            if (!window.longoRealUserId) {
+                const scanned = resolveFromWindowKeys();
+                if (scanned) window.longoRealUserId = scanned;
             }
         }
         if (!window.longoRealUserId) {
