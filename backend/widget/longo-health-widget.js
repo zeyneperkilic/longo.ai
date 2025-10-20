@@ -1303,6 +1303,32 @@
     
     // Mesaj gönder
     window.longoSendMessage = async function() {
+        // Premium/Premium+ için userId zorunlu: gönderimden hemen önce tekrar tespit etmeyi dene
+        function tryResolveUserId() {
+            if (window.longoRealUserId) return window.longoRealUserId;
+            const candidates = [
+                window.longoRealUserId,
+                window.userId, window.user_id, window.userID, window.USER_ID,
+                window.customerId, window.customer_id, window.memberId, window.member_id,
+                window.accountId, window.account_id, window.currentUserId, window.current_user_id
+            ];
+            for (const v of candidates) {
+                if (v !== undefined && v !== null && v !== '') {
+                    window.longoRealUserId = String(v);
+                    console.log('🔍 DEBUG: Real user id send öncesi tespit:', window.longoRealUserId);
+                    break;
+                }
+            }
+            return window.longoRealUserId;
+        }
+        // Eğer premium ise ve userId yoksa mesajı göndermeyi durdur
+        const planNow = window.longoUserPlan || (window.longoUserLevel === 3 ? 'premium_plus' : (window.longoUserLevel === 2 ? 'premium' : 'free'));
+        if ((planNow === 'premium' || planNow === 'premium_plus') && !tryResolveUserId()) {
+            alert('Kullanıcı ID algılanamadı. Lütfen sayfayı yenileyin veya tekrar giriş yapın.');
+            return;
+        }
+        console.log('🔍 DEBUG: Chat x-user-id =>', window.longoRealUserId);
+        
         const input = document.getElementById('longo-message-input');
         const message = input.value.trim();
         if (!message) return;
