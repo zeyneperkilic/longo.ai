@@ -1461,12 +1461,18 @@
         
         // Sadece assistant mesajları için typing effect
         if (role === 'assistant') {
-            // Typing effect için boş başlat
-            paragraph.innerHTML = '';
-            messageDiv.appendChild(paragraph);
-            
-            // Typing effect - HTML'i doğru render etmek için
-            typeTextWithHTML(paragraph, convertedContent, 30); // 30ms delay
+            const hasLink = /<a\s/i.test(convertedContent);
+            // Link varsa typing effect'i kapatıp direkt render et (kliklenebilirlik için)
+            if (hasLink) {
+                paragraph.innerHTML = convertedContent;
+                messageDiv.appendChild(paragraph);
+            } else {
+                // Typing effect için boş başlat
+                paragraph.innerHTML = '';
+                messageDiv.appendChild(paragraph);
+                // Typing effect - HTML'i doğru render etmek için
+                typeTextWithHTML(paragraph, convertedContent, 30); // 30ms delay
+            }
         } else {
             // Kullanıcı mesajları normal göster
             paragraph.innerHTML = convertedContent;
