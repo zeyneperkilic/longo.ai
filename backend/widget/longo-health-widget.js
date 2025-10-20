@@ -1437,10 +1437,13 @@
         );
         
         // Links (markdown): [text](url) -> <a href="url" target="_blank">text</a>
-        convertedContent = convertedContent.replace(
-            /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-            '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
-        );
+        // Sadece markdown formatındaki link'leri HTML'e çevir, zaten HTML olanları dokunma
+        if (!/<a\s/i.test(convertedContent)) {
+            convertedContent = convertedContent.replace(
+                /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+                '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
+            );
+        }
         
         // Links (bare URLs): https://... -> clickable
         convertedContent = convertedContent.replace(
