@@ -2285,6 +2285,9 @@ Lütfen bu kullanıcı için GENEL beslenme önerileri hazırla. Spesifik günl�
             # Fallback: Raw response döndür
             recommendations_json = {"raw_response": ai_response}
         
+        # Remove any links for non-chat endpoints
+        recommendations_json = _sanitize_json_links(recommendations_json)
+
         # AI mesajını kaydet
         create_ai_message(
             db=db,
@@ -2525,6 +2528,9 @@ Lütfen bu kullanıcı için GENEL egzersiz önerileri hazırla. Spesifik günl�
             # Fallback: Raw response döndür
             recommendations_json = {"raw_response": ai_response}
         
+        # Remove any links for non-chat endpoints
+        recommendations_json = _sanitize_json_links(recommendations_json)
+
         # AI mesajını kaydet
         create_ai_message(
             db=db,
