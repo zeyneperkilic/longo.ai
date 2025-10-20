@@ -36,7 +36,66 @@
         }
         
         console.log('🔍 DEBUG: window.longoUserLevel after:', window.longoUserLevel);
-        window.longoRealUserId = window.longoRealUserId || null; // Premium kullanıcılar için gerçek user ID
+        // Premium kullanıcılar için gerçek user ID auto-detect
+        function readCookie(name) {
+            const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+            return match ? decodeURIComponent(match[1]) : null;
+        }
+        if (!window.longoRealUserId) {
+            // 1) Yaygın global değişkenler
+            const possibleIdVars = [
+                'longoRealUserId',
+                'userId','user_id','userid','USER_ID',
+                'customerId','customer_id','memberId','member_id',
+                'accountId','account_id','currentUserId','current_user_id'
+            ];
+            for (const varName of possibleIdVars) {
+                if (window[varName] !== undefined && window[varName] !== null && window[varName] !== '') {
+                    window.longoRealUserId = String(window[varName]);
+                    console.log('🔍 DEBUG: Real user id tespit edildi (global):', varName, '=', window.longoRealUserId);
+                    break;
+                }
+            }
+        }
+        if (!window.longoRealUserId) {
+            // 2) DOM data-* attribute'ları
+            const elWithUserId = document.querySelector('[data-user-id], [data-userid], [data-customer-id], [data-member-id]');
+            if (elWithUserId) {
+                window.longoRealUserId = elWithUserId.getAttribute('data-user-id') || elWithUserId.getAttribute('data-userid') || elWithUserId.getAttribute('data-customer-id') || elWithUserId.getAttribute('data-member-id');
+                if (window.longoRealUserId) {
+                    console.log('🔍 DEBUG: Real user id tespit edildi (DOM):', window.longoRealUserId);
+                }
+            }
+        }
+        if (!window.longoRealUserId) {
+            // 3) localStorage anahtar taraması
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i) || '';
+                    if (/user.?id|customer.?id|member.?id|account.?id/i.test(key)) {
+                        const val = localStorage.getItem(key);
+                        if (val && val !== 'null' && val !== 'undefined') {
+                            window.longoRealUserId = String(val).replace(/[^0-9a-zA-Z_-]/g, '');
+                            console.log('🔍 DEBUG: Real user id tespit edildi (localStorage):', key, '=', window.longoRealUserId);
+                            break;
+                        }
+                    }
+                }
+            } catch(e) { /* ignore */ }
+        }
+        if (!window.longoRealUserId) {
+            // 4) Cookies (IdeaSoft vb.)
+            const cookieCandidates = ['user_id','customer_id','member_id','USER_ID','CURRENT_USER_ID'];
+            for (const c of cookieCandidates) {
+                const v = readCookie(c);
+                if (v) {
+                    window.longoRealUserId = String(v);
+                    console.log('🔍 DEBUG: Real user id tespit edildi (cookie):', c, '=', window.longoRealUserId);
+                    break;
+                }
+            }
+        }
+        window.longoRealUserId = window.longoRealUserId || null;
         
         // User plan'ı user level'a göre otomatik belirle
         if (!window.longoUserLevel || window.longoUserLevel === 1) {
