@@ -90,6 +90,30 @@
                 }
             }
         }
+        // Console.log listener'ı ÖNCE kur - asıl sitenin loglarından UserID yakalama (EN ÖNCELİKLİ)
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            try {
+                const logString = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+                // "UserID: 12" veya "Membership initialized - UserID: 12" formatını yakala
+                const userIdMatch = logString.match(/UserID:\s*(\d+)/i);
+                if (userIdMatch && userIdMatch[1]) {
+                    // Console.log'dan gelen ID HER ZAMAN öncelikli (güncel ID)
+                    const newUserId = userIdMatch[1];
+                    if (window.longoRealUserId !== newUserId) {
+                        originalConsoleLog('🔍 DEBUG: UserID güncellendi (console.log):', window.longoRealUserId, '->', newUserId);
+                        window.longoRealUserId = newUserId;
+                        sessionStorage.setItem('longo_user_id', window.longoRealUserId);
+                        localStorage.setItem('longo_user_id', window.longoRealUserId);
+                    }
+                }
+            } catch(e) {
+                // Silent fail
+            }
+        };
+        
+        // LocalStorage/Cookie fallback (sadece console.log'da bulunamazsa)
         if (!window.longoRealUserId) {
             // 3) localStorage anahtar taraması
             try {
@@ -99,7 +123,7 @@
                         const val = localStorage.getItem(key);
                         if (val && val !== 'null' && val !== 'undefined') {
                             window.longoRealUserId = String(val).replace(/[^0-9a-zA-Z_-]/g, '');
-                            console.log('🔍 DEBUG: Real user id tespit edildi (localStorage):', key, '=', window.longoRealUserId);
+                            console.log('🔍 DEBUG: Real user id tespit edildi (localStorage FALLBACK):', key, '=', window.longoRealUserId);
                             break;
                         }
                     }
@@ -113,29 +137,12 @@
                 const v = readCookie(c);
                 if (v) {
                     window.longoRealUserId = String(v);
-                    console.log('🔍 DEBUG: Real user id tespit edildi (cookie):', c, '=', window.longoRealUserId);
+                    console.log('🔍 DEBUG: Real user id tespit edildi (cookie FALLBACK):', c, '=', window.longoRealUserId);
                     break;
                 }
             }
         }
         window.longoRealUserId = window.longoRealUserId || null;
-        
-        // Console.log listener - Asıl sitenin loglarından UserID yakalama
-        const originalConsoleLog = console.log;
-        console.log = function(...args) {
-            originalConsoleLog.apply(console, args);
-            try {
-                const logString = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
-                const userIdMatch = logString.match(/UserID:\s*(\d+)/i);
-                if (userIdMatch && userIdMatch[1] && !window.longoRealUserId) {
-                    window.longoRealUserId = userIdMatch[1];
-                    sessionStorage.setItem('longo_user_id', window.longoRealUserId);
-                    originalConsoleLog('🔍 DEBUG: UserID from console.log captured and set:', window.longoRealUserId);
-                }
-            } catch(e) {
-                // Silent fail
-            }
-        };
         
         // User plan'ı user level'a göre otomatik belirle
         if (!window.longoUserLevel || window.longoUserLevel === 1) {
