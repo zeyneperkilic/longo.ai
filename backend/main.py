@@ -964,7 +964,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Dil algılama ve system prompt hazırlama
@@ -1347,9 +1347,9 @@ async def analyze_quiz(body: QuizRequest,
         body_dict.pop('available_supplements', None)  # Supplement field'ını çıkar
         quiz_dict = validate_input_data(body_dict, [])
     
-    # XML'den supplement listesini al (eğer body'de yoksa)
-    from backend.config import SUPPLEMENTS_LIST
-    supplements_dict = body.available_supplements or SUPPLEMENTS_LIST
+    # XML'den supplement listesini al (eğer body'de yoksa) - GÜNCEL ÜRÜNLER
+    xml_products = get_xml_products()
+    supplements_dict = body.available_supplements or xml_products
     
     # Use parallel quiz analysis with supplements
     res = parallel_quiz_analyze(quiz_dict, supplements_dict)
@@ -1853,9 +1853,9 @@ async def analyze_multiple_lab_summary(body: MultipleLabRequest,
     # XML'den supplement listesini al (eğer body'de yoksa)
     supplements_dict = body.available_supplements
     if not supplements_dict:
-        # XML'den supplement listesini çek (gerçek veriler)
-        from backend.config import SUPPLEMENTS_LIST
-        supplements_dict = SUPPLEMENTS_LIST
+        # XML'den supplement listesini çek (gerçek, güncel veriler)
+        xml_products = get_xml_products()
+        supplements_dict = xml_products
     
     # Quiz verilerini al (ürün önerileri için)
     quiz_data = None
@@ -2013,10 +2013,9 @@ JSON formatında yanıt ver:
 def get_supplements_xml():
     """XML feed endpoint - Ana site için supplement listesi"""
     from fastapi.responses import Response
-    from backend.config import SUPPLEMENTS_LIST
     
-    # Gerçek supplement verileri (config'den)
-    supplements = SUPPLEMENTS_LIST
+    # Gerçek supplement verileri (XML'den - güncel)
+    supplements = get_xml_products()
     
     # XML oluştur
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
