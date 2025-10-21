@@ -42,15 +42,7 @@ if DB_TYPE == "sqlite":
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    external_user_id = Column(String, unique=True, index=True, nullable=True)  # Asıl site'den gelen unique ID
-    email = Column(String, unique=True, index=True, nullable=True)
-    plan = Column(String, default="free")  # 'free' or 'premium'
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-
+# User model removed - only ai_messages table is used in production
 
 
 
@@ -110,31 +102,3 @@ def get_user_ai_messages_by_type(db: Session, external_user_id: str, message_typ
 def get_user_ai_messages(db: Session, external_user_id: str, limit: int = 10):
     """Get all user's AI messages (replacement for get_user_ai_interactions)"""
     return get_ai_messages(db, external_user_id=external_user_id, limit=limit)
-
-def get_or_create_user_by_external_id(db: Session, external_user_id: str, plan: str = "free") -> User:
-    """External user ID ile kullanıcıyı bul veya oluştur"""
-    if not external_user_id:
-        raise ValueError("External user ID gerekli")
-    
-    # Önce external_user_id ile ara
-    user = db.query(User).filter(User.external_user_id == external_user_id).first()
-    
-    if not user:
-        # Yeni kullanıcı oluştur
-        user = User(
-            external_user_id=external_user_id,
-            plan=plan
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    
-    return user
-
-def get_user_by_external_id(db: Session, external_user_id: str) -> User:
-    """External user ID ile kullanıcıyı bul"""
-    if not external_user_id:
-        return None
-    
-    return db.query(User).filter(User.external_user_id == external_user_id).first()
-

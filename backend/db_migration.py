@@ -2,13 +2,14 @@
 """
 Database Migration Script
 SQLite'dan PostgreSQL'e geçiş için yardımcı script
+DEPRECATED - This script is no longer used. User model has been removed.
 """
 
-import os
-import json
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from backend.db import Base, SessionLocal, User, Conversation, Message
+# import os
+# import json
+# from sqlalchemy import create_engine, text
+# from sqlalchemy.orm import sessionmaker
+# from backend.db import Base, SessionLocal, User, Conversation, Message
 
 def migrate_to_postgresql():
     """SQLite'dan PostgreSQL'e veri taşıma"""
