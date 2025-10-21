@@ -1276,18 +1276,15 @@ async def chat_message(req: ChatMessageRequest,
         
         # AI ürün öneriyorsa sepete ekle butonları göster
         if ai_recommending_products:
-            # AI'ın önerdiği ürünleri tespit et (basit keyword matching)
+            # AI'ın önerdiği ürünleri tespit et (isme göre matching)
             recommended_products = []
             for product in supplements_list:  # TÜM ürünleri kontrol et
                 product_name = product.get('name', '').lower()
                 product_category = product.get('category', '').lower()
                 
-                # SADECE ID matching - daha kesin
-                product_id = product.get('id', '')
-                if (f"[id: {product_id}]" in final.lower() or
-                    f"id: {product_id}" in final.lower() or
-                    f"(id: {product_id})" in final.lower()):
-                    
+                # İsme göre eşleştirme (ID artık kullanıcıya gösterilmiyor)
+                # Ürün adı AI'ın yanıtında geçiyorsa ekle
+                if product_name in final.lower():
                     recommended_products.append({
                         "id": product.get('id', f"product_{len(recommended_products)}"),
                         "name": product.get('name', ''),
@@ -1295,7 +1292,7 @@ async def chat_message(req: ChatMessageRequest,
                         "price": "299.99",  # Placeholder - gerçek fiyat XML'den gelecek
                         "image": f"https://longopass.myideasoft.com/images/{product.get('id', '')}.jpg"
                     })
-                    print(f"🔍 DEBUG: Ürün eklendi: {product.get('name', '')}")
+                    print(f"🔍 DEBUG: Ürün eklendi (isim eşleşmesi): {product.get('name', '')}")
             
             print(f"🔍 DEBUG: Toplam {len(recommended_products)} ürün önerildi")
             print(f"🔍 DEBUG: Önerilen ürünler: {recommended_products}")
