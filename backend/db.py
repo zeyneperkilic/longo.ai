@@ -16,7 +16,7 @@ if DB_TYPE == "postgresql":
     
     # Check if all required PostgreSQL variables are set
     if all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
-        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        DATABASE_URL = f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
         engine = create_engine(
             DATABASE_URL,
             pool_size=20,        # 20 connection hazır tut
