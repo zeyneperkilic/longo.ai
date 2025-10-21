@@ -120,6 +120,23 @@
         }
         window.longoRealUserId = window.longoRealUserId || null;
         
+        // Console.log listener - Asıl sitenin loglarından UserID yakalama
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            try {
+                const logString = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+                const userIdMatch = logString.match(/UserID:\s*(\d+)/i);
+                if (userIdMatch && userIdMatch[1] && !window.longoRealUserId) {
+                    window.longoRealUserId = userIdMatch[1];
+                    sessionStorage.setItem('longo_user_id', window.longoRealUserId);
+                    originalConsoleLog('🔍 DEBUG: UserID from console.log captured and set:', window.longoRealUserId);
+                }
+            } catch(e) {
+                // Silent fail
+            }
+        };
+        
         // User plan'ı user level'a göre otomatik belirle
         if (!window.longoUserLevel || window.longoUserLevel === 1) {
             window.longoUserPlan = 'free';
@@ -1329,6 +1346,18 @@
         // Premium/Premium+ için userId zorunlu: gönderimden hemen önce tekrar tespit etmeyi dene
         function tryResolveUserId() {
             if (window.longoRealUserId) return window.longoRealUserId;
+            
+            // 1. SessionStorage'dan kontrol et (console.log listener kaydetmiş olabilir)
+            try {
+                const ssUserId = sessionStorage.getItem('longo_user_id');
+                if (ssUserId && ssUserId !== 'null' && ssUserId !== 'undefined') {
+                    window.longoRealUserId = String(ssUserId);
+                    console.log('🔍 DEBUG: Real user id sessionStorage\'dan tespit:', window.longoRealUserId);
+                    return window.longoRealUserId;
+                }
+            } catch(e) {}
+            
+            // 2. Global değişkenler
             const candidates = [
                 window.longoRealUserId,
                 window.userId, window.user_id, window.userID, window.USER_ID,
