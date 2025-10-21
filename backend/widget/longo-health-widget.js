@@ -2,6 +2,28 @@
 (function() {
     'use strict';
     
+    // Console.log listener'ı EN BAŞTA kur (asıl sitenin logları için)
+    const originalConsoleLog = console.log;
+    console.log = function(...args) {
+        originalConsoleLog.apply(console, args);
+        try {
+            const logString = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+            // "UserID: 12" veya "Membership initialized - UserID: 12" formatını yakala
+            const userIdMatch = logString.match(/UserID:\s*(\d+)/i);
+            if (userIdMatch && userIdMatch[1]) {
+                const newUserId = userIdMatch[1];
+                if (window.longoRealUserId !== newUserId) {
+                    window.longoRealUserId = newUserId;
+                    try {
+                        sessionStorage.setItem('longo_user_id', window.longoRealUserId);
+                        localStorage.setItem('longo_user_id', window.longoRealUserId);
+                    } catch(e) {}
+                    originalConsoleLog('🔍 DEBUG: UserID captured from console.log:', newUserId);
+                }
+            }
+        } catch(e) {}
+    };
+    
     // DOM hazır olunca widget'ı başlat
     function initWidget() {
         // Cache busting için version ekle
@@ -90,28 +112,7 @@
                 }
             }
         }
-        // Console.log listener'ı ÖNCE kur - asıl sitenin loglarından UserID yakalama (EN ÖNCELİKLİ)
-        const originalConsoleLog = console.log;
-        console.log = function(...args) {
-            originalConsoleLog.apply(console, args);
-            try {
-                const logString = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
-                // "UserID: 12" veya "Membership initialized - UserID: 12" formatını yakala
-                const userIdMatch = logString.match(/UserID:\s*(\d+)/i);
-                if (userIdMatch && userIdMatch[1]) {
-                    // Console.log'dan gelen ID HER ZAMAN öncelikli (güncel ID)
-                    const newUserId = userIdMatch[1];
-                    if (window.longoRealUserId !== newUserId) {
-                        originalConsoleLog('🔍 DEBUG: UserID güncellendi (console.log):', window.longoRealUserId, '->', newUserId);
-                        window.longoRealUserId = newUserId;
-                        sessionStorage.setItem('longo_user_id', window.longoRealUserId);
-                        localStorage.setItem('longo_user_id', window.longoRealUserId);
-                    }
-                }
-            } catch(e) {
-                // Silent fail
-            }
-        };
+        // Console.log listener zaten en başta kuruldu
         
         // LocalStorage/Cookie fallback (sadece console.log'da bulunamazsa)
         if (!window.longoRealUserId) {
