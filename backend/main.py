@@ -1213,7 +1213,7 @@ async def chat_message(req: ChatMessageRequest,
             product_id = product.get('id', '')
             supplements_info += f"{i}. {product['name']} ({category}) [ID: {product_id}]\n"
         
-        supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken hem isim hem ID'yi belirt!"
+        supplements_info += "\n🚨 ÖNEMLİ: SADECE yukarıdaki listedeki ürünleri öner! Başka hiçbir ürün önerme! Kullanıcının ihtiyacına göre 3-5 ürün seç! Liste hakkında konuşma! Link verme! Ürün önerirken SADECE ÜRÜN ADINI kullan, ID'yi kullanıcıya YAZMA (backend otomatik eşleştirecek)!"
         
         history.append({"role": "user", "content": supplements_info})
         print(f"🔍 DEBUG: Supplement isteği tespit edildi, {len(supplements_list)} ürün eklendi")
