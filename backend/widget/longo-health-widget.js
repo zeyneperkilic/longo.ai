@@ -120,31 +120,6 @@
         }
         window.longoRealUserId = window.longoRealUserId || null;
         
-        // 5) membership_* scriptleri UserID'yi sadece console'a yazıyorsa, log'u hooklayıp yakala
-        (function hookConsoleForUserId(){
-            try {
-                const originalLog = console.log;
-                console.log = function(...args) {
-                    try {
-                        if (!window.longoRealUserId) {
-                            for (const a of args) {
-                                if (typeof a === 'string') {
-                                    const m = a.match(/UserID\s*[:=]\s*(\d{1,20})/i);
-                                    if (m && m[1]) {
-                                        window.longoRealUserId = m[1];
-                                        try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
-                                        originalLog.call(console, '🔍 DEBUG: Real user id console.log ile yakalandı:', window.longoRealUserId);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    } catch(e) { /* ignore */ }
-                    return originalLog.apply(console, args);
-                };
-            } catch(e) { /* ignore */ }
-        })();
-        
         // User plan'ı user level'a göre otomatik belirle
         if (!window.longoUserLevel || window.longoUserLevel === 1) {
             window.longoUserPlan = 'free';

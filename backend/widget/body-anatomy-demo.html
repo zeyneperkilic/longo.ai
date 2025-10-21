@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İnteraktif Vücut Anatomisi - Longo AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(120, 119, 198, 0.3) 0%, transparent 50%);
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-5%, -5%); }
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            max-width: 1400px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 
+                0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .body-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            letter-spacing: -0.5px;
+        }
+
+        .body-container {
+            position: relative;
+            width: 400px;
+            height: 700px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .body-container:hover {
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+        }
+
+        .body-silhouette {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+            z-index: 0;
+            object-fit: contain;
+            filter: grayscale(100%) brightness(1.2) drop-shadow(0 0 10px rgba(0, 0, 0, 0.1));
+        }
+
+        .organ {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .organ:hover {
+            transform: scale(1.15) rotate(-2deg);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            filter: brightness(1.1);
+        }
+
+        .organ.active {
+            animation: pulse 1.5s infinite;
+            border-color: #fff;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Organ pozisyonları - Adam.png'e göre aşağıya taşındı */
+        .brain {
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .thyroid {
+            top: 115px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 18px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .lungs {
+            top: 150px;
+            left: 30%;
+            width: 35px;
+            height: 45px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .lungs-right {
+            top: 148px;
+            right: 30%;
+            width: 35px;
+            height: 45px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .heart {
+            top: 135px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .liver {
+            top: 200px;
+            right: 25%;
+            width: 55px;
+            height: 40px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stomach {
+            top: 220px;
+            left: 40%;
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .pancreas {
+            top: 270px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55px;
+            height: 28px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+        }
+
+        .kidneys {
+            top: 300px;
+            left: 30%;
+            width: 35px;
+            height: 40px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .kidneys-right {
+            top: 300px;
+            right: 30%;
+            width: 35px;
+            height: 40px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .bones {
+            top: 450px;
+            left: 55%;
+            transform: translateX(-50%);
+            width: 45px;
+            height: 70px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+        }
+
+        .joints {
+            top: 520px;
+            left: 30%;
+            width: 40px;
+            height: 50px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .skin {
+            top: 240px;
+            left: 20%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 80px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .intestines {
+            top: 300px;
+            left: 49%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 60px;
+            border-radius: 35px;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .results-section {
+            flex: 1;
+            max-height: 600px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-panel h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 700;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(90deg, #667eea 0%, #764ba2 100%) 1;
+            padding-bottom: 15px;
+            letter-spacing: -0.5px;
+        }
+
+        .test-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 18px;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .test-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .test-item h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .test-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .test-value.warning {
+            color: #ff9800;
+        }
+
+        .test-value.danger {
+            color: #f44336;
+        }
+
+        .test-value.normal {
+            color: #4caf50;
+        }
+
+        .test-reference {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .test-analysis {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .organ-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 25px;
+            font-size: 15px;
+            line-height: 1.8;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .organ-summary::before {
+            content: "📋 Genel Değerlendirme";
+            display: block;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .placeholder {
+            text-align: center;
+            padding: 50px 20px;
+            color: #999;
+        }
+
+        .placeholder-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .instruction {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 18px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            animation: pulse-instruction 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-instruction {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .organ-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            transform: translateY(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .organ:hover .organ-label {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Scrollbar styling */
+        .results-section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .results-section::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .results-section::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .results-section::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                padding: 25px;
+            }
+            
+            .body-container {
+                width: 100%;
+                max-width: 400px;
+                height: 650px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            .results-panel h2 {
+                font-size: 22px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .instruction {
+                font-size: 14px;
+                padding: 12px;
+            }
+
+            .body-container {
+                height: 550px;
+            }
+
+            .organ {
+                font-size: 20px;
+            }
+
+            .test-item {
+                padding: 15px;
+            }
+
+            .organ-summary {
+                padding: 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="body-section">
+            <h1>🧬 İnteraktif Vücut Anatomisi</h1>
+            <div class="instruction">
+                👆 Organların üzerine gelin ve tıklayın
+            </div>
+            <div class="body-container">
+                <!-- İnsan Vücudu Silüeti (PNG) -->
+                <img src="adam.png" alt="İnsan Vücudu" class="body-silhouette" />
+                
+                <div class="organ brain" onclick="showOrganResults('brain')" data-organ="Beyin">
+                    🧠
+                    <span class="organ-label">Beyin</span>
+                </div>
+                <div class="organ thyroid" onclick="showOrganResults('thyroid')" data-organ="Tiroid">
+                    🦋
+                    <span class="organ-label">Tiroid</span>
+                </div>
+                <div class="organ heart" onclick="showOrganResults('heart')" data-organ="Kalp">
+                    ❤️
+                    <span class="organ-label">Kalp</span>
+                </div>
+                <div class="organ lungs" onclick="showOrganResults('lungs')" data-organ="Akciğerler">
+                    🫁
+                </div>
+                <div class="organ lungs-right" onclick="showOrganResults('lungs')" data-organ="Akciğerler">
+                    🫁
+                </div>
+                <div class="organ liver" onclick="showOrganResults('liver')" data-organ="Karaciğer">
+                    🫀
+                    <span class="organ-label">Karaciğer</span>
+                </div>
+                <div class="organ stomach" onclick="showOrganResults('stomach')" data-organ="Mide">
+                    🫃
+                    <span class="organ-label">Mide</span>
+                </div>
+                <div class="organ pancreas" onclick="showOrganResults('pancreas')" data-organ="Pankreas">
+                    🥞
+                    <span class="organ-label">Pankreas</span>
+                </div>
+                <div class="organ kidneys" onclick="showOrganResults('kidneys')" data-organ="Böbrekler">
+                    🫘
+                </div>
+                <div class="organ kidneys-right" onclick="showOrganResults('kidneys')" data-organ="Böbrekler">
+                    🫘
+                </div>
+                <div class="organ bones" onclick="showOrganResults('bones')" data-organ="Kemikler">
+                    🦴
+                    <span class="organ-label">Kemikler</span>
+                </div>
+                <div class="organ joints" onclick="showOrganResults('joints')" data-organ="Eklemler">
+                    🦴
+                    <span class="organ-label">Eklemler</span>
+                </div>
+                <div class="organ skin" onclick="showOrganResults('skin')" data-organ="Deri">
+                    🫀
+                    <span class="organ-label">Deri</span>
+                </div>
+                <div class="organ intestines" onclick="showOrganResults('intestines')" data-organ="Bağırsaklar">
+                    🫁
+                    <span class="organ-label">Bağırsaklar</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="results-panel">
+                <div id="results-content" class="placeholder">
+                    <div class="placeholder-icon">👈</div>
+                    <h3>Bir organ seçin</h3>
+                    <p>Sol taraftaki vücut şemasından bir organa tıklayarak ilgili test sonuçlarını görüntüleyin.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo test verileri - Gerçek uygulamada API'den gelecek
+        const organTestData = {
+            brain: {
+                name: "Beyin ve Sinir Sistemi",
+                icon: "🧠",
+                summary: "Beyin ve sinir sisteminiz, B12 ve folat gibi vitaminlerle beslenir. Test sonuçlarınız genel olarak iyi durumda ancak B12 seviyeniz biraz düşük. Bu durum yorgunluk, konsantrasyon güçlüğü ve hafıza sorunlarına yol açabilir. Ayrıca homosistein seviyenizin yüksek olması beyin sağlığı için risk oluşturabilir. B vitaminleri (B6, B9, B12) ile desteklenmeniz zihinsel performansınızı artırabilir.",
+                tests: [
+                    {
+                        name: "Vitamin B12",
+                        value: "245",
+                        unit: "pg/mL",
+                        reference: "Normal: 200-900 pg/mL",
+                        status: "warning",
+                        analysis: "B12 seviyeniz normal aralıkta ancak alt sınıra yakın. Sinir sistemi sağlığı için B12 kritik öneme sahiptir. Hayvansal ürünler, tahıllar veya B12 takviyesi ile destek alabilirsiniz."
+                    },
+                    {
+                        name: "Folat (B9)",
+                        value: "8.5",
+                        unit: "ng/mL",
+                        reference: "Normal: 2.7-17 ng/mL",
+                        status: "normal",
+                        analysis: "Folat seviyeniz ideal aralıkta. Beyin fonksiyonları, hafıza ve bilişsel performans için yeterli destek sağlanıyor."
+                    },
+                    {
+                        name: "Homosistein",
+                        value: "14.2",
+                        unit: "µmol/L",
+                        reference: "Normal: 5-15 µmol/L",
+                        status: "warning",
+                        analysis: "Homosistein seviyeniz yüksek normal sınıra yakın. Yüksek homosistein beyin sağlığını olumsuz etkileyebilir. B vitaminleri (B6, B9, B12) takviyesi faydalı olabilir."
+                    }
+                ]
+            },
+            thyroid: {
+                name: "Tiroid Bezi",
+                icon: "🦋",
+                summary: "Tiroid beziniz, metabolizmanızı, enerji seviyenizi ve kilo kontrolünüzü düzenler. TSH değeriniz hafif yüksek çıkmış, bu da tiroidinizin yeterince hormon üretmekte zorlandığını gösterebilir. Yorgunluk, kilo alma ve üşüme hissi yaşıyorsanız, bu durum tiroid fonksiyon bozukluğu belirtisi olabilir. İyot, selenyum ve D vitamini tiroid sağlığınızı destekler.",
+                tests: [
+                    {
+                        name: "TSH (Tiroid Uyarıcı Hormon)",
+                        value: "4.8",
+                        unit: "mIU/L",
+                        reference: "Normal: 0.4-4.0 mIU/L",
+                        status: "warning",
+                        analysis: "TSH seviyeniz referans aralığının üstünde. Bu, hafif hipotiroidi (yetersiz tiroid fonksiyonu) belirtisi olabilir. Yorgunluk, kilo alma ve soğuk hissetme gibi semptomlar yaşıyorsanız endokrinolojiye danışın."
+                    },
+                    {
+                        name: "Serbest T4",
+                        value: "1.1",
+                        unit: "ng/dL",
+                        reference: "Normal: 0.8-1.8 ng/dL",
+                        status: "normal",
+                        analysis: "Serbest T4 seviyeniz normal aralıkta. Tiroid hormon üretimi yeterli görünüyor."
+                    },
+                    {
+                        name: "Tiroid Antikorları (Anti-TPO)",
+                        value: "15",
+                        unit: "IU/mL",
+                        reference: "Normal: <35 IU/mL",
+                        status: "normal",
+                        analysis: "Tiroid antikorları normal. Otoimmün tiroid hastalığı riski düşük görünüyor."
+                    }
+                ]
+            },
+            heart: {
+                name: "Kalp ve Kardiyovasküler Sistem",
+                icon: "❤️",
+                summary: "Kalbiniz ve damarlarınız için bazı risk faktörleri mevcut. Kolesterol değerleriniz idealin üzerinde, özellikle LDL (kötü kolesterol) yüksek ve HDL (iyi kolesterol) düşük. Bu durum kalp krizi ve inme riskini artırabilir. Ayrıca trigliserit seviyeniz de yüksek. Sağlıklı beslenme, düzenli egzersiz, omega-3 takviyesi ve gerekirse doktor kontrolünde ilaç tedavisi ile bu değerleri düzeltmek mümkün. Kalp sağlığınızı korumak için şimdi harekete geçmek önemli!",
+                tests: [
+                    {
+                        name: "Total Kolesterol",
+                        value: "228",
+                        unit: "mg/dL",
+                        reference: "İdeal: <200 mg/dL",
+                        status: "warning",
+                        analysis: "Total kolesterol seviyeniz idealin üzerinde. Kardiyovasküler risk artabilir. Diyetinizde doymuş yağları azaltın, omega-3 alımını artırın ve düzenli egzersiz yapın."
+                    },
+                    {
+                        name: "LDL Kolesterol (Kötü Kolesterol)",
+                        value: "145",
+                        unit: "mg/dL",
+                        reference: "İdeal: <100 mg/dL",
+                        status: "danger",
+                        analysis: "LDL kolesterol yüksek. Damar sağlığı için risk oluşturuyor. Lifli gıdalar, omega-3, egzersiz ve gerekirse ilaç tedavisi ile düşürülmeli."
+                    },
+                    {
+                        name: "HDL Kolesterol (İyi Kolesterol)",
+                        value: "48",
+                        unit: "mg/dL",
+                        reference: "İdeal: >60 mg/dL",
+                        status: "warning",
+                        analysis: "HDL kolesterol düşük. HDL damarları koruyucu etkisi olan kolesteroldür. Düzenli egzersiz, sağlıklı yağlar (zeytinyağı, fındık) ve omega-3 ile artırılabilir."
+                    },
+                    {
+                        name: "Trigliserit",
+                        value: "175",
+                        unit: "mg/dL",
+                        reference: "Normal: <150 mg/dL",
+                        status: "warning",
+                        analysis: "Trigliserit hafif yüksek. Karbonhidrat ve şeker tüketimini azaltın, omega-3 alın ve düzenli egzersiz yapın."
+                    }
+                ]
+            },
+            lungs: {
+                name: "Akciğerler ve Solunum Sistemi",
+                icon: "🫁",
+                summary: "Akciğerleriniz oksijen alımında başarılı ancak vücudunuzda oksijen taşıyan hemoglobin için gerekli demir seviyeleri düşük. Demir ve ferritin eksikliği nefes darlığı, hızlı yorulma ve performans düşüklüğüne neden olabilir. Akciğerleriniz yeterince oksijen alsa bile, kan hücreleriniz bu oksijeni vücudunuza taşımakta zorlanıyor. Demir takviyesi ve C vitamini ile bu durumu düzeltebilirsiniz.",
+                tests: [
+                    {
+                        name: "Oksijen Saturasyonu (SpO2)",
+                        value: "97",
+                        unit: "%",
+                        reference: "Normal: 95-100%",
+                        status: "normal",
+                        analysis: "Oksijen saturasyonu mükemmel. Akciğerleriniz vücudunuza yeterli oksijen sağlıyor."
+                    },
+                    {
+                        name: "Demir",
+                        value: "55",
+                        unit: "µg/dL",
+                        reference: "Normal: 60-170 µg/dL",
+                        status: "warning",
+                        analysis: "Demir seviyeniz düşük. Demir, hemoglobinin yapı taşıdır ve oksijen taşınımı için kritiktir. Kırmızı et, ıspanak, mercimek ve demir takviyesi faydalı olabilir."
+                    },
+                    {
+                        name: "Ferritin",
+                        value: "22",
+                        unit: "ng/mL",
+                        reference: "Normal: 30-200 ng/mL",
+                        status: "danger",
+                        analysis: "Ferritin (demir depoları) düşük. Yorgunluk, nefes darlığı ve performans düşüklüğü yaşayabilirsiniz. Demir takviyesi ve C vitamini ile desteklenmelidir."
+                    }
+                ]
+            },
+            liver: {
+                name: "Karaciğer",
+                icon: "🫀",
+                summary: "Karaciğeriniz vücudunuzun detoks merkezi ve enerji deposudur. Test sonuçlarınız genel olarak iyi ancak ALT değeriniz yüksek normalde, bu hafif bir karaciğer stresi gösterebilir. Yağlı yiyecekler, alkol veya bazı ilaçlar karaciğerinizi zorlayabilir. Karaciğer sağlığınızı korumak için bol su için, antioksidan açısından zengin gıdalar (yeşil çay, brokkoli, ceviz) tüketin ve işlenmiş gıdalardan uzak durun.",
+                tests: [
+                    {
+                        name: "ALT (SGPT)",
+                        value: "52",
+                        unit: "U/L",
+                        reference: "Normal: 7-56 U/L",
+                        status: "warning",
+                        analysis: "ALT seviyesi normal aralığın üst sınırına yakın. Karaciğer fonksiyonlarını takip edin. Alkol tüketimini azaltın, yağlı gıdalardan kaçının."
+                    },
+                    {
+                        name: "AST (SGOT)",
+                        value: "38",
+                        unit: "U/L",
+                        reference: "Normal: 10-40 U/L",
+                        status: "normal",
+                        analysis: "AST seviyesi normal. Karaciğer hücre hasarı belirtisi yok."
+                    },
+                    {
+                        name: "GGT (Gamma GT)",
+                        value: "45",
+                        unit: "U/L",
+                        reference: "Normal: 9-48 U/L",
+                        status: "normal",
+                        analysis: "GGT normal aralıkta. Safra yolları ve karaciğer fonksiyonları iyi durumda."
+                    },
+                    {
+                        name: "Bilirubin (Total)",
+                        value: "0.9",
+                        unit: "mg/dL",
+                        reference: "Normal: 0.3-1.2 mg/dL",
+                        status: "normal",
+                        analysis: "Bilirubin normal. Karaciğer safra metabolizması dengede."
+                    }
+                ]
+            },
+            stomach: {
+                name: "Mide ve Sindirim Sistemi",
+                icon: "🫃",
+                summary: "Sindirim sisteminiz, besinleri parçalayıp vücudunuza emer. B12 ve demir seviyelerinizin düşük olması, midenizin bu besinleri yeterince emediğini gösterebilir. Mide asit eksikliği, H. pylori enfeksiyonu veya çölyak hastalığı gibi durumlar sindirim sorunlarına yol açabilir. Probiyotikler, sindirim enzimleri ve C vitamini ile desteklenebilirsiniz. Ayrıca yavaş yemek ve yemeği iyice çiğnemek sindirim sistemini rahatlatır.",
+                tests: [
+                    {
+                        name: "Vitamin B12",
+                        value: "245",
+                        unit: "pg/mL",
+                        reference: "Normal: 200-900 pg/mL",
+                        status: "warning",
+                        analysis: "B12 düşük normal. Midedeki intrinsik faktör eksikliği veya sindirim sorunu olabilir. Takviye ile desteklenebilir."
+                    },
+                    {
+                        name: "Demir",
+                        value: "55",
+                        unit: "µg/dL",
+                        reference: "Normal: 60-170 µg/dL",
+                        status: "warning",
+                        analysis: "Demir düşük. Mide asit eksikliği demir emilimini azaltabilir. Demir takviyesi C vitamini ile alınmalı."
+                    },
+                    {
+                        name: "Magnezyum",
+                        value: "1.8",
+                        unit: "mg/dL",
+                        reference: "Normal: 1.7-2.2 mg/dL",
+                        status: "normal",
+                        analysis: "Magnezyum seviyesi normal. Sindirim sistemi mineral emilimi iyi durumda."
+                    }
+                ]
+            },
+            pancreas: {
+                name: "Pankreas ve Metabolik Sistem",
+                icon: "🥞",
+                summary: "Pankreasınız, kan şekerinizi düzenleyen insülin hormonunu üretir. Test sonuçlarınız prediyabet (diyabet öncesi) aşamasını gösteriyor. Açlık kan şekeriniz ve HbA1c değeriniz normalin üstünde. Bu, tip 2 diyabet riskinin arttığını gösterir. Ancak iyi haber: Bu aşamada yaşam tarzı değişiklikleri ile durumu tersine çevirebilirsiniz! Düşük karbonhidratlı beslenme, düzenli egzersiz, kilo kontrolü ve gerekirse metformin tedavisi ile diyabeti önleyebilirsiniz.",
+                tests: [
+                    {
+                        name: "Açlık Kan Şekeri",
+                        value: "108",
+                        unit: "mg/dL",
+                        reference: "Normal: 70-100 mg/dL",
+                        status: "warning",
+                        analysis: "Açlık kan şekeri yüksek normal (prediyabetik aralık). Karbonhidrat alımını kontrol edin, düzenli egzersiz yapın. 3-6 ay içinde tekrar kontrol edilmeli."
+                    },
+                    {
+                        name: "HbA1c (3 aylık ortalama)",
+                        value: "5.9",
+                        unit: "%",
+                        reference: "Normal: <5.7%",
+                        status: "warning",
+                        analysis: "HbA1c prediyabetik aralıkta (5.7-6.4%). Diyabet riski mevcut. Beslenme ve egzersiz programı ile düşürülebilir."
+                    },
+                    {
+                        name: "İnsülin (Açlık)",
+                        value: "18.5",
+                        unit: "µU/mL",
+                        reference: "Normal: 2-25 µU/mL",
+                        status: "warning",
+                        analysis: "İnsülin seviyesi yüksek normal. İnsülin direnci riski var. Düşük glisemik indeksli gıdalar, egzersiz ve kilo kontrolü önemli."
+                    },
+                    {
+                        name: "C-Peptit",
+                        value: "2.8",
+                        unit: "ng/mL",
+                        reference: "Normal: 0.8-3.1 ng/mL",
+                        status: "normal",
+                        analysis: "C-Peptit normal. Pankreas insülin üretimi yeterli."
+                    }
+                ]
+            },
+            kidneys: {
+                name: "Böbrekler",
+                icon: "🫘",
+                summary: "Böbrekleriniz, kan filtreleme ve atık madde temizleme işlevini başarıyla yerine getiriyor. Kreatinin, BUN ve GFR değerleriniz mükemmel durumda. Ancak ürik asit seviyeniz yüksek normal sınırda, bu gut (damla hastalığı) ve böbrek taşı riskini artırabilir. Bol su içmek, pürinden zengin gıdaları (kırmızı et, deniz ürünleri, alkol) azaltmak ve kiraz, vişne gibi antioksidan açısından zengin meyveler tüketmek faydalı olacaktır.",
+                tests: [
+                    {
+                        name: "Kreatinin",
+                        value: "1.1",
+                        unit: "mg/dL",
+                        reference: "Normal: 0.7-1.3 mg/dL",
+                        status: "normal",
+                        analysis: "Kreatinin seviyesi normal. Böbrek fonksiyonları iyi durumda."
+                    },
+                    {
+                        name: "BUN (Kan Üre Azotu)",
+                        value: "18",
+                        unit: "mg/dL",
+                        reference: "Normal: 7-20 mg/dL",
+                        status: "normal",
+                        analysis: "BUN normal aralıkta. Böbrekler atık filtreleme işlevini düzgün yapıyor."
+                    },
+                    {
+                        name: "GFR (Glomerüler Filtrasyon Hızı)",
+                        value: "92",
+                        unit: "mL/min/1.73m²",
+                        reference: "Normal: >90",
+                        status: "normal",
+                        analysis: "GFR mükemmel. Böbrek filtreleme kapasitesi tam düzeyde."
+                    },
+                    {
+                        name: "Ürik Asit",
+                        value: "7.2",
+                        unit: "mg/dL",
+                        reference: "Normal: 3.5-7.2 mg/dL",
+                        status: "warning",
+                        analysis: "Ürik asit üst sınırda. Gut (damla hastalığı) riski artabilir. Pürinden zengin gıdaları (kırmızı et, deniz ürünleri, alkol) azaltın, bol su için."
+                    }
+                ]
+            },
+            bones: {
+                name: "Kemikler ve İskelet Sistemi",
+                icon: "🦴",
+                summary: "Kemikleriniz ve iskelet sisteminiz için önemli bir eksiklik tespit edildi: D vitamini. Bu vitamin kemik sağlığı, bağışıklık sistemi ve genel sağlık için kritik öneme sahiptir. D vitamini eksikliği kemik erimesine (osteoporoz), kas zayıflığına ve kırık riskine yol açabilir. Ayrıca yorgunluk, depresyon ve bağışıklık sisteminde zayıflamaya neden olur. Güneş ışığı, yağlı balıklar ve D vitamini takviyesi (2000-4000 IU/gün) ile bu eksikliği hızla giderebilirsiniz.",
+                tests: [
+                    {
+                        name: "Vitamin D (25-OH D)",
+                        value: "18",
+                        unit: "ng/mL",
+                        reference: "Normal: 30-100 ng/mL",
+                        status: "danger",
+                        analysis: "Vitamin D eksikliği tespit edildi. Kemik sağlığı, bağışıklık ve genel sağlık için kritik. Güneş ışığı, yağlı balıklar ve D vitamini takviyesi (2000-4000 IU/gün) gerekli."
+                    },
+                    {
+                        name: "Kalsiyum",
+                        value: "9.2",
+                        unit: "mg/dL",
+                        reference: "Normal: 8.5-10.5 mg/dL",
+                        status: "normal",
+                        analysis: "Kalsiyum seviyesi normal. Kemik yapısı için yeterli kalsiyum var."
+                    },
+                    {
+                        name: "Fosfor",
+                        value: "3.8",
+                        unit: "mg/dL",
+                        reference: "Normal: 2.5-4.5 mg/dL",
+                        status: "normal",
+                        analysis: "Fosfor seviyesi ideal. Kalsiyum-fosfor dengesi kemik mineralizasyonu için uygun."
+                    },
+                    {
+                        name: "Alkalen Fosfataz (ALP)",
+                        value: "75",
+                        unit: "U/L",
+                        reference: "Normal: 30-120 U/L",
+                        status: "normal",
+                        analysis: "ALP normal. Kemik yapım-yıkım dengesi sağlıklı."
+                    },
+                    {
+                        name: "Magnezyum",
+                        value: "1.8",
+                        unit: "mg/dL",
+                        reference: "Normal: 1.7-2.2 mg/dL",
+                        status: "normal",
+                        analysis: "Magnezyum normal. Kemik sağlığı ve kalsiyum metabolizması için yeterli."
+                    }
+                ]
+            },
+            joints: {
+                name: "Eklemler ve Kas-İskelet Sistemi",
+                icon: "🦴",
+                summary: "Eklemleriniz ve kas-iskelet sisteminiz genel olarak sağlıklı durumda. Romatoid faktör ve CRP değerleriniz normal, bu da inflamatuar eklem hastalığı riskinin düşük olduğunu gösteriyor. Ancak D vitamini seviyeniz sınıra yakın, bu da kemik ve eklem sağlığınızı etkileyebilir. Düzenli egzersiz, yeterli D vitamini alımı ve omega-3 takviyesi eklem sağlığınızı korumaya yardımcı olur. Ağırlık taşıyan egzersizler kemik yoğunluğunu artırır ve eklem esnekliğini korur.",
+                tests: [
+                    {
+                        name: "Romatoid Faktör (RF)",
+                        value: "8",
+                        unit: "IU/mL",
+                        reference: "Normal: <20 IU/mL",
+                        status: "normal",
+                        analysis: "Romatoid faktör normal. Romatoid artrit riski düşük."
+                    },
+                    {
+                        name: "CRP (C-Reaktif Protein)",
+                        value: "2.1",
+                        unit: "mg/L",
+                        reference: "Normal: <3.0 mg/L",
+                        status: "normal",
+                        analysis: "CRP normal. Sistemik inflamasyon belirtisi yok."
+                    },
+                    {
+                        name: "D Vitamini (25-OH)",
+                        value: "28",
+                        unit: "ng/mL",
+                        reference: "Optimal: 30-100 ng/mL",
+                        status: "warning",
+                        analysis: "D vitamini seviyeniz sınıra yakın. Kemik ve eklem sağlığı için D vitamini takviyesi faydalı olabilir."
+                    },
+                    {
+                        name: "Kalsiyum",
+                        value: "9.2",
+                        unit: "mg/dL",
+                        reference: "Normal: 8.5-10.5 mg/dL",
+                        status: "normal",
+                        analysis: "Kalsiyum normal. Kemik sağlığı için yeterli."
+                    }
+                ]
+            },
+            skin: {
+                name: "Deri ve Cilt Sağlığı",
+                icon: "🫀",
+                summary: "Cildiniz genel sağlığınızın aynasıdır ve test sonuçlarınıza göre bazı alanlarda desteklenmeye ihtiyacı var. Çinko seviyeniz düşük, bu da cilt iyileşmesi, saç sağlığı ve bağışıklık fonksiyonlarını etkileyebilir. A vitamini seviyeniz de sınıra yakın, bu da cilt hücre yenilenmesi ve koruyucu bariyer fonksiyonunu etkileyebilir. Antioksidan vitaminler (A, C, E), çinko ve omega-3 yağ asitleri cilt sağlığınızı destekler. Ayrıca yeterli su tüketimi ve güneş koruyucu kullanımı cilt sağlığınız için önemli.",
+                tests: [
+                    {
+                        name: "Çinko",
+                        value: "65",
+                        unit: "µg/dL",
+                        reference: "Normal: 70-120 µg/dL",
+                        status: "warning",
+                        analysis: "Çinko seviyeniz düşük. Cilt iyileşmesi, saç sağlığı ve bağışıklık fonksiyonları için çinko takviyesi faydalı olabilir."
+                    },
+                    {
+                        name: "A Vitamini (Retinol)",
+                        value: "28",
+                        unit: "µg/dL",
+                        reference: "Normal: 30-80 µg/dL",
+                        status: "warning",
+                        analysis: "A vitamini seviyeniz sınıra yakın. Cilt hücre yenilenmesi ve koruyucu bariyer fonksiyonu için A vitamini desteği faydalı olabilir."
+                    },
+                    {
+                        name: "E Vitamini",
+                        value: "12.5",
+                        unit: "mg/L",
+                        reference: "Normal: 5-20 mg/L",
+                        status: "normal",
+                        analysis: "E vitamini normal. Antioksidan koruma yeterli."
+                    },
+                    {
+                        name: "C Vitamini",
+                        value: "4.8",
+                        unit: "mg/dL",
+                        reference: "Normal: 0.6-2.0 mg/dL",
+                        status: "normal",
+                        analysis: "C vitamini normal. Kollajen sentezi ve cilt sağlığı için yeterli."
+                    }
+                ]
+            },
+            intestines: {
+                name: "Bağırsaklar ve Sindirim Sistemi",
+                icon: "🫁",
+                summary: "Bağırsaklarınız genel sağlığınızın merkezidir ve test sonuçlarınıza göre bazı alanlarda desteklenmeye ihtiyacı var. Çinko seviyeniz düşük, bu da bağırsak bariyer fonksiyonunu ve besin emilimini etkileyebilir. B12 vitamini seviyeniz de sınıra yakın, bu da bağırsak sağlığınızı ve sinir sistemi fonksiyonlarını etkileyebilir. Probiyotikler, prebiyotikler, çinko ve B vitaminleri bağırsak sağlığınızı destekler. Ayrıca lifli besinler, yeterli su tüketimi ve stres yönetimi bağırsak sağlığınız için önemli. Bağırsak mikrobiyotası genel sağlığınızı doğrudan etkiler.",
+                tests: [
+                    {
+                        name: "Çinko",
+                        value: "65",
+                        unit: "µg/dL",
+                        reference: "Normal: 70-120 µg/dL",
+                        status: "warning",
+                        analysis: "Çinko seviyeniz düşük. Bağırsak bariyer fonksiyonu ve besin emilimi için çinko takviyesi faydalı olabilir."
+                    },
+                    {
+                        name: "B12 Vitamini",
+                        value: "280",
+                        unit: "pg/mL",
+                        reference: "Normal: 300-900 pg/mL",
+                        status: "warning",
+                        analysis: "B12 vitamini seviyeniz sınıra yakın. Bağırsak sağlığı ve sinir sistemi fonksiyonları için B12 desteği faydalı olabilir."
+                    },
+                    {
+                        name: "Folat (B9)",
+                        value: "8.5",
+                        unit: "ng/mL",
+                        reference: "Normal: 3.0-17.0 ng/mL",
+                        status: "normal",
+                        analysis: "Folat normal. Bağırsak hücre yenilenmesi için yeterli."
+                    },
+                    {
+                        name: "D Vitamini (25-OH)",
+                        value: "28",
+                        unit: "ng/mL",
+                        reference: "Optimal: 30-100 ng/mL",
+                        status: "warning",
+                        analysis: "D vitamini seviyeniz sınıra yakın. Bağırsak bağışıklık fonksiyonları için D vitamini takviyesi faydalı olabilir."
+                    },
+                    {
+                        name: "Magnezyum",
+                        value: "1.8",
+                        unit: "mg/dL",
+                        reference: "Normal: 1.7-2.2 mg/dL",
+                        status: "normal",
+                        analysis: "Magnezyum normal. Bağırsak kas fonksiyonları için yeterli."
+                    }
+                ]
+            }
+        };
+
+        let currentOrgan = null;
+
+        function showOrganResults(organKey) {
+            // Önceki aktif organı temizle
+            if (currentOrgan) {
+                document.querySelectorAll('.organ').forEach(el => {
+                    el.classList.remove('active');
+                });
+            }
+
+            // Yeni organı aktif yap
+            currentOrgan = organKey;
+            document.querySelectorAll(`.organ.${organKey}, .organ[onclick*="${organKey}"]`).forEach(el => {
+                el.classList.add('active');
+            });
+
+            const data = organTestData[organKey];
+            const resultsDiv = document.getElementById('results-content');
+
+            let html = `
+                <h2>${data.icon} ${data.name}</h2>
+            `;
+
+            data.tests.forEach(test => {
+                html += `
+                    <div class="test-item">
+                        <h3>${test.name}</h3>
+                        <div class="test-value ${test.status}">${test.value} ${test.unit}</div>
+                        <div class="test-reference">📊 ${test.reference}</div>
+                        <div class="test-analysis">
+                            ${getStatusIcon(test.status)} ${test.analysis}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Organ özeti ekle
+            if (data.summary) {
+                html += `
+                    <div class="organ-summary">
+                        ${data.summary}
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'normal': return '✅';
+                case 'warning': return '⚠️';
+                case 'danger': return '🚨';
+                default: return 'ℹ️';
+            }
+        }
+
+        // Sayfa yüklendiğinde kalp sonuçlarını göster
+        window.addEventListener('DOMContentLoaded', () => {
+            showOrganResults('heart');
+        });
+    </script>
+</body>
+</html>
+
