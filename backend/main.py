@@ -952,7 +952,7 @@ async def chat_message(req: ChatMessageRequest,
     # Helper'dan gelen lab verilerini de ekle
     if lab_tests:
         lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
-        for test in lab_tests[:2]:  # İlk 2 test
+        for test in lab_tests[:50]:  # İlk 50 test - tüm testleri göster
             lab_info += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
         lab_info += "\n"
     
