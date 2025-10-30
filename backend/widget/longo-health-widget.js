@@ -710,11 +710,14 @@
 
         #longo-message-input {
             flex: 1;
-            padding: 0 24px;
-            height: 48px; /* butonla hizalı sabit yükseklik */
+            padding: 12px 16px; /* textarea icin daha uygun padding */
+            min-height: 48px; /* 1 satır */
+            max-height: 84px; /* ~2 satır görünür */
+            overflow-y: auto; /* uzun metinde scroll */
             border: 2px solid rgba(59, 130, 246, 0.3);
-            border-radius: 30px;
+            border-radius: 16px;
             font-size: 15px;
+            line-height: 1.4;
             outline: none;
             transition: all 0.3s ease;
             background: rgba(255, 255, 255, 0.9);
@@ -723,6 +726,7 @@
             color: #1e293b;
             font-weight: 500;
             box-sizing: border-box; /* Safari padding-border hesaplaması */
+            resize: none; /* kullanici boyutlandirmasini engelle */
         }
 
         #longo-message-input:focus {
@@ -1052,7 +1056,7 @@
                     
                     <div id="longo-chat-input">
                         <div class="input-container">
-                            <input type="text" id="longo-message-input" placeholder="Mesajınızı yazın..." onkeypress="longoHandleKeyPress(event)">
+                            <textarea id="longo-message-input" placeholder="Mesajınızı yazın..." rows="2" onkeydown="longoHandleKeyPress(event)"></textarea>
                             <button onclick="longoSendMessage()" class="longo-send-btn">
                                 <span>Gönder</span>
                                 <div class="btn-ripple"></div>
@@ -1202,9 +1206,10 @@
         }, 300);
     };
     
-    // Enter tuşu ile mesaj gönder
+    // Enter ile gönder, Shift+Enter ile yeni satır (textarea)
     window.longoHandleKeyPress = function(event) {
-        if (event.key === 'Enter') {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
             longoSendMessage();
         }
     };
