@@ -1371,7 +1371,11 @@ async def analyze_quiz(body: QuizRequest,
                     continue
                 product_id = item.get("product_id")
                 if product_id:
-                    item["productId"] = str(product_id)
+                    # Integer'a çevir (sepete ekleme için)
+                    try:
+                        item["productId"] = int(product_id)
+                    except (ValueError, TypeError):
+                        item["productId"] = str(product_id)
     except Exception:
         pass
 
