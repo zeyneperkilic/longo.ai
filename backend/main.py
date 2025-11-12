@@ -964,7 +964,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Dil algılama ve system prompt hazırlama
@@ -1359,6 +1359,19 @@ async def analyze_quiz(body: QuizRequest,
     # Remove any links for non-chat endpoints
     try:
         data = _sanitize_json_links(data)
+    except Exception:
+        pass
+    
+    # product_id -> productId dönüştür (sepete ekleme için)
+    try:
+        supplement_recommendations = data.get("supplement_recommendations", [])
+        if isinstance(supplement_recommendations, list):
+            for item in supplement_recommendations:
+                if not isinstance(item, dict):
+                    continue
+                product_id = item.get("product_id")
+                if product_id:
+                    item["productId"] = str(product_id)
     except Exception:
         pass
 

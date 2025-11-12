@@ -417,6 +417,7 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         '  "supplement_recommendations": [\n'
         "    {\n"
         '      "name": "Ürün adı (kullanılabilir ürünlerden seç)",\n'
+        '      "product_id": "Ürün ID\'si (yukarıdaki listeden ID\'yi kopyala)",\n'
         '      "description": "Neden önerildiği",\n'
         '      "daily_dose": "Günlük doz",\n'
         '      "benefits": ["Faydaları"],\n'
@@ -431,6 +432,7 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         "3) PERSONALIZED: Quiz cevaplarına göre eksik değerler için 4-5 ürün ekle "
         "4) SADECE kullanılabilir ürünlerden seçim yap! "
         "5) 'Diğer' seçeneğindeki özel durumları analiz et! "
+        "6) HER ÜRÜN İÇİN product_id ALANINI MUTLAKA EKLE (yukarıdaki listeden ID'yi kopyala)! "
         "SADECE VE SADECE bu JSON formatında yanıt ver. Hiçbir açıklama, metin ekleme."
     )
     
@@ -450,7 +452,8 @@ def build_quiz_prompt(quiz_answers: Dict[str, Any], available_supplements: List[
         "10) Kullanıcının yaşı, cinsiyeti, sağlık durumu, alerjileri, kullandığı ilaçlar dikkate al! "
         "11) Riskli durumlar varsa o supplement'i önerme! "
         "12) Sadece gerçekten gerekli olan supplementleri öner! "
-        "13) DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
+        "13) HER ÜRÜN İÇİN product_id ALANINI MUTLAKA EKLE (yukarıdaki listeden ID'yi kopyala)! "
+        "14) DİL: SADECE TÜRKÇE YANIT VER! İngilizce kelime, terim veya cümle kullanma!"
     )
     
     user_prompt = f"Kullanıcı profili:\n{user_profile_text}{supplements_info}{default_supplements_info}\n\n{schema}"
