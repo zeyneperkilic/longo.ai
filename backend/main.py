@@ -1362,7 +1362,7 @@ async def analyze_quiz(body: QuizRequest,
     except Exception:
         pass
     
-    # product_id -> productId dönüştür (sepete ekleme için)
+    # product_id -> productId dönüştür ve ürün adına ID ekle (eskiden olduğu gibi)
     try:
         supplement_recommendations = data.get("supplement_recommendations", [])
         if isinstance(supplement_recommendations, list):
@@ -1376,6 +1376,11 @@ async def analyze_quiz(body: QuizRequest,
                         item["productId"] = int(product_id)
                     except (ValueError, TypeError):
                         item["productId"] = str(product_id)
+                    
+                    # Ürün adına ID ekle (eskiden olduğu gibi: "Probiyotik (ID: 181)")
+                    product_name = item.get("name", "")
+                    if product_name and f"(ID: {product_id})" not in product_name:
+                        item["name"] = f"{product_name} (ID: {product_id})"
     except Exception:
         pass
 
