@@ -965,7 +965,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-    else:
+                else:
         user_message = message_text
     
     # Dil algılama ve system prompt hazırlama
@@ -2074,35 +2074,41 @@ def run_risk_detection_background(
         user_level: Kullanıcı seviyesi
         lab_summary_id: İlgili lab_summary ai_messages kaydının ID'si
     """
-    print(f"🚀 Background risk detection başladı: User ID {external_user_id}")
-    print(f"   Yeni testler: {len(tests)}, Tüm testler: {len(all_tests)}")
-    
-    # Yeni database session aç (background task için)
-    db = SessionLocal()
     try:
-        # Tüm testleri risk detection'a gönder (AI tüm testleri analiz etsin)
-        # Ama yeni testlerin bilgisini de gönder (duplicate kontrolü için)
-        print(f"🔍 Risk detection fonksiyonu çağrılıyor...")
-        result = detect_high_risk_with_ai(
-            tests=all_tests,  # Tüm testleri gönder (AI tüm testleri analiz etsin)
-            new_tests=tests,  # Yeni testleri ayrı gönder (duplicate kontrolü için)
-            ai_lab_summary=ai_lab_summary,
-            db=db,
-            external_user_id=external_user_id,
-            user_level=user_level,
-            lab_summary_id=lab_summary_id,
-        )
-        if result:
-            print(f"✅ Risk detection tamamlandı: {result}")
-        else:
-            print(f"✅ Risk detection tamamlandı: Risk tespit edilmedi")
+        print(f"🚀 Background risk detection başladı: User ID {external_user_id}")
+        print(f"   Yeni testler: {len(tests)}, Tüm testler: {len(all_tests)}")
+        print(f"   Lab summary ID: {lab_summary_id}")
+        
+        # Yeni database session aç (background task için)
+        db = SessionLocal()
+        try:
+            # Tüm testleri risk detection'a gönder (AI tüm testleri analiz etsin)
+            # Ama yeni testlerin bilgisini de gönder (duplicate kontrolü için)
+            print(f"🔍 Risk detection fonksiyonu çağrılıyor...")
+            result = detect_high_risk_with_ai(
+                tests=all_tests,  # Tüm testleri gönder (AI tüm testleri analiz etsin)
+                new_tests=tests,  # Yeni testleri ayrı gönder (duplicate kontrolü için)
+                ai_lab_summary=ai_lab_summary,
+                db=db,
+                external_user_id=external_user_id,
+                user_level=user_level,
+                lab_summary_id=lab_summary_id,
+            )
+            if result:
+                print(f"✅ Risk detection tamamlandı: {result}")
+            else:
+                print(f"✅ Risk detection tamamlandı: Risk tespit edilmedi")
+        except Exception as e:
+            print(f"❌ Background risk detection hatası (inner): {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            db.close()
+            print(f"🔒 Database session kapatıldı")
     except Exception as e:
-        print(f"❌ Background risk detection hatası: {e}")
+        print(f"❌ Background risk detection hatası (outer): {e}")
         import traceback
         traceback.print_exc()
-    finally:
-        db.close()
-        print(f"🔒 Database session kapatıldı")
 
 
 
