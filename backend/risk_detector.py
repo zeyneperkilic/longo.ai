@@ -89,6 +89,7 @@ AI LAB ANALİZİ:
 Bu lab sonuçlarında gerçekten HIGH RISK tespit eden bir durum var mı? Yukarıdaki kurallara göre değerlendir ve SADECE JSON formatında yanıt ver."""
 
         # AI'ya sor (async fonksiyonu sync context'te çalıştır)
+        print(f"🤖 AI'ya risk detection sorusu gönderiliyor...")
         import asyncio
         try:
             loop = asyncio.get_event_loop()
@@ -102,6 +103,7 @@ Bu lab sonuçlarında gerçekten HIGH RISK tespit eden bir durum var mı? Yukar�
                 user_message=user_prompt
             )
         )
+        print(f"📥 AI response alındı (uzunluk: {len(ai_response) if ai_response else 0})")
         
         # Response'u parse et
         try:
@@ -119,6 +121,7 @@ Bu lab sonuçlarında gerçekten HIGH RISK tespit eden bir durum var mı? Yukar�
                     cleaned_response = cleaned_response[json_start:json_end].strip()
             
             risk_data = json.loads(cleaned_response)
+            print(f"📊 AI risk data parse edildi: is_high_risk={risk_data.get('is_high_risk')}")
             
             # High risk tespit edildiyse kaydet
             if risk_data.get('is_high_risk') == True:
