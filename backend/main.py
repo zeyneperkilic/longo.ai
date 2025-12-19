@@ -2034,6 +2034,7 @@ JSON formatında yanıt ver:
             test_marked['is_new'] = True  # Yeni test işareti
             new_tests_marked.append(test_marked)
         
+        print(f"🔍 Risk detection başlatılıyor: User ID {x_user_id}, {len(new_tests_marked)} yeni test")
         background_tasks.add_task(
             run_risk_detection_background,
             tests=new_tests_marked,  # Yeni testler işaretli
@@ -2043,6 +2044,12 @@ JSON formatında yanıt ver:
             user_level=x_user_level,
             lab_summary_id=lab_summary_record.id if lab_summary_record else None
         )
+        print(f"✅ Risk detection background task eklendi")
+    else:
+        if not x_user_id:
+            print(f"⚠️ Risk detection atlandı: User ID yok")
+        if not new_tests_dict:
+            print(f"⚠️ Risk detection atlandı: Yeni test yok")
     
     return data
 
@@ -2067,12 +2074,16 @@ def run_risk_detection_background(
         user_level: Kullanıcı seviyesi
         lab_summary_id: İlgili lab_summary ai_messages kaydının ID'si
     """
+    print(f"🚀 Background risk detection başladı: User ID {external_user_id}")
+    print(f"   Yeni testler: {len(tests)}, Tüm testler: {len(all_tests)}")
+    
     # Yeni database session aç (background task için)
     db = SessionLocal()
     try:
         # Tüm testleri risk detection'a gönder (AI tüm testleri analiz etsin)
         # Ama yeni testlerin bilgisini de gönder (duplicate kontrolü için)
-        detect_high_risk_with_ai(
+        print(f"🔍 Risk detection fonksiyonu çağrılıyor...")
+        result = detect_high_risk_with_ai(
             tests=all_tests,  # Tüm testleri gönder (AI tüm testleri analiz etsin)
             new_tests=tests,  # Yeni testleri ayrı gönder (duplicate kontrolü için)
             ai_lab_summary=ai_lab_summary,
@@ -2081,12 +2092,17 @@ def run_risk_detection_background(
             user_level=user_level,
             lab_summary_id=lab_summary_id,
         )
+        if result:
+            print(f"✅ Risk detection tamamlandı: {result}")
+        else:
+            print(f"✅ Risk detection tamamlandı: Risk tespit edilmedi")
     except Exception as e:
         print(f"❌ Background risk detection hatası: {e}")
         import traceback
         traceback.print_exc()
     finally:
         db.close()
+        print(f"🔒 Database session kapatıldı")
 
 
 
