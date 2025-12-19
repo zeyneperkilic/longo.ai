@@ -35,9 +35,12 @@ def detect_high_risk_with_ai(
     try:
         from backend.openrouter_client import get_ai_response
         
-        # Lab testlerini formatla
+        # Lab testlerini formatla - SADECE YENİ TESTLERİ GÖNDER (geçmiş testleri değil)
+        # Geçmiş testler AI summary'de bahsediliyor olabilir, bu yüzden sadece yeni testlere bakmalıyız
+        tests_to_analyze = new_tests if new_tests else tests  # Yeni testler varsa onları kullan
+        
         tests_info = []
-        for test in tests:
+        for test in tests_to_analyze:
             test_info = f"- {test.get('name', 'Bilinmeyen')}: {test.get('value', 'N/A')}"
             if test.get('unit'):
                 test_info += f" {test['unit']}"
@@ -49,7 +52,7 @@ def detect_high_risk_with_ai(
         
         tests_text = "\n".join(tests_info)
         
-        # AI summary'yi text'e çevir
+        # AI summary'yi text'e çevir (ama sadece bu seansın özeti için kullanılacak)
         summary_text = json.dumps(ai_lab_summary, ensure_ascii=False, indent=2)
         
         # AI'ya risk detection sorusu
@@ -80,13 +83,23 @@ SADECE JSON formatında yanıt ver:
   "risky_tests": ["Test adı 1", "Test adı 2"] (sadece is_high_risk true ise)
 }"""
 
-        user_prompt = f"""LAB TEST SONUÇLARI:
+        user_prompt = f"""LAB TEST SONUÇLARI (BU SEANS - YENİ EKLENEN TESTLER):
 {tests_text}
 
-AI LAB ANALİZİ:
+ÖNEMLİ: SADECE YUKARIDAKİ TEST SONUÇLARINA BAK! Geçmiş testlere veya önceki seanslara bakma!
+Eğer yukarıdaki testlerde TÜM DEĞERLER NORMAL ARALIKTAYSA → is_high_risk = false
+Eğer yukarıdaki testlerde GERÇEKTEN CİDDİ BİR ANORMALLİK VARSA → is_high_risk = true
+
+AI LAB ANALİZİ (SADECE REFERANS İÇİN):
 {summary_text}
 
-Bu lab sonuçlarında gerçekten HIGH RISK tespit eden bir durum var mı? Yukarıdaki kurallara göre değerlendir ve SADECE JSON formatında yanıt ver."""
+Bu lab sonuçlarında gerçekten HIGH RISK tespit eden bir durum var mı? 
+- SADECE yukarıdaki test sonuçlarına bak
+- Geçmiş testlere bakma
+- Normal değerler → is_high_risk = false
+- Ciddi anormallikler → is_high_risk = true
+
+Yukarıdaki kurallara göre değerlendir ve SADECE JSON formatında yanıt ver."""
 
         # AI'ya sor (async fonksiyonu sync context'te çalıştır)
         print(f"🤖 AI'ya risk detection sorusu gönderiliyor...")
