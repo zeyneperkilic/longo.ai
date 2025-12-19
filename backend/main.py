@@ -12,6 +12,7 @@ import requests
 import xml.etree.ElementTree as ET
 import time
 from datetime import datetime
+import threading
 
 from backend.config import (
     ALLOWED_ORIGINS, CHAT_HISTORY_MAX, FREE_ANALYZE_LIMIT,
@@ -2035,16 +2036,21 @@ JSON formatında yanıt ver:
             new_tests_marked.append(test_marked)
         
         print(f"🔍 Risk detection başlatılıyor: User ID {x_user_id}, {len(new_tests_marked)} yeni test")
-        background_tasks.add_task(
-            run_risk_detection_background,
-            tests=new_tests_marked,  # Yeni testler işaretli
-            all_tests=tests_dict,  # Tüm testler (geçmiş + yeni) - tests_dict zaten all_tests_dict'e eşit
-            ai_lab_summary=data,
-            external_user_id=x_user_id,
-            user_level=x_user_level,
-            lab_summary_id=lab_summary_record.id if lab_summary_record else None
+        # Threading kullanarak arka planda çalıştır (FastAPI BackgroundTasks Render'da çalışmıyor)
+        thread = threading.Thread(
+            target=run_risk_detection_background,
+            args=(
+                new_tests_marked,  # Yeni testler işaretli
+                tests_dict,  # Tüm testler (geçmiş + yeni)
+                data,  # AI lab summary
+                x_user_id,  # External user ID
+                x_user_level,  # User level
+                lab_summary_record.id if lab_summary_record else None  # Lab summary ID
+            ),
+            daemon=True  # Ana thread bitince thread de bitsin
         )
-        print(f"✅ Risk detection background task eklendi")
+        thread.start()
+        print(f"✅ Risk detection thread başlatıldı")
     else:
         if not x_user_id:
             print(f"⚠️ Risk detection atlandı: User ID yok")
