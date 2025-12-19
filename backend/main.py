@@ -965,7 +965,7 @@ async def chat_message(req: ChatMessageRequest,
         if quiz_info:
             enhanced_message = quiz_info + enhanced_message
         user_message = enhanced_message
-                else:
+    else:
         user_message = message_text
     
     # Dil algılama ve system prompt hazırlama
