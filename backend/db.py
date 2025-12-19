@@ -59,6 +59,22 @@ class AIMessage(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
+# High risk users table - Lab sonuçlarında high risk tespit edilen kullanıcılar
+class HighRiskUser(Base):
+    __tablename__ = "high_risk_users"
+    id = Column(Integer, primary_key=True, index=True)
+    external_user_id = Column(String, index=True, nullable=False)
+    user_level = Column(Integer, nullable=True)
+    lab_summary_id = Column(Integer, nullable=True)  # İlgili lab_summary ai_messages kaydının ID'si
+    risk_level = Column(String, nullable=False)  # high, critical
+    risk_reason = Column(Text, nullable=True)  # AI'nin risk tespit nedeni
+    risky_tests = Column(JSON, nullable=True)  # Riskli testler listesi
+    ai_analysis = Column(Text, nullable=True)  # AI'nin tam analizi
+    detected_at = Column(DateTime, default=datetime.datetime.utcnow)
+    notified = Column(Boolean, default=False)  # Mail gönderildi mi?
+    notified_at = Column(DateTime, nullable=True)
+
+
 
 def create_ai_message(
     db: Session,
@@ -102,3 +118,44 @@ def get_user_ai_messages_by_type(db: Session, external_user_id: str, message_typ
 def get_user_ai_messages(db: Session, external_user_id: str, limit: int = 10):
     """Get all user's AI messages (replacement for get_user_ai_interactions)"""
     return get_ai_messages(db, external_user_id=external_user_id, limit=limit)
+
+
+def create_high_risk_user(
+    db: Session,
+    external_user_id: str,
+    user_level: int | None,
+    lab_summary_id: int | None,
+    risk_level: str,
+    risk_reason: str | None,
+    risky_tests: list | None,
+    ai_analysis: str | None,
+):
+    """High risk kullanıcı kaydı oluştur"""
+    record = HighRiskUser(
+        external_user_id=external_user_id,
+        user_level=user_level,
+        lab_summary_id=lab_summary_id,
+        risk_level=risk_level,
+        risk_reason=risk_reason,
+        risky_tests=risky_tests,
+        ai_analysis=ai_analysis,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+def get_high_risk_users(
+    db: Session,
+    external_user_id: str | None = None,
+    notified: bool | None = None,
+    limit: int = 100,
+):
+    """High risk kullanıcıları sorgula"""
+    query = db.query(HighRiskUser)
+    if external_user_id:
+        query = query.filter(HighRiskUser.external_user_id == external_user_id)
+    if notified is not None:
+        query = query.filter(HighRiskUser.notified == notified)
+    return query.order_by(HighRiskUser.detected_at.desc()).limit(limit).all()

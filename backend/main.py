@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Header, Request, Query, Body
+from fastapi import FastAPI, Depends, HTTPException, Header, Request, Query, Body, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -28,6 +28,7 @@ from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
 from backend.cache_utils import cache_supplements
+from backend.risk_detector import detect_high_risk_with_ai
 
 
 
@@ -1766,6 +1767,7 @@ def analyze_single_session(body: SingleSessionRequest,
 
 @app.post("/ai/lab/summary", response_model=GeneralLabSummaryResponse)
 async def analyze_multiple_lab_summary(body: MultipleLabRequest,
+                                 background_tasks: BackgroundTasks,
                                  current_user: str = Depends(get_current_user),
                                  db: Session = Depends(get_db),
                                  x_user_id: str | None = Header(default=None),
@@ -2009,8 +2011,9 @@ JSON formatında yanıt ver:
             print(f"🔍 DEBUG: Lab summary test recommendations hatası: {e}")
     
     # Log to ai_messages
+    lab_summary_record = None
     try:
-        create_ai_message(
+        lab_summary_record = create_ai_message(
                 db=db,
             external_user_id=x_user_id,
             message_type="lab_summary",
@@ -2021,7 +2024,69 @@ JSON formatında yanıt ver:
     except Exception as e:
         print(f"🔍 DEBUG: Lab Summary ai_messages kaydı hatası: {e}")
     
+    # Risk detection'i arka planda çalıştır (asenkron, endpoint'i geciktirmez)
+    # Yeni eklenen testleri işaretle (duplicate kontrolü için)
+    if x_user_id and new_tests_dict:
+        # Yeni testleri işaretle (test_date = 'Yeni Seans' olanlar)
+        new_tests_marked = []
+        for test in new_tests_dict:
+            test_marked = test.copy()
+            test_marked['is_new'] = True  # Yeni test işareti
+            new_tests_marked.append(test_marked)
+        
+        background_tasks.add_task(
+            run_risk_detection_background,
+            tests=new_tests_marked,  # Yeni testler işaretli
+            all_tests=tests_dict,  # Tüm testler (geçmiş + yeni) - tests_dict zaten all_tests_dict'e eşit
+            ai_lab_summary=data,
+            external_user_id=x_user_id,
+            user_level=x_user_level,
+            lab_summary_id=lab_summary_record.id if lab_summary_record else None
+        )
+    
     return data
+
+
+def run_risk_detection_background(
+    tests: list,
+    all_tests: list,
+    ai_lab_summary: dict,
+    external_user_id: str,
+    user_level: int | None,
+    lab_summary_id: int | None,
+):
+    """
+    Background task: Lab summary sonrası risk detection çalıştır
+    Yeni bir database session açarak çalışır (asenkron)
+    
+    Args:
+        tests: Yeni eklenen testler (is_new=True işaretli)
+        all_tests: Tüm testler (geçmiş + yeni)
+        ai_lab_summary: AI'nin lab summary response'u
+        external_user_id: Kullanıcı ID'si
+        user_level: Kullanıcı seviyesi
+        lab_summary_id: İlgili lab_summary ai_messages kaydının ID'si
+    """
+    # Yeni database session aç (background task için)
+    db = SessionLocal()
+    try:
+        # Tüm testleri risk detection'a gönder (AI tüm testleri analiz etsin)
+        # Ama yeni testlerin bilgisini de gönder (duplicate kontrolü için)
+        detect_high_risk_with_ai(
+            tests=all_tests,  # Tüm testleri gönder (AI tüm testleri analiz etsin)
+            new_tests=tests,  # Yeni testleri ayrı gönder (duplicate kontrolü için)
+            ai_lab_summary=ai_lab_summary,
+            db=db,
+            external_user_id=external_user_id,
+            user_level=user_level,
+            lab_summary_id=lab_summary_id,
+        )
+    except Exception as e:
+        print(f"❌ Background risk detection hatası: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        db.close()
 
 
 
