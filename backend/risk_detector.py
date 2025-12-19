@@ -91,19 +91,31 @@ Bu lab sonuçlarında gerçekten HIGH RISK tespit eden bir durum var mı? Yukar�
         # AI'ya sor (async fonksiyonu sync context'te çalıştır)
         print(f"🤖 AI'ya risk detection sorusu gönderiliyor...")
         import asyncio
+        
+        # Thread içinde async çalıştırmak için yeni event loop oluştur
         try:
+            # Mevcut loop'u kontrol et
             loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                raise RuntimeError("Loop closed")
         except RuntimeError:
+            # Yeni loop oluştur
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
         
-        ai_response = loop.run_until_complete(
-            get_ai_response(
-                system_prompt=system_prompt,
-                user_message=user_prompt
+        try:
+            ai_response = loop.run_until_complete(
+                get_ai_response(
+                    system_prompt=system_prompt,
+                    user_message=user_prompt
+                )
             )
-        )
-        print(f"📥 AI response alındı (uzunluk: {len(ai_response) if ai_response else 0})")
+            print(f"📥 AI response alındı (uzunluk: {len(ai_response) if ai_response else 0})")
+        except Exception as ai_error:
+            print(f"❌ AI response alma hatası: {ai_error}")
+            import traceback
+            traceback.print_exc()
+            return None
         
         # Response'u parse et
         try:
