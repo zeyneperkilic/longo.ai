@@ -832,6 +832,15 @@
             padding: 0 5px;
         }
 
+        .longo-quick-questions-title {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 8px;
+            padding: 0 10px;
+        }
+
         .longo-quick-question-btn {
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid rgba(59, 130, 246, 0.2);
@@ -1325,20 +1334,17 @@
                         
                         <!-- Hazır Soru Butonları -->
                         <div class="longo-quick-questions" id="longo-quick-questions">
-                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Hangi ürünler bana uygun?')">
-                                Hangi ürünler bana uygun?
-                            </button>
-                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Stresimi nasıl azaltabilirim?')">
-                                Stresimi nasıl azaltabilirim?
+                            <div class="longo-quick-questions-title">
+                                Sorulardan birini seç ve konuşmayı başlat
+                            </div>
+                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Hangi Longopass ürünleri bana uygun?')">
+                                Hangi Longopass ürünleri bana uygun?
                             </button>
                             <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Uyku kalitemi nasıl iyileştirebilirim?')">
                                 Uyku kalitemi nasıl iyileştirebilirim?
                             </button>
                             <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?')">
                                 Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?
-                            </button>
-                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sağlıklı kilo yönetimi için ipuçları')">
-                                Sağlıklı kilo yönetimi için ipuçları
                             </button>
                         </div>
                     </div>
@@ -1602,20 +1608,17 @@
                     Kişiselleştirilmiş öneriler almak için üye olun
                 </div>
                 <div class="longo-quick-questions" id="longo-quick-questions">
-                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Hangi ürünler bana uygun?')">
-                        Hangi ürünler bana uygun?
-                    </button>
-                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Stresimi nasıl azaltabilirim?')">
-                        Stresimi nasıl azaltabilirim?
+                    <div class="longo-quick-questions-title">
+                        Sorulardan birini seç ve konuşmayı başlat
+                    </div>
+                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Hangi Longopass ürünleri bana uygun?')">
+                        Hangi Longopass ürünleri bana uygun?
                     </button>
                     <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Uyku kalitemi nasıl iyileştirebilirim?')">
                         Uyku kalitemi nasıl iyileştirebilirim?
                     </button>
                     <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?')">
                         Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?
-                    </button>
-                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sağlıklı kilo yönetimi için ipuçları')">
-                        Sağlıklı kilo yönetimi için ipuçları
                     </button>
                 </div>
             `;
