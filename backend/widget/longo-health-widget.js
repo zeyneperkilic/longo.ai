@@ -1756,7 +1756,7 @@
             
             history.forEach(item => {
                 if (item.role && item.content) {
-                    longoAddMessage(item.role, item.content, 'normal');
+                    longoAddMessage(item.role, item.content, 'history'); // 'history' type = typing effect yok
                 }
             });
             
@@ -2163,22 +2163,59 @@
         }, delay);
     }
     
-    // Typing effect fonksiyonu - HTML'i doğru render etmek için
-    function typeTextWithHTML(element, text, delay = 30) {
-        // Önce tüm HTML'i render et
-        element.innerHTML = text;
+    // Typing effect fonksiyonu - HTML'i doğru render etmek için (kelime kelime)
+    function typeTextWithHTML(element, text, delay = 80) {
+        // HTML tag'lerini koruyarak metni kelimelere ayır
+        const words = [];
+        let currentWord = '';
+        let inTag = false;
         
-        // Sonra karakter karakter typing effect yap
-        const originalHTML = text;
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            
+            if (char === '<') {
+                inTag = true;
+                // Eğer önceki kelime varsa ekle
+                if (currentWord.trim()) {
+                    words.push(currentWord);
+                    currentWord = '';
+                }
+                currentWord += char;
+            } else if (char === '>') {
+                inTag = false;
+                currentWord += char;
+                // Tag'i bir kelime olarak ekle
+                words.push(currentWord);
+                currentWord = '';
+            } else if (inTag) {
+                // Tag içindeyken her şeyi ekle
+                currentWord += char;
+            } else if (char === ' ' || char === '\n') {
+                // Boşluk veya yeni satır - kelimeyi bitir
+                if (currentWord.trim()) {
+                    words.push(currentWord);
+                    currentWord = '';
+                }
+                // Boşluğu da ekle (ayrı bir "kelime" olarak)
+                words.push(char);
+            } else {
+                currentWord += char;
+            }
+        }
+        
+        // Son kelimeyi ekle
+        if (currentWord.trim()) {
+            words.push(currentWord);
+        }
+        
+        // Kelime kelime yaz
         element.innerHTML = '';
+        let wordIndex = 0;
         
-        let index = 0;
         const timer = setInterval(() => {
-            if (index < originalHTML.length) {
-                // Mevcut içeriği al ve bir karakter daha ekle
-                const currentText = originalHTML.substring(0, index + 1);
-                element.innerHTML = currentText;
-                index++;
+            if (wordIndex < words.length) {
+                element.innerHTML += words[wordIndex];
+                wordIndex++;
                 
                 // Scroll to bottom
                 const messagesDiv = document.getElementById('longo-chat-messages');
@@ -2223,8 +2260,13 @@
             );
         }
         
-        // Sadece assistant mesajları için typing effect
-        if (role === 'assistant') {
+        // History yüklenirken typing effect yok
+        if (type === 'history') {
+            // Direkt render et, typing effect yok
+            paragraph.innerHTML = convertedContent;
+            messageDiv.appendChild(paragraph);
+        } else if (role === 'assistant') {
+            // Sadece assistant mesajları için typing effect
             // Link detection: <a tag'i, target="_blank" attribute'u veya markdown link formatı varsa
             const hasLink = /<a\s/i.test(convertedContent) || /target="_blank"/i.test(convertedContent) || /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g.test(convertedContent);
             // Link varsa typing effect'i kapatıp direkt render et (kliklenebilirlik için)
