@@ -717,7 +717,7 @@
         #longo-chat-messages {
             flex: 1;
             padding: 20px;
-            padding-bottom: 130px; /* Disclaimer için daha fazla yer */
+            padding-bottom: 140px; /* Input alanı için daha fazla yer */
             overflow-y: auto;
             background: rgba(255, 255, 255, 0.02);
             backdrop-filter: blur(25px);
@@ -917,14 +917,14 @@
         /* Chat Input - Şeffaf ve Modern - SABİT */
         #longo-chat-input {
             padding: 25px 30px 15px 30px; /* Alt padding azaltıldı */
-            background: rgba(255, 255, 255, 0.05);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center; /* Safari dikey hizalama */
             gap: 10px; /* Gap azaltıldı */
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             position: absolute;
             bottom: 0;
             left: 0;
@@ -932,6 +932,7 @@
             z-index: 10;
             flex-shrink: 0;
             min-height: 120px; /* Minimum yükseklik eklendi */
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
         }
         
         /* Input ve button container */
@@ -975,9 +976,7 @@
             line-height: 1.4;
             outline: none;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: white;
             color: #1e293b;
             font-weight: 500;
             box-sizing: border-box; /* Safari padding-border hesaplaması */
