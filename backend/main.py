@@ -819,7 +819,12 @@ def get_conversations(db: Session = Depends(get_db),
             if conv_id not in conversations_dict:
                 # İlk mesajı title olarak kullan
                 first_message = msg.request_payload.get("message", "") or msg.request_payload.get("text", "")
-                title = first_message[:50] + "..." if len(first_message) > 50 else first_message or "Yeni Sohbet"
+                # Özel karakterleri ve HTML tag'lerini temizle
+                import re
+                title = re.sub(r'===.*?===', '', first_message)
+                title = re.sub(r'<[^>]*>', '', title)
+                title = title.strip()
+                title = title[:50] + "..." if len(title) > 50 else title or "Yeni Sohbet"
                 
                 conversations_dict[conv_id] = {
                     "conversation_id": conv_id,

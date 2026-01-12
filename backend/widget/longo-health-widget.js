@@ -1688,18 +1688,30 @@
             // Conversation'ları listele
             let historyHTML = '';
             conversations.forEach(conv => {
+                // ISO formatındaki tarihi parse et (timezone'u dikkate al)
                 const date = new Date(conv.updated_at);
+                
+                // Tarih formatı: "12 Ocak 2026, 07:10"
                 const dateStr = date.toLocaleDateString('tr-TR', { 
                     day: 'numeric', 
                     month: 'long', 
-                    year: 'numeric',
+                    year: 'numeric'
+                }) + ', ' + date.toLocaleTimeString('tr-TR', {
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
+                    hour12: false
                 });
+                
+                // Title'ı temizle (HTML escape)
+                const cleanTitle = conv.title
+                    .replace(/===.*?===/g, '')
+                    .replace(/<[^>]*>/g, '')
+                    .replace(/&nbsp;/g, ' ')
+                    .trim();
                 
                 historyHTML += `
                     <div class="longo-history-item" onclick="longoLoadConversation(${conv.conversation_id})">
-                        <div class="longo-history-item-title">${conv.title}</div>
+                        <div class="longo-history-item-title">${cleanTitle || 'Yeni Sohbet'}</div>
                         <div class="longo-history-item-date">${dateStr}</div>
                     </div>
                 `;
