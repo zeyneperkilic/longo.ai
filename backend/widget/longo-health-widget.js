@@ -1688,18 +1688,20 @@
             // Conversation'ları listele
             let historyHTML = '';
             conversations.forEach(conv => {
-                // ISO formatındaki tarihi parse et (timezone'u dikkate al)
+                // Backend UTC zamanı gönderiyor, Türkiye saatine çevir
                 const date = new Date(conv.updated_at);
                 
-                // Tarih formatı: "12 Ocak 2026, 07:10"
+                // Türkiye saatine çevir (UTC+3)
                 const dateStr = date.toLocaleDateString('tr-TR', { 
                     day: 'numeric', 
                     month: 'long', 
-                    year: 'numeric'
+                    year: 'numeric',
+                    timeZone: 'Europe/Istanbul'
                 }) + ', ' + date.toLocaleTimeString('tr-TR', {
                     hour: '2-digit',
                     minute: '2-digit',
-                    hour12: false
+                    hour12: false,
+                    timeZone: 'Europe/Istanbul'
                 });
                 
                 // Title'ı temizle (HTML escape)
