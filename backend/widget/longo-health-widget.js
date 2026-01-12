@@ -1335,7 +1335,7 @@
                         <!-- Hazır Soru Butonları -->
                         <div class="longo-quick-questions" id="longo-quick-questions">
                             <div class="longo-quick-questions-title">
-                                Sorulardan birini seç ve konuşmayı başlat
+                                Sorulardan birini seçin veya mesajınızı yazın
                             </div>
                             <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Hangi Longopass ürünleri bana uygun?')">
                                 Hangi Longopass ürünleri bana uygun?
@@ -1691,16 +1691,11 @@
                 // Backend UTC zamanı gönderiyor, Türkiye saatine çevir
                 const date = new Date(conv.updated_at);
                 
-                // Türkiye saatine çevir (UTC+3)
+                // Sadece tarih göster (saat yok)
                 const dateStr = date.toLocaleDateString('tr-TR', { 
                     day: 'numeric', 
                     month: 'long', 
                     year: 'numeric',
-                    timeZone: 'Europe/Istanbul'
-                }) + ', ' + date.toLocaleTimeString('tr-TR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false,
                     timeZone: 'Europe/Istanbul'
                 });
                 
