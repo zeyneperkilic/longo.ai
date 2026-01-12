@@ -1743,26 +1743,40 @@
             
             const history = await response.json();
             
+            console.log('🔍 Conversation history loaded:', history);
+            console.log('🔍 History length:', history ? history.length : 'null');
+            
             // Mesajları göster
             messagesDiv.innerHTML = '';
+            
+            if (!history || history.length === 0) {
+                messagesDiv.innerHTML = '<div class="longo-history-empty">Bu conversation için mesaj geçmişi bulunamadı.</div>';
+                return;
+            }
+            
             history.forEach(item => {
-                longoAddMessage(item.role, item.content, 'normal');
+                if (item.role && item.content) {
+                    longoAddMessage(item.role, item.content, 'normal');
+                }
             });
             
             // Hazır soru butonlarını gizle (mesaj geçmişi varsa)
             const quickQuestions = document.getElementById('longo-quick-questions');
-            if (quickQuestions && history.length > 0) {
+            if (quickQuestions) {
                 quickQuestions.style.display = 'none';
             }
             
             // Longo karakterini kaldır (mesaj geçmişi varsa)
-            if (history.length > 0) {
-                removeLongoCharacter();
-            }
+            removeLongoCharacter();
+            
+            // Scroll to bottom
+            setTimeout(() => {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 100);
             
         } catch (error) {
-            console.error('Error loading conversation:', error);
-            messagesDiv.innerHTML = '<div class="longo-history-empty">Conversation yüklenirken bir hata oluştu.</div>';
+            console.error('❌ Error loading conversation:', error);
+            messagesDiv.innerHTML = '<div class="longo-history-empty">Conversation yüklenirken bir hata oluştu: ' + error.message + '</div>';
         }
     };
     

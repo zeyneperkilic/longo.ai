@@ -843,10 +843,11 @@ def get_conversations(db: Session = Depends(get_db),
 @app.get("/ai/chat/{conversation_id}/history")
 def chat_history(conversation_id: int,
                  db: Session = Depends(get_db),
-                 x_user_id: str | None = Header(default=None)):
+                 x_user_id: str | None = Header(default=None),
+                 x_user_level: int | None = Header(default=None)):
     
     # Plan kontrolü
-    user_plan = "free"  # Free chat için sabit
+    user_plan = get_user_plan_from_headers(x_user_level)
     is_premium = user_plan in ["premium", "premium_plus"]
     
     # User ID validasyonu (Free: Session ID, Premium: Real ID)
@@ -866,22 +867,34 @@ def chat_history(conversation_id: int,
     # ai_messages formatını chat history formatına çevir
     history = []
     for msg in chat_messages:
-        if msg.request_payload and "message" in msg.request_payload and msg.request_payload.get("conversation_id") == conversation_id:
-            # User message
-            history.append({
-                "role": "user", 
-                "content": msg.request_payload["message"], 
-                "ts": msg.created_at.isoformat()
-            })
+        # User message - conversation_id kontrolü
+        if msg.request_payload and "message" in msg.request_payload:
+            msg_conv_id = msg.request_payload.get("conversation_id") or msg.request_payload.get("conv_id")
+            if msg_conv_id == conversation_id:
+                history.append({
+                    "role": "user", 
+                    "content": msg.request_payload["message"] or msg.request_payload.get("text", ""), 
+                    "ts": msg.created_at.isoformat()
+                })
+        
+        # Assistant message - aynı conversation_id'ye ait olmalı (request'ten al)
         if msg.response_payload and "reply" in msg.response_payload:
-            # Assistant message
-            history.append({
-                "role": "assistant", 
-                "content": msg.response_payload["reply"], 
-                "ts": msg.created_at.isoformat()
-            })
+            # Request payload'dan conversation_id kontrolü
+            msg_conv_id = None
+            if msg.request_payload:
+                msg_conv_id = msg.request_payload.get("conversation_id") or msg.request_payload.get("conv_id")
+            
+            if msg_conv_id == conversation_id:
+                history.append({
+                    "role": "assistant", 
+                    "content": msg.response_payload["reply"], 
+                    "ts": msg.created_at.isoformat()
+                })
     
-    return history[-CHAT_HISTORY_MAX:]
+    # Tarihe göre sırala (en eski önce)
+    history.sort(key=lambda x: x["ts"])
+    
+    return history
 
 @app.post("/ai/chat", response_model=ChatResponse)
 async def chat_message(req: ChatMessageRequest,
