@@ -1681,7 +1681,15 @@
             const conversations = await response.json();
             
             if (conversations.length === 0) {
-                modalBody.innerHTML = '<div class="longo-history-empty">Henüz chat geçmişiniz yok.</div>';
+                // Free kullanıcılar için özel mesaj
+                const userPlan = window.longoUserPlan || (window.longoUserLevel === 3 ? 'premium_plus' : (window.longoUserLevel === 2 ? 'premium' : 'free'));
+                const isFree = userPlan === 'free' || !userPlan || window.longoUserLevel === 1;
+                
+                if (isFree) {
+                    modalBody.innerHTML = '<div class="longo-history-empty">Chat geçmişi Essential ve Ultimate üyelikler içindir.</div>';
+                } else {
+                    modalBody.innerHTML = '<div class="longo-history-empty">Henüz chat geçmişiniz yok.</div>';
+                }
                 return;
             }
             
