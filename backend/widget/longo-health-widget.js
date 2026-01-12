@@ -1260,6 +1260,9 @@
     // CSS'i head'e ekle
     document.head.insertAdjacentHTML('beforeend', widgetStyles);
     
+    // Widget'ı başlat
+    createWidget();
+    
     // Session-based user ID yönetimi
     function getSessionUserId() {
         let userId = sessionStorage.getItem('longo_session_user_id');
@@ -1827,4 +1830,619 @@
             <div class="typing-dots">
                 <span></span>
                 <span></span>
-               
+                <span></span>
+            </div>
+            <div class="typing-text">Longo yazıyor...</div>
+        `;
+        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    
+    // Longo figürünü kaldır
+    function removeLongoCharacter() {
+        const longoCharacterArea = document.querySelector('.longo-character-area');
+        if (longoCharacterArea) {
+            longoCharacterArea.style.opacity = '0';
+            longoCharacterArea.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                if (longoCharacterArea.parentNode) {
+                    longoCharacterArea.remove();
+                }
+            }, 300);
+        }
+    }
+    
+    // Typing indicator'ı kaldır
+    function longoRemoveTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+    
+    // Conversation ID state - sessionStorage'da sakla
+    function getConversationId() {
+        return sessionStorage.getItem('longo_conversation_id');
+    }
+    
+    function setConversationId(id) {
+        if (id) {
+            sessionStorage.setItem('longo_conversation_id', id);
+        } else {
+            sessionStorage.removeItem('longo_conversation_id');
+        }
+    }
+    
+    // Session-based chat history (free kullanıcılar için)
+    function getSessionChatHistory() {
+        const history = sessionStorage.getItem('longo_session_chat_history');
+        return history ? JSON.parse(history) : [];
+    }
+    
+    function addToSessionChatHistory(role, content) {
+        const history = getSessionChatHistory();
+        history.push({
+            role: role,
+            content: content,
+            timestamp: new Date().toISOString()
+        });
+        sessionStorage.setItem('longo_session_chat_history', JSON.stringify(history));
+    }
+    
+    function clearSessionChatHistory() {
+        sessionStorage.removeItem('longo_session_chat_history');
+    }
+    
+    // Session history'yi UI'da göster
+    function loadSessionChatHistory() {
+        const history = getSessionChatHistory();
+        if (history.length === 0) return;
+        
+        // Mevcut mesajları temizle (welcome message hariç)
+        const messagesDiv = document.getElementById('longo-chat-messages');
+        const welcomeMessage = messagesDiv.querySelector('.longo-welcome-message');
+        const longoCharacterArea = messagesDiv.querySelector('.longo-character-area');
+        
+        // Tüm mesajları temizle
+        messagesDiv.innerHTML = '';
+        
+        // Welcome message ve Longo character'ı geri ekle
+        if (welcomeMessage) {
+            messagesDiv.appendChild(welcomeMessage);
+        }
+        if (longoCharacterArea) {
+            messagesDiv.appendChild(longoCharacterArea);
+        }
+        
+        // Session history'den mesajları yükle
+        history.forEach(item => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `longo-message ${item.role}`;
+            
+            const paragraph = document.createElement('p');
+            paragraph.textContent = item.content;
+            messageDiv.appendChild(paragraph);
+            
+            messagesDiv.appendChild(messageDiv);
+        });
+        
+        // Hazır soru butonlarını gizle (mesaj geçmişi varsa)
+        const quickQuestions = document.getElementById('longo-quick-questions');
+        if (quickQuestions) {
+            quickQuestions.style.display = 'none';
+        }
+        
+        // Longo karakterini kaldır (mesaj geçmişi varsa)
+        removeLongoCharacter();
+        
+        // En alta scroll
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+    
+    // Chat start endpoint
+    async function startConversation() {
+        try {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
+            
+            const response = await fetch(`${apiUrl}/ai/chat/start`, {
+                method: 'POST',
+                headers: {
+                    'username': 'longopass',
+                    'password': '123456',
+                    'x-user-id': getUserIdForChat(),
+                    ...(window.longoUserLevel && { 'x-user-level': window.longoUserLevel }),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.conversation_id;
+        } catch (error) {
+            console.error('Error starting conversation:', error);
+            return null;
+        }
+    }
+    
+    // Mesaj gönder
+    window.longoSendMessage = async function() {
+        // Premium/Premium+ için userId zorunlu: gönderimden hemen önce tekrar tespit etmeyi dene
+        function tryResolveUserId() {
+            if (window.longoRealUserId) return window.longoRealUserId;
+            
+            // 1. SessionStorage'dan kontrol et (console.log listener kaydetmiş olabilir)
+            try {
+                const ssUserId = sessionStorage.getItem('longo_user_id');
+                if (ssUserId && ssUserId !== 'null' && ssUserId !== 'undefined') {
+                    window.longoRealUserId = String(ssUserId);
+                    console.log('🔍 DEBUG: Real user id sessionStorage\'dan tespit:', window.longoRealUserId);
+                    return window.longoRealUserId;
+                }
+            } catch(e) {}
+            
+            // 2. Global değişkenler
+            const candidates = [
+                window.longoRealUserId,
+                window.userId, window.user_id, window.userID, window.USER_ID,
+                window.customerId, window.customer_id, window.memberId, window.member_id,
+                window.accountId, window.account_id, window.currentUserId, window.current_user_id
+            ];
+            for (const v of candidates) {
+                if (v !== undefined && v !== null && v !== '') {
+                    window.longoRealUserId = String(v);
+                    console.log('🔍 DEBUG: Real user id send öncesi tespit:', window.longoRealUserId);
+                    try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
+                    break;
+                }
+            }
+            // localStorage / sessionStorage
+            if (!window.longoRealUserId) {
+                try {
+                    const lsKeys = ['user_id','USER_ID','customer_id','member_id','longo_user_id'];
+                    for (const k of lsKeys) {
+                        const val = localStorage.getItem(k) || sessionStorage.getItem(k);
+                        if (val && val !== 'null' && val !== 'undefined') {
+                            window.longoRealUserId = String(val).replace(/[^0-9a-zA-Z_-]/g, '');
+                            console.log('🔍 DEBUG: Real user id storage ile tespit:', k, '=>', window.longoRealUserId);
+                            try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
+                            break;
+                        }
+                    }
+                } catch(e) {}
+            }
+            // cookie
+            if (!window.longoRealUserId) {
+                try {
+                    const cookieKeys = ['user_id','USER_ID','customer_id','member_id'];
+                    for (const ck of cookieKeys) {
+                        const v = (typeof readCookie === 'function') ? readCookie(ck) : null;
+                        if (v) {
+                            window.longoRealUserId = String(v);
+                            console.log('🔍 DEBUG: Real user id cookie ile tespit:', ck, '=>', window.longoRealUserId);
+                            try { sessionStorage.setItem('longo_user_id', window.longoRealUserId); } catch(e) {}
+                            break;
+                        }
+                    }
+                } catch(e) {}
+            }
+            return window.longoRealUserId;
+        }
+        // Eğer premium ise ve userId yoksa mesajı göndermeyi durdur
+        const planNow = window.longoUserPlan || (window.longoUserLevel === 3 ? 'premium_plus' : (window.longoUserLevel === 2 ? 'premium' : 'free'));
+        if ((planNow === 'premium' || planNow === 'premium_plus') && !tryResolveUserId()) {
+            alert('Kullanıcı ID algılanamadı. Lütfen sayfayı yenileyin veya tekrar giriş yapın.');
+            return;
+        }
+        console.log('🔍 DEBUG: Chat x-user-id =>', window.longoRealUserId);
+        
+        const input = document.getElementById('longo-message-input');
+        const message = input.value.trim();
+        if (!message) return;
+        
+        // Hazır soru butonlarını gizle (ilk mesajdan sonra)
+        const quickQuestions = document.getElementById('longo-quick-questions');
+        if (quickQuestions) {
+            quickQuestions.style.display = 'none';
+        }
+        
+        // Mesajı göster
+        longoAddMessage('user', message);
+        input.value = '';
+        
+        // Longo figürünü kaldır (ilk mesajdan sonra)
+        removeLongoCharacter();
+        
+        // Input'u devre dışı bırak
+        input.disabled = true;
+        
+        // Typing effect göster
+        showTypingIndicator();
+        
+        // API'ye gönder
+        try {
+            // Start conversation if needed
+            let conversationId = getConversationId();
+            if (!conversationId) {
+                conversationId = await startConversation();
+                if (!conversationId) {
+                    throw new Error('Konuşma başlatılamadı');
+                }
+                setConversationId(conversationId);
+            }
+            
+            // Local veya production için URL seç
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
+            
+            const response = await fetch(`${apiUrl}/ai/chat`, {
+                method: 'POST',
+                headers: {
+                    'username': 'longopass',
+                    'password': '123456',
+                    'x-user-id': getUserIdForChat(),
+                    ...(window.longoUserLevel && { 'x-user-level': window.longoUserLevel }),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    conversation_id: conversationId,
+                    text: message
+                })
+            });
+            
+            if (!response.ok) {
+                // 429 Too Many Requests hatası için özel handling
+                if (response.status === 429) {
+                    const errorData = await response.json();
+                    longoRemoveTypingIndicator();
+                    longoAddMessage('assistant', 'Günlük soru limitiniz doldu. 24 saat sonra tekrar deneyin.');
+                    showLimitPopup();
+                    return;
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            // Typing effect'i kaldır
+            longoRemoveTypingIndicator();
+            
+            // AI yanıtını göster
+            const reply = result.reply;
+            const products = result.products; // Sepete ekleme için ürünler
+            
+            console.log('🔍 DEBUG: AI Response:', result);
+            console.log('🔍 DEBUG: Products:', products);
+            console.log('🔍 DEBUG: Products length:', products ? products.length : 'null');
+            console.log('🔍 DEBUG: Products type:', typeof products);
+            
+            // Limit popup kontrolü
+            if (reply.startsWith('LIMIT_POPUP:')) {
+                const cleanReply = reply.replace('LIMIT_POPUP:', '');
+                longoAddMessage('assistant', cleanReply);
+                showLimitPopup();
+            } else {
+                longoAddMessage('assistant', reply);
+                
+                // Eğer ürün önerileri varsa sepete ekle butonları göster
+                console.log('🔍 DEBUG: Products kontrol ediliyor...');
+                console.log('🔍 DEBUG: products var mı?', !!products);
+                console.log('🔍 DEBUG: products length:', products ? products.length : 'null');
+                console.log('🔍 DEBUG: products type:', typeof products);
+                
+                if (products && products.length > 0) {
+                    console.log('🔍 DEBUG: Ürün butonları gösteriliyor:', products);
+                    showProductButtons(products);
+                } else {
+                    console.log('🔍 DEBUG: Ürün bulunamadı, butonlar gösterilmiyor');
+                    console.log('🔍 DEBUG: products değeri:', products);
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error sending message:', error);
+            longoRemoveTypingIndicator();
+            longoAddMessage('assistant', 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.');
+        } finally {
+            // Input'u tekrar aktif et
+            input.disabled = false;
+            input.focus();
+        }
+    };
+    
+    // Typing effect fonksiyonu
+    function typeText(element, text, delay = 30) {
+        let index = 0;
+        const timer = setInterval(() => {
+            if (index < text.length) {
+                // HTML tag'leri için özel kontrol
+                if (text[index] === '<') {
+                    // HTML tag'ini bul ve tamamını ekle
+                    const tagEnd = text.indexOf('>', index);
+                    if (tagEnd !== -1) {
+                        const tag = text.substring(index, tagEnd + 1);
+                        element.innerHTML += tag;
+                        index = tagEnd + 1;
+                    } else {
+                        element.innerHTML += text[index];
+                        index++;
+                    }
+                } else {
+                    element.innerHTML += text[index];
+                    index++;
+                }
+                
+                // Scroll to bottom
+                const messagesDiv = document.getElementById('longo-chat-messages');
+                if (messagesDiv) {
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            } else {
+                clearInterval(timer);
+            }
+        }, delay);
+    }
+    
+    // Typing effect fonksiyonu - HTML'i doğru render etmek için (kelime kelime)
+    function typeTextWithHTML(element, text, delay = 80) {
+        // HTML tag'lerini koruyarak metni kelimelere ayır
+        const words = [];
+        let currentWord = '';
+        let inTag = false;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            
+            if (char === '<') {
+                inTag = true;
+                // Eğer önceki kelime varsa ekle
+                if (currentWord.trim()) {
+                    words.push(currentWord);
+                    currentWord = '';
+                }
+                currentWord += char;
+            } else if (char === '>') {
+                inTag = false;
+                currentWord += char;
+                // Tag'i bir kelime olarak ekle
+                words.push(currentWord);
+                currentWord = '';
+            } else if (inTag) {
+                // Tag içindeyken her şeyi ekle
+                currentWord += char;
+            } else if (char === ' ' || char === '\n') {
+                // Boşluk veya yeni satır - kelimeyi bitir
+                if (currentWord.trim()) {
+                    words.push(currentWord);
+                    currentWord = '';
+                }
+                // Boşluğu da ekle (ayrı bir "kelime" olarak)
+                words.push(char);
+            } else {
+                currentWord += char;
+            }
+        }
+        
+        // Son kelimeyi ekle
+        if (currentWord.trim()) {
+            words.push(currentWord);
+        }
+        
+        // Kelime kelime yaz
+        element.innerHTML = '';
+        let wordIndex = 0;
+        
+        const timer = setInterval(() => {
+            if (wordIndex < words.length) {
+                element.innerHTML += words[wordIndex];
+                wordIndex++;
+                
+                // Scroll to bottom
+                const messagesDiv = document.getElementById('longo-chat-messages');
+                if (messagesDiv) {
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            } else {
+                clearInterval(timer);
+            }
+        }, delay);
+    }
+
+    // Mesaj ekle
+    function longoAddMessage(role, content, type = 'normal') {
+        const messagesDiv = document.getElementById('longo-chat-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `longo-message ${role} ${type}`;
+        
+        const paragraph = document.createElement('p');
+        
+        // Backend'den gelen response'da zaten HTML var, sadece markdown formatındaki link'leri HTML'e çevir
+        let convertedContent = content;
+        
+        // Bold: **text** -> <strong>text</strong>
+        convertedContent = convertedContent.replace(
+            /\*\*([^*]+)\*\*/g,
+            '<strong style="font-weight: bold;">$1</strong>'
+        );
+        
+        // Italic: *text* -> <em>text</em>
+        convertedContent = convertedContent.replace(
+            /\*([^*]+)\*/g,
+            '<em style="font-style: italic;">$1</em>'
+        );
+        
+        // Sadece markdown formatındaki link'leri HTML'e çevir, zaten HTML olanları dokunma
+        if (!/<a\s/i.test(convertedContent)) {
+            // Links (markdown): [text](url) -> <a href="url" target="_blank">text</a>
+            convertedContent = convertedContent.replace(
+                /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+                '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: underline;">$1</a>'
+            );
+        }
+        
+        // History yüklenirken typing effect yok
+        if (type === 'history') {
+            // Direkt render et, typing effect yok
+            paragraph.innerHTML = convertedContent;
+            messageDiv.appendChild(paragraph);
+        } else if (role === 'assistant') {
+            // Sadece assistant mesajları için typing effect
+            // Link detection: <a tag'i, target="_blank" attribute'u veya markdown link formatı varsa
+            const hasLink = /<a\s/i.test(convertedContent) || /target="_blank"/i.test(convertedContent) || /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g.test(convertedContent);
+            // Link varsa typing effect'i kapatıp direkt render et (kliklenebilirlik için)
+            if (hasLink) {
+                paragraph.innerHTML = convertedContent;
+                messageDiv.appendChild(paragraph);
+            } else {
+                // Typing effect için boş başlat
+                paragraph.innerHTML = '';
+                messageDiv.appendChild(paragraph);
+                // Typing effect - HTML'i doğru render etmek için
+                typeTextWithHTML(paragraph, convertedContent, 30); // 30ms delay
+            }
+        } else {
+            // Kullanıcı mesajları normal göster
+            paragraph.innerHTML = convertedContent;
+            messageDiv.appendChild(paragraph);
+        }
+        
+        // Başlangıçta görünmez yap
+        messageDiv.style.opacity = '0';
+        messageDiv.style.transform = 'translateY(20px)';
+        
+        messagesDiv.appendChild(messageDiv);
+        
+        // Animasyon ile göster
+        setTimeout(() => {
+            messageDiv.style.opacity = '1';
+            messageDiv.style.transform = 'translateY(0)';
+        }, 100);
+        
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        // Session history'ye ekle (free kullanıcılar için)
+        if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+            addToSessionChatHistory(role, content);
+        }
+    }
+    
+    // Loading mesajını kaldır
+    function longoRemoveLoadingMessage() {
+        const loadingMessage = document.querySelector('.longo-message.loading');
+        if (loadingMessage) {
+            loadingMessage.style.opacity = '0';
+            loadingMessage.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (loadingMessage.parentNode) {
+                    loadingMessage.remove();
+                }
+            }, 300);
+        }
+    }
+    
+    // Ürün butonlarını göster
+    function showProductButtons(products) {
+        console.log('🔍 DEBUG: showProductButtons çağrıldı, products:', products);
+        
+        // Doğru selector'ı kullan
+        const messagesDiv = document.getElementById('longo-chat-messages');
+        
+        console.log('🔍 DEBUG: messagesDiv bulundu mu?', !!messagesDiv);
+        console.log('🔍 DEBUG: messagesDiv element:', messagesDiv);
+        if (!messagesDiv) {
+            console.log('🔍 DEBUG: messagesDiv bulunamadı! Tüm selector\'lar denendi.');
+            return;
+        }
+        
+        // Unique ID'ler oluştur
+        const uniqueId = 'product-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        const productListId = 'product-list-' + uniqueId;
+        const toggleIconId = 'product-toggle-icon-' + uniqueId;
+        
+        const productDiv = document.createElement('div');
+        productDiv.className = 'longo-message assistant';
+        productDiv.style.marginTop = '10px';
+        
+        let productHTML = '<div class="longo-product-buttons">';
+        productHTML += `
+            <div class="longo-product-header" style="font-size: 12px; color: #666; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px; background: #f0f0f0; border-radius: 6px; user-select: none;" onclick="toggleProductList('${productListId}', '${toggleIconId}')">
+                <span>🛒 Önerilen Ürünler (${products.length})</span>
+                <span id="${toggleIconId}" style="font-size: 14px; transition: transform 0.3s ease;">▼</span>
+            </div>
+            <div id="${productListId}" style="display: none; max-height: 300px; overflow-y: auto;">
+        `;
+        
+        products.forEach(product => {
+            productHTML += `
+                <div class="longo-product-item" style="margin-bottom: 8px; padding: 8px; border: 1px solid #e0e0e0; border-radius: 6px; background: #f9f9f9;">
+                    <div style="font-weight: 500; font-size: 13px; margin-bottom: 4px;">${product.name}</div>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 6px;">${product.category}</div>
+                    <div style="font-size: 11px; color: #007bff; font-weight: 500;">${product.price}₺</div>
+                </div>
+            `;
+        });
+        
+        productHTML += '</div></div>';
+        productDiv.innerHTML = productHTML;
+        
+        console.log('🔍 DEBUG: Product HTML oluşturuldu:', productHTML);
+        console.log('🔍 DEBUG: Product div DOM\'a ekleniyor...');
+        
+        messagesDiv.appendChild(productDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        console.log('🔍 DEBUG: Product div başarıyla eklendi!');
+    }
+    
+    // Ürün listesini aç/kapat
+    window.toggleProductList = function(productListId, toggleIconId) {
+        const productList = document.getElementById(productListId);
+        const toggleIcon = document.getElementById(toggleIconId);
+        
+        console.log('🔍 DEBUG: toggleProductList çağrıldı:', productListId, toggleIconId);
+        console.log('🔍 DEBUG: productList bulundu mu?', !!productList);
+        console.log('🔍 DEBUG: toggleIcon bulundu mu?', !!toggleIcon);
+        
+        if (productList && toggleIcon) {
+            if (productList.style.display === 'none') {
+                productList.style.display = 'block';
+                toggleIcon.textContent = '▲';
+                toggleIcon.style.transform = 'rotate(0deg)';
+                console.log('🔍 DEBUG: Ürün listesi açıldı');
+            } else {
+                productList.style.display = 'none';
+                toggleIcon.textContent = '▼';
+                toggleIcon.style.transform = 'rotate(0deg)';
+                console.log('🔍 DEBUG: Ürün listesi kapandı');
+            }
+        } else {
+            console.log('🔍 DEBUG: Elementler bulunamadı!');
+        }
+    };
+    
+    // Sepete ekleme fonksiyonu kaldırıldı - Ideasoft entegrasyonu zor olduğu için
+    
+    // Dropdown menüyü dışarı tıklandığında kapat
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('longo-dropdown-menu');
+        const menuBtn = document.querySelector('.longo-menu-btn');
+        
+        if (dropdown && menuBtn && !dropdown.contains(event.target) && !menuBtn.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+    }
+    
+    // DOM hazır olunca widget'ı başlat
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWidget);
+    } else {
+        // DOM zaten hazır
+        initWidget();
+    }
+    
+})();
