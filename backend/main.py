@@ -789,6 +789,57 @@ def chat_start(body: ChatStartRequest = Body(default={}),
     
     return ChatStartResponse(conversation_id=new_conversation_id)
 
+@app.get("/ai/chat/conversations")
+def get_conversations(db: Session = Depends(get_db),
+                     x_user_id: str | None = Header(default=None),
+                     x_user_level: int | None = Header(default=None)):
+    """Kullanıcının tüm conversation'larını listele"""
+    
+    # Plan kontrolü
+    user_plan = get_user_plan_from_headers(x_user_level)
+    is_premium = user_plan in ["premium", "premium_plus"]
+    
+    # User ID validasyonu
+    if not validate_chat_user_id(x_user_id or "", user_plan):
+        raise HTTPException(status_code=400, detail="Premium kullanıcılar için gerçek user ID gerekli")
+    
+    # Free kullanıcılar için boş liste
+    if not is_premium:
+        return []
+    
+    # Premium kullanıcılar için conversation'ları al (daha fazla mesaj al ki tüm conversation'ları görelim)
+    chat_messages = get_user_ai_messages_by_type(db, x_user_id, "chat", limit=500)
+    
+    # Conversation ID'lere göre grupla
+    conversations_dict = {}
+    for msg in chat_messages:
+        if msg.request_payload and "conversation_id" in msg.request_payload:
+            conv_id = msg.request_payload["conversation_id"]
+            
+            if conv_id not in conversations_dict:
+                # İlk mesajı title olarak kullan
+                first_message = msg.request_payload.get("message", "") or msg.request_payload.get("text", "")
+                title = first_message[:50] + "..." if len(first_message) > 50 else first_message or "Yeni Sohbet"
+                
+                conversations_dict[conv_id] = {
+                    "conversation_id": conv_id,
+                    "title": title,
+                    "created_at": msg.created_at.isoformat(),
+                    "updated_at": msg.created_at.isoformat()
+                }
+            else:
+                # En son mesaj tarihini güncelle
+                current_updated = conversations_dict[conv_id]["updated_at"]
+                if msg.created_at.isoformat() > current_updated:
+                    conversations_dict[conv_id]["updated_at"] = msg.created_at.isoformat()
+    
+    # Tarihe göre sırala (en yeni önce)
+    conversations = list(conversations_dict.values())
+    conversations.sort(key=lambda x: x["updated_at"], reverse=True)
+    
+    # Sadece son 10 conversation'ı döndür
+    return conversations[:10]
+
 @app.get("/ai/chat/{conversation_id}/history")
 def chat_history(conversation_id: int,
                  db: Session = Depends(get_db),

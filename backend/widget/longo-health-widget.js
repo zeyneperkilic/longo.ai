@@ -314,7 +314,7 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            overflow: hidden;
+            overflow: visible;
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             flex-shrink: 0;
         }
@@ -328,6 +328,8 @@
             height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
             animation: float 8s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
         }
 
         @keyframes float {
@@ -376,6 +378,211 @@
             background: rgba(255,255,255,0.3);
             transform: scale(1.1) rotate(90deg);
             border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Header Butonları Container */
+        .longo-header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Dropdown Menü Butonu */
+        .longo-menu-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            position: relative;
+            z-index: 2;
+            pointer-events: auto;
+        }
+
+        .longo-menu-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Dropdown Menü */
+        .longo-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            z-index: 10005;
+            overflow: hidden;
+            display: none;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            pointer-events: auto;
+        }
+
+        .longo-dropdown-menu.show {
+            display: block;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .longo-dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1e293b;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .longo-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .longo-dropdown-item:hover {
+            background: rgba(47, 93, 131, 0.1);
+            color: #2F5D83;
+        }
+
+        .longo-dropdown-item-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Chat History Modal - Chat window içinde */
+        .longo-history-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 10010;
+            display: none;
+            flex-direction: column;
+            animation: fadeIn 0.2s ease;
+            border-radius: 25px;
+        }
+
+        .longo-history-modal.show {
+            display: flex;
+        }
+
+        .longo-history-modal-content {
+            background: transparent;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .longo-history-modal-header {
+            padding: 18px 25px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(47, 93, 131, 0.95) 0%, rgba(74, 124, 154, 0.95) 100%);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .longo-history-modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .longo-history-modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .longo-history-modal-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .longo-history-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .longo-history-item {
+            padding: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .longo-history-item:hover {
+            background: rgba(47, 93, 131, 0.1);
+            border-color: rgba(47, 93, 131, 0.3);
+            transform: translateX(5px);
+        }
+
+        .longo-history-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .longo-history-item-date {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .longo-history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            font-size: 14px;
         }
         
         /* Plan Badge Stilleri */
@@ -541,19 +748,19 @@
         .longo-welcome-message {
             text-align: center;
             color: #1e293b;
-            margin-bottom: 20px;
-            padding: 20px;
+            margin-bottom: 15px;
+            padding: 12px 16px;
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(15px);
-            border-radius: 20px;
+            border-radius: 15px;
             border: 1px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         }
 
         .longo-welcome-message p {
-            margin: 10px 0;
-            font-size: 16px;
-            line-height: 1.6;
+            margin: 6px 0;
+            font-size: 14px;
+            line-height: 1.5;
             color: #334155;
             font-weight: 500;
         }
@@ -561,23 +768,23 @@
         /* Longo Karakteri Alanı */
         .longo-character-area {
             text-align: center;
-            margin: 15px 0;
-            padding: 15px;
+            margin: 10px 0;
+            padding: 10px;
         }
 
         .longo-character {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 15px;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 10px;
             background: linear-gradient(135deg, #4A7C9A 0%, #2F5D83 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 25px rgba(47, 93, 131, 0.4);
+            box-shadow: 0 6px 20px rgba(47, 93, 131, 0.3);
             animation: longoFloat 3s ease-in-out infinite;
             overflow: hidden;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
         .longo-image {
@@ -598,9 +805,57 @@
         }
 
         .longo-character-text {
-            font-size: 14px;
+            font-size: 12px;
             color: #64748b;
             font-weight: 500;
+        }
+
+        /* Guest Kullanıcı Mesajı */
+        .longo-guest-message {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px 15px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            font-size: 12px;
+            color: #856404;
+            font-weight: 500;
+        }
+
+        /* Hazır Soru Butonları */
+        .longo-quick-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 0 5px;
+        }
+
+        .longo-quick-question-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .longo-quick-question-btn:hover {
+            background: rgba(47, 93, 131, 0.1);
+            border-color: rgba(47, 93, 131, 0.4);
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(47, 93, 131, 0.15);
+        }
+
+        .longo-quick-question-btn:active {
+            transform: translateX(3px) scale(0.98);
         }
 
         /* Message Bubbles - Kahve.com Stilinde */
@@ -1034,15 +1289,26 @@
                             <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo" class="header-longo-icon">
                             LONGO AI
                         </h3>
-                        <button onclick="longoCloseChat()" class="longo-close-btn">✕</button>
+                        <div class="longo-header-buttons">
+                            <button onclick="longoToggleMenu()" class="longo-menu-btn" title="Menü">⋮</button>
+                            <button onclick="longoCloseChat()" class="longo-close-btn">✕</button>
+                        </div>
+                        <div class="longo-dropdown-menu" id="longo-dropdown-menu">
+                            <div class="longo-dropdown-item" onclick="longoStartNewChat()">
+                                <span class="longo-dropdown-item-icon">🔄</span>
+                                <span>Yeni Chat</span>
+                            </div>
+                            <div class="longo-dropdown-item" onclick="longoShowChatHistory()">
+                                <span class="longo-dropdown-item-icon">📜</span>
+                                <span>Chat Geçmişi</span>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="longo-chat-messages">
                         <div class="longo-welcome-message">
                             <p>Merhaba! Ben Longo, sağlık asistanın.</p>
                             <p>Nasıl yardımcı olabilirim?</p>
-                            
-                            
                         </div>
                         
                         <!-- Longo Karakteri -->
@@ -1051,6 +1317,30 @@
                                 <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo AI Asistan" class="longo-image">
                             </div>
                             <div class="longo-character-text"></div>
+                        </div>
+                        
+                        <!-- Guest Kullanıcı Mesajı -->
+                        <div class="longo-guest-message" id="longo-guest-message" style="display: none;">
+                            Kişiselleştirilmiş öneriler almak için üye olun
+                        </div>
+                        
+                        <!-- Hazır Soru Butonları -->
+                        <div class="longo-quick-questions" id="longo-quick-questions">
+                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Hangi ürünler bana uygun?')">
+                                Hangi ürünler bana uygun?
+                            </button>
+                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Stresimi nasıl azaltabilirim?')">
+                                Stresimi nasıl azaltabilirim?
+                            </button>
+                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Uyku kalitemi nasıl iyileştirebilirim?')">
+                                Uyku kalitemi nasıl iyileştirebilirim?
+                            </button>
+                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?')">
+                                Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?
+                            </button>
+                            <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sağlıklı kilo yönetimi için ipuçları')">
+                                Sağlıklı kilo yönetimi için ipuçları
+                            </button>
                         </div>
                     </div>
                     
@@ -1064,6 +1354,19 @@
                         </div>
                         <div class="longo-disclaimer">
                             Longo yapay zeka desteklidir. Öneriler için doktorunuza danışınız.
+                        </div>
+                    </div>
+                    
+                    <!-- Chat History Modal - Chat window içinde -->
+                    <div class="longo-history-modal" id="longo-history-modal">
+                        <div class="longo-history-modal-content">
+                            <div class="longo-history-modal-header">
+                                <h3>Chat Geçmişi</h3>
+                                <button onclick="longoCloseHistoryModal()" class="longo-history-modal-close">✕</button>
+                            </div>
+                            <div class="longo-history-modal-body" id="longo-history-modal-body">
+                                <div class="longo-history-empty">Yükleniyor...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1088,6 +1391,23 @@
             }, 3000);
         }
     }
+    
+    // Hazır soru butonuna tıklandığında
+    window.longoSendQuickQuestion = function(question) {
+        // Hazır soru butonlarını gizle
+        const quickQuestions = document.getElementById('longo-quick-questions');
+        if (quickQuestions) {
+            quickQuestions.style.display = 'none';
+        }
+        
+        // Longo karakterini kaldır
+        removeLongoCharacter();
+        
+        // Mesajı input'a yaz ve gönder
+        const input = document.getElementById('longo-message-input');
+        input.value = question;
+        longoSendMessage();
+    };
     
     // Chat toggle
     window.longoToggleChat = function() {
@@ -1181,6 +1501,14 @@
         // Chat butonunu her zaman görünür tut
         keepChatButtonVisible();
         
+        // Guest kullanıcı mesajını göster/gizle
+        const guestMessage = document.getElementById('longo-guest-message');
+        if (guestMessage) {
+            // Guest kontrolü: userLevel null/undefined veya 1 ise guest
+            const isGuest = !window.longoUserLevel || window.longoUserLevel === 1 || window.longoUserPlan === 'free' || !window.longoUserPlan;
+            guestMessage.style.display = isGuest ? 'block' : 'none';
+        }
+        
         // Free kullanıcılar için session history'yi yükle
         if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
             loadSessionChatHistory();
@@ -1204,6 +1532,247 @@
                 tooltip.style.display = 'block';
             }
         }, 300);
+        
+        // Dropdown menüyü kapat
+        const dropdown = document.getElementById('longo-dropdown-menu');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+    };
+    
+    // Dropdown menüyü aç/kapat
+    window.longoToggleMenu = function() {
+        const dropdown = document.getElementById('longo-dropdown-menu');
+        if (dropdown) {
+            dropdown.classList.toggle('show');
+        }
+    };
+    
+    // Yeni chat başlat
+    window.longoStartNewChat = async function() {
+        // Dropdown menüyü kapat
+        const dropdown = document.getElementById('longo-dropdown-menu');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+        
+        // Yeni conversation başlat
+        try {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
+            
+            const response = await fetch(`${apiUrl}/ai/chat/start`, {
+                method: 'POST',
+                headers: {
+                    'username': 'longopass',
+                    'password': '123456',
+                    'x-user-id': getUserIdForChat(),
+                    ...(window.longoUserLevel && { 'x-user-level': window.longoUserLevel }),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const newConversationId = data.conversation_id;
+            
+            // Conversation ID'yi kaydet
+            setConversationId(newConversationId);
+            
+            // Chat mesajlarını temizle
+            const messagesDiv = document.getElementById('longo-chat-messages');
+            messagesDiv.innerHTML = '';
+            
+            // Welcome message ve karakteri tekrar ekle
+            const welcomeHTML = `
+                <div class="longo-welcome-message">
+                    <p>Merhaba! Ben Longo, sağlık asistanın.</p>
+                    <p>Nasıl yardımcı olabilirim?</p>
+                </div>
+                <div class="longo-character-area">
+                    <div class="longo-character">
+                        <img src="https://longo-ai.onrender.com/widget/longo.jpeg" alt="Longo AI Asistan" class="longo-image">
+                    </div>
+                    <div class="longo-character-text"></div>
+                </div>
+                <div class="longo-guest-message" id="longo-guest-message" style="display: none;">
+                    Kişiselleştirilmiş öneriler almak için üye olun
+                </div>
+                <div class="longo-quick-questions" id="longo-quick-questions">
+                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Hangi ürünler bana uygun?')">
+                        Hangi ürünler bana uygun?
+                    </button>
+                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Stresimi nasıl azaltabilirim?')">
+                        Stresimi nasıl azaltabilirim?
+                    </button>
+                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Uyku kalitemi nasıl iyileştirebilirim?')">
+                        Uyku kalitemi nasıl iyileştirebilirim?
+                    </button>
+                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?')">
+                        Sindirim ve bağırsak sağlığı için hangi alışkanlıklar önemli?
+                    </button>
+                    <button class="longo-quick-question-btn" onclick="longoSendQuickQuestion('Sağlıklı kilo yönetimi için ipuçları')">
+                        Sağlıklı kilo yönetimi için ipuçları
+                    </button>
+                </div>
+            `;
+            messagesDiv.innerHTML = welcomeHTML;
+            
+            // Guest mesajını kontrol et
+            const guestMessage = document.getElementById('longo-guest-message');
+            if (guestMessage) {
+                const isGuest = !window.longoUserLevel || window.longoUserLevel === 1 || window.longoUserPlan === 'free' || !window.longoUserPlan;
+                guestMessage.style.display = isGuest ? 'block' : 'none';
+            }
+            
+            // Session history'yi temizle (free kullanıcılar için)
+            if (window.longoUserPlan === 'free' || !window.longoUserPlan) {
+                clearSessionChatHistory();
+            }
+            
+        } catch (error) {
+            console.error('Error starting new chat:', error);
+            alert('Yeni chat başlatılırken bir hata oluştu. Lütfen tekrar deneyin.');
+        }
+    };
+    
+    // Chat geçmişini göster
+    window.longoShowChatHistory = async function() {
+        // Dropdown menüyü kapat
+        const dropdown = document.getElementById('longo-dropdown-menu');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+        
+        // Modal'ı göster
+        const modal = document.getElementById('longo-history-modal');
+        const modalBody = document.getElementById('longo-history-modal-body');
+        
+        if (!modal || !modalBody) return;
+        
+        modal.classList.add('show');
+        modalBody.innerHTML = '<div class="longo-history-empty">Yükleniyor...</div>';
+        
+        try {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
+            
+            const response = await fetch(`${apiUrl}/ai/chat/conversations`, {
+                method: 'GET',
+                headers: {
+                    'username': 'longopass',
+                    'password': '123456',
+                    'x-user-id': getUserIdForChat(),
+                    ...(window.longoUserLevel && { 'x-user-level': window.longoUserLevel }),
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const conversations = await response.json();
+            
+            if (conversations.length === 0) {
+                modalBody.innerHTML = '<div class="longo-history-empty">Henüz chat geçmişiniz yok.</div>';
+                return;
+            }
+            
+            // Conversation'ları listele
+            let historyHTML = '';
+            conversations.forEach(conv => {
+                const date = new Date(conv.updated_at);
+                const dateStr = date.toLocaleDateString('tr-TR', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                historyHTML += `
+                    <div class="longo-history-item" onclick="longoLoadConversation(${conv.conversation_id})">
+                        <div class="longo-history-item-title">${conv.title}</div>
+                        <div class="longo-history-item-date">${dateStr}</div>
+                    </div>
+                `;
+            });
+            
+            modalBody.innerHTML = historyHTML;
+            
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+            modalBody.innerHTML = '<div class="longo-history-empty">Chat geçmişi yüklenirken bir hata oluştu.</div>';
+        }
+    };
+    
+    // Conversation yükle
+    window.longoLoadConversation = async function(conversationId) {
+        // Modal'ı kapat
+        longoCloseHistoryModal();
+        
+        // Conversation ID'yi kaydet
+        setConversationId(conversationId);
+        
+        // Chat mesajlarını temizle
+        const messagesDiv = document.getElementById('longo-chat-messages');
+        messagesDiv.innerHTML = '<div class="longo-history-empty">Yükleniyor...</div>';
+        
+        try {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000' : 'https://longo-ai.onrender.com';
+            
+            const response = await fetch(`${apiUrl}/ai/chat/${conversationId}/history`, {
+                method: 'GET',
+                headers: {
+                    'username': 'longopass',
+                    'password': '123456',
+                    'x-user-id': getUserIdForChat(),
+                    ...(window.longoUserLevel && { 'x-user-level': window.longoUserLevel }),
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const history = await response.json();
+            
+            // Mesajları göster
+            messagesDiv.innerHTML = '';
+            history.forEach(item => {
+                longoAddMessage(item.role, item.content, 'normal');
+            });
+            
+            // Hazır soru butonlarını gizle (mesaj geçmişi varsa)
+            const quickQuestions = document.getElementById('longo-quick-questions');
+            if (quickQuestions && history.length > 0) {
+                quickQuestions.style.display = 'none';
+            }
+            
+            // Longo karakterini kaldır (mesaj geçmişi varsa)
+            if (history.length > 0) {
+                removeLongoCharacter();
+            }
+            
+        } catch (error) {
+            console.error('Error loading conversation:', error);
+            messagesDiv.innerHTML = '<div class="longo-history-empty">Conversation yüklenirken bir hata oluştu.</div>';
+        }
+    };
+    
+    // History modal'ı kapat
+    window.longoCloseHistoryModal = function() {
+        const modal = document.getElementById('longo-history-modal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
     };
     
     // Enter ile gönder, Shift+Enter ile yeni satır (textarea)
@@ -1320,6 +1889,15 @@
             messagesDiv.appendChild(messageDiv);
         });
         
+        // Hazır soru butonlarını gizle (mesaj geçmişi varsa)
+        const quickQuestions = document.getElementById('longo-quick-questions');
+        if (quickQuestions) {
+            quickQuestions.style.display = 'none';
+        }
+        
+        // Longo karakterini kaldır (mesaj geçmişi varsa)
+        removeLongoCharacter();
+        
         // En alta scroll
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
@@ -1428,6 +2006,12 @@
         const input = document.getElementById('longo-message-input');
         const message = input.value.trim();
         if (!message) return;
+        
+        // Hazır soru butonlarını gizle (ilk mesajdan sonra)
+        const quickQuestions = document.getElementById('longo-quick-questions');
+        if (quickQuestions) {
+            quickQuestions.style.display = 'none';
+        }
         
         // Mesajı göster
         longoAddMessage('user', message);
@@ -1765,6 +2349,16 @@
     
     // Widget'ı başlat
     createWidget();
+    
+    // Dropdown menüyü dışarı tıklandığında kapat
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('longo-dropdown-menu');
+        const menuBtn = document.querySelector('.longo-menu-btn');
+        
+        if (dropdown && menuBtn && !dropdown.contains(event.target) && !menuBtn.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
     }
     
     // DOM hazır olunca widget'ı başlat
