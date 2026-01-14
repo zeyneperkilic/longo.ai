@@ -280,6 +280,10 @@ def build_chat_system_prompt() -> str:
 - Supplement ürünleri ayrı bir şey, üyelik paketleriyle KARIŞTIRMA!
 - Kendi bilgini kullanma! Sadece yukarıda yazan bilgileri kullan!
 - Bilmediğin şey sorulursa "Bu bilgiyi şu anda veremiyorum" de, uydurma!
+- 🚨 ÖNEMLİ: Kullanıcının mevcut üyelik paketi bilgisi "KULLANICI BİLGİLERİ" bölümünde verilecek. Kullanıcının mevcut üyelik paketini bil ve ona göre konuş!
+- 🚨 Kullanıcı zaten ULTIMATE üyeliğe sahipse ona STARTER veya ESSENTIAL paketi önerme!
+- 🚨 Kullanıcı zaten ESSENTIAL üyeliğe sahipse ona STARTER paketi önerme!
+- 🚨 Kullanıcının mevcut üyelik paketini bil ve ona göre önerilerde bulun!
 
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
@@ -322,12 +326,33 @@ def build_chat_system_prompt() -> str:
 
 🚨 HAFıZA KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler senin hafızandan! Bunlar için "hafızamdaki verilerine göre", "geçmiş analizlerine göre" de. "Paylaştığın/gönderdiğin" deme!"""
 
-def add_user_context_to_prompt(system_prompt: str, user_context: dict) -> str:
+def add_user_context_to_prompt(system_prompt: str, user_context: dict, user_plan: str = None) -> str:
     """Kullanıcı bilgilerini system prompt'a ekle"""
     if not user_context or not any(user_context.values()):
         return system_prompt + "\n\nGenel sağlık ve supplement konularında yardımcı ol. Kullanıcı bilgileri yoksa genel öneriler ver ve listeden mantıklı ürün öner.\n\n🍎 BESLENME ÖNERİSİ KURALLARI:\n- Kullanıcı 'beslenme önerisi ver' derse, SADECE beslenme tavsiyeleri ver!\n- Beslenme önerisi istenince supplement önerme!\n- Sadece doğal besinler, yemek önerileri, beslenme programı ver!\n- Supplement önerisi sadece kullanıcı özel olarak 'supplement öner' derse yap!"
     
     system_prompt += "\n\n=== KULLANICI BİLGİLERİ ===\n"
+    
+    # Üyelik bilgisini ekle - ÖNEMLİ: AI'ın kullanıcının üyelik seviyesini bilmesi gerekiyor
+    if user_plan:
+        plan_names = {
+            "free": "LONGO STARTER",
+            "premium": "LONGO ESSENTIAL",
+            "premium_plus": "LONGO ULTIMATE"
+        }
+        plan_name = plan_names.get(user_plan, user_plan.upper())
+        system_prompt += f"KULLANICI ÜYELİK PAKETİ: {plan_name}\n"
+        system_prompt += f"\n🚨 KRİTİK UYARI - ÜYELİK PAKETİ ÖNERİLERİ:\n"
+        system_prompt += f"- Bu kullanıcı şu anda {plan_name} üyeliğine sahip!\n"
+        if user_plan == "premium_plus":
+            system_prompt += f"- Kullanıcı zaten EN ÜST SEVİYE (ULTIMATE) üyeliğe sahip! Ona STARTER veya ESSENTIAL paketi önerme!\n"
+            system_prompt += f"- Kullanıcıya mevcut üyelik paketinin avantajlarını hatırlatabilirsin ama daha düşük seviye paket önerme!\n"
+        elif user_plan == "premium":
+            system_prompt += f"- Kullanıcı ESSENTIAL üyeliğe sahip! Ona STARTER paketi önerme!\n"
+            system_prompt += f"- Kullanıcıya ULTIMATE paketine yükseltme önerebilirsin ama STARTER önerme!\n"
+        elif user_plan == "free":
+            system_prompt += f"- Kullanıcı STARTER (ücretsiz) üyeliğe sahip. Ona ESSENTIAL veya ULTIMATE paketi önerebilirsin.\n"
+        system_prompt += f"- Kullanıcının mevcut üyelik paketini bil ve ona göre konuş!\n"
     
     # String ve integer değerler için özel format
     if "isim" in user_context and user_context["isim"]:
@@ -1175,7 +1200,7 @@ async def chat_message(req: ChatMessageRequest,
             user_context.update(new_context)
     
     # Kullanıcı bilgilerini system prompt'a ekle
-    system_prompt = add_user_context_to_prompt(system_prompt, user_context)
+    system_prompt = add_user_context_to_prompt(system_prompt, user_context, user_plan)
     
     # User analyses context - OPTIMIZED (only add if exists)
     if user_analyses:
