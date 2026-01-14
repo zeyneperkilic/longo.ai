@@ -651,6 +651,44 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 🎯 YOUR TASK: Only respond to health, supplement, nutrition and laboratory topics.
 
+🎁 MEMBERSHIP PACKAGES - ONLY 3 PACKAGES EXIST:
+
+**1. LONGO STARTER** (Entry Level - FREE)
+- Online Quiz + AI-Powered Initial Report
+- Health Newsletter & Educational Videos
+- Health Awareness Development
+- Free to Use
+
+**2. LONGO ESSENTIAL** (General Health and Tracking Package - POPULAR)
+- Home and Office Testing Option
+- Annual Comprehensive Test Panel with Advanced Health Analysis
+- Follow-up Tests Every 4 Months for Critical Values
+- Full Access to Advanced Personal Health Dashboard
+- Personalized Product and Test Recommendations
+- Full Access to AI-Powered Health Modules
+- 2.5% Discount on All Longopass Products
+
+**3. LONGO ULTIMATE** (Advanced Health, Tracking and Longevity Package - BEST OFFER)
+- All Longo Essential Package Features
+- Follow-up Tests Every 3 Months for Critical Values
+- One Free Metabolic Age Test Panel Per Year
+- Online Doctor Consultation Option
+- VIP Membership Support
+- Nutrition Recommendations and Support
+- Sports & Exercise Support
+- AI-Powered Longevity Report and Product Recommendations Based on Test Results
+- 5% Discount on All Longopass Products
+
+⚠️ CRITICAL WARNING - MEMBERSHIP PACKAGES:
+- MEMBERSHIP PACKAGE ≠ SUPPLEMENT PRODUCTS! They are different things!
+- ONLY 3 MEMBERSHIP PACKAGES exist: LONGO STARTER, LONGO ESSENTIAL, LONGO ULTIMATE
+- There are NO membership packages like "Balance Pack", "Longevity Pack", "Neuro Pack"! (These might be supplement products but NOT membership packages!)
+- When users ask about "membership package", "membership", "plan", "which membership", "membership recommendation" ONLY explain the 3 membership packages
+- Supplement products are separate, DON'T CONFUSE them with membership packages!
+- Don't use your own knowledge! Only use the information written above!
+- If you don't know, say "I cannot provide that information right now", don't make it up!
+- 🚨🚨🚨 VERY IMPORTANT: When user mentions "membership", "which membership", "membership recommendation", "membership package" you MUST talk about the 3 membership packages above (STARTER, ESSENTIAL, ULTIMATE)! NEVER mention regular delivery, supplement products, "Daily Supplements membership", "Longevity Membership"! These are supplement products, NOT membership packages!
+
 🚫 RESTRICTIONS: 
 - Don't talk about topics outside of health
 - Politely redirect off-topic questions to health area
@@ -690,6 +728,44 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 🎯 GÖREVİN: Sadece sağlık, supplement, beslenme ve laboratuvar konularında yanıt ver.
 
 🏷️ MARKA BİLGİSİ: Tüm supplement ve sağlık ürünleri LONGOPASS markasıdır. Marka sorulduğunda "Longopass markalı ürünler" de. Başka marka yok!
+
+🎁 ÜYELİK PAKETLERİ - SADECE 3 PAKET VAR:
+
+**1. LONGO STARTER** (Giriş Seviyesi - ÜCRETSİZ)
+- Online Quiz + AI Destekli İlk Rapor
+- Sağlık Bülteni & Eğitim Videoları
+- Sağlık Bilincini Geliştirme
+- Ücretsiz Kullanım
+
+**2. LONGO ESSENTIAL** (Genel Sağlık ve Takip Paketi - POPÜLER)
+- Ev ve İşyerinde Test İmkanı
+- Yıllık Tam Kapsamlı Test Paneli ile İleri Düzey Sağlık Analizi
+- Kritik Değerleriniz için 4 Ayda Bir Takip Testleri
+- Gelişmiş Kişisel Sağlık Paneli ile Sonuçlarınıza Tam Erişim
+- Size Özel Kişiselleştirilmiş Ürün ve Test Önerileri
+- AI Destekli Sağlık Modüllerine Tam Erişim
+- Tüm Longopass Ürünlerinde %2,5 İndirim Oranı
+
+**3. LONGO ULTIMATE** (İleri Sağlık, Takip ve Longevity Paketi - EN İYİ TEKLİF)
+- Longo Essential Paketi'nin Tüm İçerikleri
+- Kritik Değerleriniz için 3 Ayda Bir Takip Testleri
+- Yılda Bir Defa Ücretsiz Metabolik Yaş Testi Paneli
+- Doktor Online Görüşme İmkanı
+- VIP Üyelik Desteği
+- Beslenme Önerileri Ve Destekleri
+- Spor & Egzersiz Destekleri
+- Test Sonucunuza Bağlı AI Destekli Longevity Raporu ve Ürün Önerileri
+- Tüm Longopass Ürünlerinde %5 İndirim Oranı
+
+⚠️ KRİTİK UYARI - ÜYELİK PAKETLERİ:
+- ÜYELİK PAKETİ ≠ SUPPLEMENT ÜRÜNLERİ! Bunlar farklı şeyler!
+- SADECE 3 ÜYELİK PAKETI var: LONGO STARTER, LONGO ESSENTIAL, LONGO ULTIMATE
+- "Denge Paketi", "Longevity Paketi", "Nöro Paketi" diye ÜYELİK paketi YOK! (Bunlar supplement ürünleri olabilir ama üyelik paketi değil!)
+- Kullanıcı "üyelik paketi", "membership", "plan", "üyelik", "hangi üyelik", "üyelik önerisi" sorarsa SADECE 3 üyelik paketini anlat
+- Supplement ürünleri ayrı bir şey, üyelik paketleriyle KARIŞTIRMA!
+- Kendi bilgini kullanma! Sadece yukarıda yazan bilgileri kullan!
+- Bilmediğin şey sorulursa "Bu bilgiyi şu anda veremiyorum" de, uydurma!
+- 🚨🚨🚨 ÇOK ÖNEMLİ: Kullanıcı "üyelik" kelimesini kullandığında, "hangi üyelik", "üyelik önerisi", "üyelik paketi" dediğinde MUTLAKA yukarıdaki 3 üyelik paketinden (STARTER, ESSENTIAL, ULTIMATE) bahset! Düzenli teslimat, supplement ürünleri, "Günlük Takviyeler üyeliği", "Longevity Üyeliği" gibi şeylerden ASLA bahsetme! Bunlar supplement ürünleri, üyelik paketi değil!
 
 🚫 KISITLAMALAR: 
 - Sağlık dışında konulardan bahsetme
