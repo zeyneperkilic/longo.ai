@@ -127,8 +127,13 @@ def get_standardized_lab_data(db, user_id, limit=5):
     """Tüm endpoint'ler için standart lab verisi - ham test verileri"""
     # Önce lab_summary'den dene (en kapsamlı)
     lab_summary = get_user_ai_messages_by_type(db, user_id, "lab_summary", limit)
-    if lab_summary and lab_summary[0].request_payload and "tests" in lab_summary[0].request_payload:
-        return lab_summary[0].request_payload["tests"]
+    if lab_summary and lab_summary[0].request_payload:
+        payload = lab_summary[0].request_payload
+        # Hem "tests" hem de "lab_results" field'larını kontrol et
+        if "tests" in payload and payload["tests"]:
+            return payload["tests"]
+        elif "lab_results" in payload and payload["lab_results"]:
+            return payload["lab_results"]
     
     # Lab_summary yoksa lab_single'dan al
     lab_single = get_user_ai_messages_by_type(db, user_id, "lab_single", limit)
@@ -324,7 +329,9 @@ def build_chat_system_prompt() -> str:
 - Sadece ürün isimlerini öner, gereksiz açıklama yapma
 - AYNI ÖNERİYİ TEKRAR ETME! Kullanıcı anladıysa farklı konuya geç!
 
-🚨 HAFıZA KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler senin hafızandan! Bunlar için "hafızamdaki verilerine göre", "geçmiş analizlerine göre" de. "Paylaştığın/gönderdiğin" deme!"""
+🚨 HAFıZA KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler senin hafızandan! Bunlar için "hafızamdaki verilerine göre", "geçmiş analizlerine göre" de. "Paylaştığın/gönderdiğin" deme!
+
+🔬 LAB VERİLERİ KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" ile başlayan bölümde kullanıcının GERÇEK test değerleri var! Kullanıcı bir test hakkında sorduğunda (örn: "hemoglobin durumum nasıl", "vitamin D seviyem nasıl") MUTLAKA bu değerlere bak! Test değerini, referans aralığını kontrol et ve ona göre cevap ver! Eğer değer normal aralıktaysa "normal" de, düşükse "düşük" de, yüksekse "yüksek" de! Lab verilerini görmezden gelme!"""
 
 def add_user_context_to_prompt(system_prompt: str, user_context: dict, user_plan: str = None) -> str:
     """Kullanıcı bilgilerini system prompt'a ekle"""
@@ -1123,10 +1130,19 @@ async def chat_message(req: ChatMessageRequest,
     
     # Helper'dan gelen lab verilerini de ekle
     if lab_tests:
-        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ):\n"
+        lab_info = f"🚨 LAB SONUÇLARI (KULLANICI VERİSİ - GERÇEK TEST DEĞERLERİ):\n"
         for test in lab_tests[:50]:  # İlk 50 test - tüm testleri göster
-            lab_info += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} ({test.get('reference_range', 'N/A')})\n"
-        lab_info += "\n"
+            test_name = test.get('name', 'N/A')
+            test_value = test.get('value', 'N/A')
+            test_unit = test.get('unit', '')
+            ref_range = test.get('reference_range', 'N/A')
+            # Unit varsa value'ya ekle
+            if test_unit and test_value != 'N/A':
+                value_str = f"{test_value} {test_unit}"
+            else:
+                value_str = str(test_value)
+            lab_info += f"- {test_name}: {value_str} (Referans Aralık: {ref_range})\n"
+        lab_info += "\n⚠️ ÖNEMLİ: Yukarıdaki lab sonuçları kullanıcının GERÇEK test değerleridir. Kullanıcı bir test hakkında sorduğunda MUTLAKA bu değerlere bak ve ona göre cevap ver!\n\n"
     
     # Lab ve quiz bilgilerini user message'a ekle
     if lab_info or quiz_info:
@@ -1242,6 +1258,8 @@ async def chat_message(req: ChatMessageRequest,
 - DON'T REPEAT THE SAME RECOMMENDATION! If user understood, move to a different topic!
 
 🚨 MEMORY RULE: Messages with "🚨 LAB RESULTS" or "🚨 HEALTH QUIZ PROFILE" are from your memory! Use phrases like "based on your previous data", "according to past analyses". Don't say "you shared/sent"!
+
+🔬 LAB DATA RULE: When user message contains "🚨 LAB RESULTS" section, those are the user's REAL test values! When user asks about a test (e.g., "how is my hemoglobin", "what's my vitamin D level"), ALWAYS check these values! Check the test value, reference range, and respond accordingly! If value is in normal range say "normal", if low say "low", if high say "high"! Don't ignore lab data!
 
 🌍 LANGUAGE: The user is writing in English. You MUST respond in English only! Do not use Turkish at all!"""
         logger.info("🔍 DEBUG: Added English language instruction to system prompt")
