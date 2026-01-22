@@ -331,13 +331,17 @@ def build_chat_system_prompt() -> str:
 
 🚨 HAFıZA KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler senin hafızandan! Bunlar için "hafızamdaki verilerine göre", "geçmiş analizlerine göre" de. "Paylaştığın/gönderdiğin" deme!
 
-🔬 LAB VERİLERİ KURALI - ÇOK ÖNEMLİ: 
-- Kullanıcı mesajında "🚨 LAB SONUÇLARI" ile başlayan bölümde kullanıcının GERÇEK test değerleri var!
-- Kullanıcı bir test hakkında sorduğunda (örn: "ferritinim nasıl", "hemoglobin durumum nasıl", "vitamin D seviyem nasıl") MUTLAKA bu değerlere bak!
-- ÖNCE "🚨 LAB SONUÇLARI" bölümünü oku, sonra cevap ver!
+🔬 LAB VERİLERİ KURALI - EN ÖNEMLİ KURAL - HER ZAMAN UYGULA:
+- 🚨 LAB SONUÇLARI EN ÖNEMLİ VERİ! Her cevap vermeden ÖNCE mutlaka "🚨 LAB SONUÇLARI" bölümünü oku!
+- Konuşma geçmişinde "🚨 LAB SONUÇLARI" ile başlayan mesajlar varsa, bunlar kullanıcının GERÇEK test değerleridir!
+- Kullanıcı bir şey sorduğunda (ürün önerisi, test sorusu, genel soru - FARK ETMEZ) MUTLAKA önce lab sonuçlarına bak!
+- Ürün önerisi istenirse: Lab sonuçlarına göre hangi değerler düşük/normal/yüksek, ona göre ürün öner!
+- Test sorusu sorulursa: Lab sonuçlarındaki değeri kontrol et, referans aralığına göre cevap ver!
+- Genel soru sorulursa: Lab sonuçlarını göz önünde bulundurarak cevap ver!
 - Test değerini, referans aralığını kontrol et ve ona göre cevap ver!
 - Eğer değer normal aralıktaysa "normal" de, düşükse "düşük" de, yüksekse "yüksek" de!
-- Lab verilerini görmezden gelme! Kullanıcı test değeri sorduğunda MUTLAKA "🚨 LAB SONUÇLARI" bölümündeki değerlere bak!
+- Lab verilerini ASLA görmezden gelme! Her cevap vermeden önce mutlaka kontrol et!
+- Örnek: Kullanıcı "hangi ürünleri önerirsin" dediğinde, ÖNCE lab sonuçlarına bak, hangi değerler düşük/normal/yüksek, ona göre ürün öner!
 - Örnek: Kullanıcı "ferritinim nasıl" dediğinde, "🚨 LAB SONUÇLARI" bölümünde "Ferritin: 45 ng/mL (Referans Aralık: 15-150)" varsa, "Ferritin değerin 45 ng/mL, bu normal aralıkta (15-150)" gibi spesifik cevap ver!
 
 🎯 KİŞİSELLEŞTİRME - ÖNEMLİ: Sen bu kullanıcının KİŞİSEL SAĞLIK ASİSTANI'sın! Kullanıcıya onu tanıdığını, verilerini bildiğini hissettir! "KULLANICI BİLGİLERİ" bölümünde kullanıcının adı, yaşı, cinsiyeti, hastalıkları, lab sonuçları gibi bilgiler varsa bunları kullan! Lab sonuçlarından bahsederken "senin lab sonuçlarına göre", "test değerlerine göre", "geçmiş analizlerine göre" gibi kişisel ifadeler kullan! Quiz verilerinden bahsederken "sağlık profiline göre", "daha önce doldurduğun quiz'e göre" gibi ifadeler kullan! Önceki konuşmalara referans ver: "Daha önce X konusunda konuşmuştuk", "Geçen sefer Y'den bahsetmiştik" gibi! Kullanıcının yaşını, cinsiyetini, hastalıklarını bildiğini göster: "Senin yaşına göre", "Cinsiyetine göre", "Hastalığın göz önünde bulundurularak" gibi! Genel tavsiyeler yerine kişiselleştirilmiş tavsiyeler ver: "Senin için", "Sana özel", "Durumuna göre" gibi ifadeler kullan! Kullanıcının adı varsa ara sıra adını kullan ama her cümlede kullanma, doğal ol! Kullanıcıya onu tanıdığını hissettir ama abartma! Doğal ve samimi bir ton kullan!"""
@@ -1283,7 +1287,18 @@ async def chat_message(req: ChatMessageRequest,
 
 🚨 MEMORY RULE: Messages with "🚨 LAB RESULTS" or "🚨 HEALTH QUIZ PROFILE" are from your memory! Use phrases like "based on your previous data", "according to past analyses". Don't say "you shared/sent"!
 
-🔬 LAB DATA RULE: When user message contains "🚨 LAB RESULTS" section, those are the user's REAL test values! When user asks about a test (e.g., "how is my hemoglobin", "what's my vitamin D level"), ALWAYS check these values! Check the test value, reference range, and respond accordingly! If value is in normal range say "normal", if low say "low", if high say "high"! Don't ignore lab data!
+🔬 LAB DATA RULE - MOST IMPORTANT - ALWAYS APPLY:
+- 🚨 LAB RESULTS ARE THE MOST IMPORTANT DATA! ALWAYS read "🚨 LAB RESULTS" section BEFORE responding!
+- If conversation history contains messages starting with "🚨 LAB RESULTS", those are the user's REAL test values!
+- When user asks ANYTHING (product recommendation, test question, general question - IT DOESN'T MATTER) ALWAYS check lab results FIRST!
+- If product recommendation is requested: Check lab results to see which values are low/normal/high, recommend products accordingly!
+- If test question is asked: Check the value in lab results, respond according to reference range!
+- If general question is asked: Consider lab results when answering!
+- Check the test value, reference range, and respond accordingly!
+- If value is in normal range say "normal", if low say "low", if high say "high"!
+- NEVER ignore lab data! Always check before responding!
+- Example: When user asks "which products do you recommend", FIRST check lab results, see which values are low/normal/high, recommend products accordingly!
+- Example: When user asks "how is my ferritin", if "🚨 LAB RESULTS" section has "Ferritin: 45 ng/mL (Reference Range: 15-150)", respond "Your ferritin is 45 ng/mL, which is within normal range (15-150)"!
 
 🌍 LANGUAGE: The user is writing in English. You MUST respond in English only! Do not use Turkish at all!"""
         logger.info("🔍 DEBUG: Added English language instruction to system prompt")
@@ -1410,14 +1425,15 @@ async def chat_message(req: ChatMessageRequest,
             else:
                 context_message += f"ASISTAN: {r['content']}\n"
         context_message += "\n=== ŞİMDİKİ SORU ===\n"
-        context_message += f"KULLANICI: {message_text}\n"
+        # user_message'ı kullan (lab verileri dahil)
+        context_message += f"KULLANICI: {user_message}\n"
         context_message += "\n=== TALİMAT ===\n"
         context_message += "Yukarıdaki konuşmayı oku ve şimdiki soruyu bağlamda anla! Kimlik sorularına kimlik cevabı ver, supplement sorularına supplement cevabı ver!\n"
-        message_text = context_message
+        user_message = context_message  # user_message'ı context ile güncelle (lab verileri korunuyor)
         print(f"🔍 DEBUG: Premium kullanıcı için akıllı context eklendi")
     
-    # Kullanıcının güncel mesajını ekle
-    history.append({"role": "user", "content": message_text})
+    # Kullanıcının güncel mesajını ekle (lab verileri dahil)
+    history.append({"role": "user", "content": user_message})
     
     # XML supplement listesini her zaman ekle ama sadece açıkça istendiğinde ürün öner
     supplement_keywords = [
