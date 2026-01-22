@@ -331,7 +331,14 @@ def build_chat_system_prompt() -> str:
 
 🚨 HAFıZA KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" veya "🚨 SAĞLIK QUIZ PROFİLİ" ile başlayan bölümler senin hafızandan! Bunlar için "hafızamdaki verilerine göre", "geçmiş analizlerine göre" de. "Paylaştığın/gönderdiğin" deme!
 
-🔬 LAB VERİLERİ KURALI: Kullanıcı mesajında "🚨 LAB SONUÇLARI" ile başlayan bölümde kullanıcının GERÇEK test değerleri var! Kullanıcı bir test hakkında sorduğunda (örn: "hemoglobin durumum nasıl", "vitamin D seviyem nasıl") MUTLAKA bu değerlere bak! Test değerini, referans aralığını kontrol et ve ona göre cevap ver! Eğer değer normal aralıktaysa "normal" de, düşükse "düşük" de, yüksekse "yüksek" de! Lab verilerini görmezden gelme!
+🔬 LAB VERİLERİ KURALI - ÇOK ÖNEMLİ: 
+- Kullanıcı mesajında "🚨 LAB SONUÇLARI" ile başlayan bölümde kullanıcının GERÇEK test değerleri var!
+- Kullanıcı bir test hakkında sorduğunda (örn: "ferritinim nasıl", "hemoglobin durumum nasıl", "vitamin D seviyem nasıl") MUTLAKA bu değerlere bak!
+- ÖNCE "🚨 LAB SONUÇLARI" bölümünü oku, sonra cevap ver!
+- Test değerini, referans aralığını kontrol et ve ona göre cevap ver!
+- Eğer değer normal aralıktaysa "normal" de, düşükse "düşük" de, yüksekse "yüksek" de!
+- Lab verilerini görmezden gelme! Kullanıcı test değeri sorduğunda MUTLAKA "🚨 LAB SONUÇLARI" bölümündeki değerlere bak!
+- Örnek: Kullanıcı "ferritinim nasıl" dediğinde, "🚨 LAB SONUÇLARI" bölümünde "Ferritin: 45 ng/mL (Referans Aralık: 15-150)" varsa, "Ferritin değerin 45 ng/mL, bu normal aralıkta (15-150)" gibi spesifik cevap ver!
 
 🎯 KİŞİSELLEŞTİRME - ÖNEMLİ: Sen bu kullanıcının KİŞİSEL SAĞLIK ASİSTANI'sın! Kullanıcıya onu tanıdığını, verilerini bildiğini hissettir! "KULLANICI BİLGİLERİ" bölümünde kullanıcının adı, yaşı, cinsiyeti, hastalıkları, lab sonuçları gibi bilgiler varsa bunları kullan! Lab sonuçlarından bahsederken "senin lab sonuçlarına göre", "test değerlerine göre", "geçmiş analizlerine göre" gibi kişisel ifadeler kullan! Quiz verilerinden bahsederken "sağlık profiline göre", "daha önce doldurduğun quiz'e göre" gibi ifadeler kullan! Önceki konuşmalara referans ver: "Daha önce X konusunda konuşmuştuk", "Geçen sefer Y'den bahsetmiştik" gibi! Kullanıcının yaşını, cinsiyetini, hastalıklarını bildiğini göster: "Senin yaşına göre", "Cinsiyetine göre", "Hastalığın göz önünde bulundurularak" gibi! Genel tavsiyeler yerine kişiselleştirilmiş tavsiyeler ver: "Senin için", "Sana özel", "Durumuna göre" gibi ifadeler kullan! Kullanıcının adı varsa ara sıra adını kullan ama her cümlede kullanma, doğal ol! Kullanıcıya onu tanıdığını hissettir ama abartma! Doğal ve samimi bir ton kullan!"""
 
@@ -1347,12 +1354,21 @@ async def chat_message(req: ChatMessageRequest,
                 quiz_info += f"QUIZ CEVAPLARI: {msg.request_payload}\n\n"
         history.append({"role": "user", "content": quiz_info})
     
-    # Lab verilerini ekle - Sadece helper'dan gelen veriler (diğer endpoint'ler gibi)
+    # Lab verilerini ekle - Tüm testleri ekle ve "🚨 LAB SONUÇLARI" formatında
     if lab_tests:
-        lab_info = "\n\n=== LAB BİLGİLERİ ===\n"
-        lab_info += "LAB TEST SONUÇLARI:\n"
-        for test in lab_tests[:3]:  # İlk 3 test
-            lab_info += f"- {test.get('name', 'N/A')}: {test.get('value', 'N/A')} {test.get('unit', '')} (Referans: {test.get('reference_range', 'N/A')})\n"
+        lab_info = "🚨 LAB SONUÇLARI (KULLANICI VERİSİ - GERÇEK TEST DEĞERLERİ):\n"
+        for test in lab_tests[:50]:  # İlk 50 test - tüm testleri göster
+            test_name = test.get('name', 'N/A')
+            test_value = test.get('value', 'N/A')
+            test_unit = test.get('unit', '')
+            ref_range = test.get('reference_range', 'N/A')
+            # Unit varsa value'ya ekle
+            if test_unit and test_value != 'N/A':
+                value_str = f"{test_value} {test_unit}"
+            else:
+                value_str = str(test_value)
+            lab_info += f"- {test_name}: {value_str} (Referans Aralık: {ref_range})\n"
+        lab_info += "\n⚠️ ÖNEMLİ: Yukarıdaki lab sonuçları kullanıcının GERÇEK test değerleridir. Kullanıcı bir test hakkında sorduğunda MUTLAKA bu değerlere bak ve ona göre cevap ver!\n"
         history.append({"role": "user", "content": lab_info})
     
     # Akıllı context ekleme - sadece gerekli olduğunda
