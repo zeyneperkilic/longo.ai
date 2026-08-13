@@ -1,10 +1,12 @@
 /**
  * LongoPass Kişisel Sağlık Künyesi — chatbot gibi yüzen buton + panel
  *
- * <script>
- *   window.LongopassMedicalIdConfig = { userId: '...', userLevel: 3 };
- * </script>
+ * Ideasoft entegrasyonu (chatbot ile aynı — ek config gerekmez):
+ * <script src="https://longo-ai.onrender.com/widget/longo-health-widget.js"></script>
  * <script src="https://longo-ai.onrender.com/widget/medical-id-form.js"></script>
+ *
+ * Kullanıcı ID / üyelik seviyesi chatbot ile aynı yöntemle otomatik algılanır.
+ * Essential (2) ve Ultimate (3) üyelerde buton görünür; Free kullanıcıda gizlenir.
  */
 (function () {
   'use strict';
@@ -15,12 +17,136 @@
   var cfg = window.LongopassMedicalIdConfig || {};
   var API_BASE = (cfg.apiBase || 'https://longo-ai.onrender.com').replace(/\/$/, '');
   var FLOATING = cfg.floating !== false;
-  var USER_ID = String(cfg.userId || window.longoRealUserId || window.longoCurrentUserId || '');
-  var USER_LEVEL = Number(
-    cfg.userLevel != null ? cfg.userLevel : window.longoUserLevel != null ? window.longoUserLevel : 0
-  );
   var USERNAME = cfg.username || 'longopass';
   var PASSWORD = cfg.password || '123456';
+
+  function readCookie(name) {
+    var match = document.cookie.match(
+      new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\\[\\]\\\\/+^])/g, '\\$1') + '=([^;]*)')
+    );
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  function detectUserContext() {
+    if (cfg.userId) {
+      window.longoRealUserId = String(cfg.userId);
+    }
+    if (cfg.userLevel != null) {
+      window.longoUserLevel = Number(cfg.userLevel);
+    }
+
+    if (window.longoUserLevel == null || window.longoUserLevel === '') {
+      var levelVars = [
+        'userLevel', 'user_level', 'level', 'userLevelValue',
+        'membershipLevel', 'userType', 'accountLevel',
+      ];
+      for (var i = 0; i < levelVars.length; i++) {
+        var lv = window[levelVars[i]];
+        if (lv !== undefined && lv !== null && lv !== '') {
+          window.longoUserLevel = parseInt(lv, 10);
+          break;
+        }
+      }
+    }
+
+    if (!window.longoRealUserId) {
+      var idVars = [
+        'longoRealUserId', 'longoCurrentUserId',
+        'userId', 'user_id', 'userID', 'USER_ID',
+        'customerId', 'customer_id', 'memberId', 'member_id',
+        'accountId', 'account_id', 'currentUserId', 'current_user_id',
+      ];
+      for (var j = 0; j < idVars.length; j++) {
+        var iv = window[idVars[j]];
+        if (iv !== undefined && iv !== null && iv !== '') {
+          window.longoRealUserId = String(iv);
+          break;
+        }
+      }
+    }
+
+    if (!window.longoRealUserId) {
+      try {
+        var props = Object.getOwnPropertyNames(window);
+        var idRe = /(user.?id|member.?id|customer.?id|account.?id|current.?user.?id)/i;
+        for (var k = 0; k < props.length; k++) {
+          if (!idRe.test(props[k])) continue;
+          var pv = window[props[k]];
+          if (pv === undefined || pv === null) continue;
+          if (typeof pv === 'string' || typeof pv === 'number') {
+            var ps = String(pv).trim();
+            if (ps && ps !== 'undefined' && ps !== 'null') {
+              window.longoRealUserId = ps;
+              break;
+            }
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    if (!window.longoRealUserId) {
+      var el = document.querySelector('[data-user-id], [data-userid], [data-customer-id], [data-member-id]');
+      if (el) {
+        window.longoRealUserId =
+          el.getAttribute('data-user-id') ||
+          el.getAttribute('data-userid') ||
+          el.getAttribute('data-customer-id') ||
+          el.getAttribute('data-member-id');
+      }
+    }
+
+    if (!window.longoRealUserId) {
+      try {
+        var stored = sessionStorage.getItem('longo_user_id') || localStorage.getItem('longo_user_id');
+        if (stored && stored !== 'null' && stored !== 'undefined') {
+          window.longoRealUserId = String(stored);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    if (!window.longoRealUserId) {
+      try {
+        for (var s = 0; s < localStorage.length; s++) {
+          var key = localStorage.key(s) || '';
+          if (!/user.?id|customer.?id|member.?id|account.?id/i.test(key)) continue;
+          var val = localStorage.getItem(key);
+          if (val && val !== 'null' && val !== 'undefined') {
+            window.longoRealUserId = String(val).replace(/[^0-9a-zA-Z_-]/g, '');
+            break;
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    if (!window.longoRealUserId) {
+      var cookies = ['user_id', 'customer_id', 'member_id', 'USER_ID', 'CURRENT_USER_ID'];
+      for (var c = 0; c < cookies.length; c++) {
+        var cv = readCookie(cookies[c]);
+        if (cv) {
+          window.longoRealUserId = String(cv);
+          break;
+        }
+      }
+    }
+  }
+
+  function getUserId() {
+    return String(
+      cfg.userId || window.longoRealUserId || window.longoCurrentUserId || ''
+    ).trim();
+  }
+
+  function getUserLevel() {
+    if (cfg.userLevel != null) return Number(cfg.userLevel);
+    if (window.longoUserLevel != null && window.longoUserLevel !== '') {
+      return Number(window.longoUserLevel);
+    }
+    return 0;
+  }
+
+  function isEligible() {
+    return getUserId() && getUserLevel() >= 2;
+  }
 
   var state = {
     schema: null,
@@ -41,8 +167,8 @@
       'Content-Type': 'application/json',
       username: USERNAME,
       password: PASSWORD,
-      'x-user-id': USER_ID,
-      'x-user-level': String(USER_LEVEL || 1),
+      'x-user-id': getUserId(),
+      'x-user-level': String(getUserLevel() || 1),
     };
   }
 
@@ -122,6 +248,8 @@
   }
 
   function openPanel() {
+    detectUserContext();
+    if (!isEligible()) return;
     state.open = true;
     var panel = document.getElementById('lp-medical-id-panel');
     var fab = document.getElementById('lp-medical-id-fab');
@@ -129,10 +257,8 @@
     if (panel) panel.classList.add('open');
     if (fab) fab.classList.add('active');
     if (wrap) wrap.classList.add('open');
-    if (USER_ID && USER_LEVEL >= 2) {
-      if (!state.loaded) loadData();
-      else refreshForm();
-    }
+    if (!state.loaded) loadData();
+    else refreshForm();
   }
 
   function closePanel() {
@@ -294,11 +420,11 @@
     var root = getRoot();
     if (!root) return;
 
-    if (!USER_ID) {
+    if (!getUserId()) {
       root.innerHTML = '<div class="lp-mid-locked">Kişisel Sağlık Künyesi için giriş yapmanız gerekiyor.</div>';
       return;
     }
-    if (USER_LEVEL < 2) {
+    if (getUserLevel() < 2) {
       root.innerHTML =
         '<div class="lp-mid-locked">Kişisel Sağlık Künyesi Essential / Ultimate üyeliklerde aktiftir.</div>';
       return;
@@ -487,26 +613,35 @@
       });
   }
 
+  function tryMountFloatingWidget() {
+    detectUserContext();
+    if (!isEligible()) return false;
+    createShell();
+    return true;
+  }
+
   function bootstrap() {
     injectStyles();
     if (FLOATING) {
-      createShell();
-      if (USER_ID && USER_LEVEL >= 2) {
-        // Buton her zaman görünür; form panel açılınca yüklenir
-      } else if (!USER_ID || USER_LEVEL < 2) {
-        // Giriş yoksa butonu gizle veya tıklayınca mesaj göster
-        createShell();
-      }
-    } else {
-      var el = document.getElementById('lp-medical-id-root');
-      if (!el) {
-        el = document.createElement('div');
-        el.id = 'lp-medical-id-root';
-        document.body.appendChild(el);
-      }
-      if (USER_ID && USER_LEVEL >= 2) loadData();
-      else render();
+      if (tryMountFloatingWidget()) return;
+      var attempts = 0;
+      var timer = setInterval(function () {
+        attempts += 1;
+        if (tryMountFloatingWidget() || attempts >= 12) {
+          clearInterval(timer);
+        }
+      }, 500);
+      return;
     }
+    var el = document.getElementById('lp-medical-id-root');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'lp-medical-id-root';
+      document.body.appendChild(el);
+    }
+    detectUserContext();
+    if (isEligible()) loadData();
+    else render();
   }
 
   if (document.readyState === 'loading') {
