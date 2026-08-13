@@ -341,20 +341,21 @@ class MetabolicAgeTestResponse(BaseModel):
 # Medical ID / Kişisel Sağlık Künyesi
 class MedicalIdCreateRequest(BaseModel):
     """
-    Opsiyonel profil alanları Ideasoft kayıt/profil bilgisinden gelir.
-    Quiz'deki yaş aralığı yerine net yaş / doğum tarihi burada gönderilebilir.
+    İlk create: sabit QR üretir (yoksa). Varsa aynı QR döner — force_new hariç değişmez.
+    form: künye formu. pin şimdilik opsiyonel; default 1234.
     """
-    profile: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description=(
-            "Opsiyonel profil: full_name, birth_date, age, sex, blood_type, "
-            "allergies, medications, diagnoses, emergency_contact, emergency_notes, ..."
-        ),
-    )
-    force_new: bool = Field(
-        default=False,
-        description="True ise mevcut aktif QR iptal edilir, yeni token üretilir",
-    )
+    form: Optional[Dict[str, Any]] = Field(default=None, description="Sağlık künyesi formu (V1 şema)")
+    profile: Optional[Dict[str, Any]] = Field(default=None, description="Legacy kısa profil")
+    pin: Optional[str] = Field(default=None, description="Künye şifresi; verilmezse 1234")
+    force_new: bool = Field(default=False, description="True ise QR yenilenir (nadiren)")
+
+    class Config:
+        extra = "allow"
+
+
+class MedicalIdFormRequest(BaseModel):
+    """Form kaydı — QR değişmez."""
+    form: Dict[str, Any] = Field(default_factory=dict)
 
     class Config:
         extra = "allow"
@@ -367,7 +368,9 @@ class MedicalIdResponse(BaseModel):
     qr_image_url: str
     created_at: Optional[str] = None
     expires_at: Optional[str] = None
-    profile_attached: bool = False
+    form_saved: bool = False
+    pin_hint: str = "1234"
+    message: Optional[str] = None
 
     class Config:
         extra = "allow"

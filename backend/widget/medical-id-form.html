@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hesabım · LongoPass</title>
+  <style>
+    body { margin: 0; background: #f4f7f9; font-family: Segoe UI, system-ui, sans-serif; color: #1d2d3a; }
+    .top { background: #1e3a5f; color: #fff; padding: 14px 24px; font-weight: 800; }
+    .main { max-width: 900px; margin: 40px auto; padding: 0 16px; text-align: center; }
+    .tiles { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-top: 40px; }
+    .tile { width: 120px; text-align: center; color: #1e3a5f; font-size: .9rem; font-weight: 600; }
+    .circle { width: 92px; height: 92px; border-radius: 50%; border: 1px solid #cfd8df; background: #fff; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+    .hint { margin-top: 48px; color: #6b7c8a; font-size: .9rem; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="top">LONGOPASS · Hesabım</div>
+  <div class="main">
+    <h1>Hesabım</h1>
+    <div class="tiles">
+      <div class="tile"><div class="circle">🧪</div>Laboratuvar Sonuçlarım</div>
+      <div class="tile"><div class="circle">📅</div>Randevular Ekranım</div>
+      <div class="tile"><div class="circle">🛒</div>Siparişlerim</div>
+      <div class="tile"><div class="circle">📈</div>Longevity Raporum</div>
+      <div class="tile"><div class="circle">💚</div>Genel Sağlık Önerileri</div>
+    </div>
+    <p class="hint">
+      Sağ tarafta, chatbot’un hemen üstündeki <strong>🪪</strong> butonu Sağlık Künyesi’dir.
+      Tıklayınca form paneli açılır.
+    </p>
+  </div>
+
+  <script>
+    window.LongopassMedicalIdConfig = {
+      apiBase: window.location.origin,
+      userId: 'preview-user-1',
+      userLevel: 3,
+      username: 'longopass',
+      password: 'change_this_password',
+      floating: true
+    };
+  </script>
+  <script src="/widget/medical-id-form.js"></script>
+</body>
+</html>

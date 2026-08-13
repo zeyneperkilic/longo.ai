@@ -1,4 +1,4 @@
-"""Sağlık künyesi verisini mevcut ai_messages (quiz + lab) + opsiyonel profil ile derler."""
+"""Sağlık künyesi verisini form + lab ile derler. Quiz kullanılmaz."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -37,8 +37,6 @@ def _normalize_lab_item(item: dict) -> dict:
 
 
 def _extract_labs(db: Session, user_id: str, limit: int = 40) -> list[dict]:
-    """En güncel lab setini çıkar (lab_summary öncelikli)."""
-    # 1) lab_summary
     summaries = get_user_ai_messages_by_type(db, user_id, "lab_summary", limit=3)
     for msg in summaries:
         payload = msg.request_payload or {}
@@ -46,7 +44,6 @@ def _extract_labs(db: Session, user_id: str, limit: int = 40) -> list[dict]:
         if isinstance(tests, list) and tests:
             return [_normalize_lab_item(t) for t in tests if isinstance(t, dict)]
 
-    # 2) lab_session
     sessions = get_user_ai_messages_by_type(db, user_id, "lab_session", limit=3)
     for msg in sessions:
         payload = msg.request_payload or {}
@@ -54,7 +51,6 @@ def _extract_labs(db: Session, user_id: str, limit: int = 40) -> list[dict]:
         if isinstance(tests, list) and tests:
             return [_normalize_lab_item(t) for t in tests if isinstance(t, dict)]
 
-    # 3) lab_single birleştir
     singles = get_user_ai_messages_by_type(db, user_id, "lab_single", limit=limit)
     labs = []
     for msg in singles:
@@ -68,112 +64,185 @@ def _extract_labs(db: Session, user_id: str, limit: int = 40) -> list[dict]:
     return labs
 
 
-def _extract_quiz(db: Session, user_id: str) -> dict:
-    messages = get_user_ai_messages_by_type(db, user_id, "quiz", limit=1)
-    if not messages:
-        return {}
-    payload = messages[0].request_payload or {}
-    # Bazı isteklerde quiz_answers altında gelir
-    answers = payload.get("quiz_answers")
-    if isinstance(answers, dict) and answers:
-        return answers
-    # Flat payload — meta alanları çıkar
-    skip = {"available_supplements", "availableSupplements"}
-    return {k: v for k, v in payload.items() if k not in skip and v not in (None, "", "N/A")}
-
-
-def _quiz_display_rows(quiz: dict) -> list[dict]:
-    """Quiz dict → okunabilir satırlar (ham key'ler korunur, label güzelleştirilir)."""
-    label_map = {
-        "age": "Yaş",
-        "age_range": "Yaş Aralığı",
-        "sex": "Cinsiyet",
-        "gender": "Cinsiyet",
-        "height": "Boy",
-        "weight": "Kilo",
-        "blood_type": "Kan Grubu",
-        "allergies": "Alerjiler",
-        "allergy": "Alerjiler",
-        "medications": "İlaçlar",
-        "current_medications": "Güncel İlaçlar",
-        "chronic_conditions": "Kronik Durumlar",
-        "family_history": "Aile Öyküsü",
-        "health_goals": "Sağlık Hedefleri",
-        "lifestyle": "Yaşam Tarzı",
-        "diet": "Beslenme",
-        "sleep_quality": "Uyku",
-        "sleep": "Uyku",
-        "stress_level": "Stres",
-        "stress": "Stres",
-        "exercise_frequency": "Egzersiz",
-        "activity": "Aktivite",
-        "smoking": "Sigara",
-        "alcohol": "Alkol",
-        "pregnancy": "Gebelik",
+def _merge_profile(form_data: dict | None, profile_snapshot: dict | None) -> dict:
+    """form.emergency + form.personal + diğer düz alanlar + legacy profile birleşimi."""
+    merged: dict = {}
+    if profile_snapshot:
+        merged.update(profile_snapshot)
+    form = form_data or {}
+    flat_sections = (
+        "personal",
+        "emergency",
+        "lifestyle",
+        "accessibility",
+        "womens_health",
+        "mens_health",
+        "directives",
+        "notes",
+    )
+    for section in flat_sections:
+        part = form.get(section)
+        if isinstance(part, dict):
+            merged.update(part)
+    list_keys = {
+        "allergies",
+        "medications",
+        "diagnoses",
+        "emergency_contacts",
+        "drug_intolerances",
+        "past_conditions",
+        "surgeries",
+        "hospitalizations",
+        "supplements",
+        "vaccinations",
+        "family_history",
+        "devices",
+        "doctors",
     }
-    rows = []
-    for key, value in quiz.items():
-        if isinstance(value, (dict, list)):
-            display = ", ".join(str(x) for x in value) if isinstance(value, list) else str(value)
-        else:
-            display = str(value)
-        label = label_map.get(key, key.replace("_", " ").title())
-        rows.append({"key": key, "label": label, "value": display})
-    return rows
+    for k, v in form.items():
+        if k not in flat_sections and k not in list_keys and not isinstance(v, (list, dict)):
+            merged[k] = v
+    return merged
+
+
+def _list_section_rows(items: list | None, fields: list[tuple[str, str]]) -> list[str]:
+    if not items or not isinstance(items, list):
+        return []
+    lines = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        parts = []
+        for key, label in fields:
+            val = item.get(key)
+            if val:
+                parts.append(f"{label}: {val}")
+        if parts:
+            lines.append(" · ".join(parts))
+    return lines
 
 
 def build_health_card_data(
     db: Session,
     external_user_id: str,
     profile_snapshot: dict | None = None,
+    form_data: dict | None = None,
 ) -> dict:
-    """
-    Künye için birleşik veri.
-    profile_snapshot: Ideasoft'tan gelen kayıt bilgileri (ad, doğum tarihi, kan grubu vb.)
-    Quiz'deki yaş aralığı yerine net yaş/doğum tarihi buradan gelir — sonradan eklenebilir.
-    """
-    profile = profile_snapshot or {}
-    quiz = _extract_quiz(db, external_user_id)
+    profile = _merge_profile(form_data, profile_snapshot)
     labs = _extract_labs(db, external_user_id)
+    form = form_data or {}
 
-    # Acil özet: profil öncelikli, yoksa quiz
     full_name = _pick(profile, "full_name", "name", "ad_soyad", "adSoyad")
     birth_date = _pick(profile, "birth_date", "birthDate", "dogum_tarihi")
-    age = _pick(profile, "age", "yas") or _pick(quiz, "age", "age_range")
-    sex = _pick(profile, "sex", "gender", "cinsiyet") or _pick(quiz, "sex", "gender")
-    blood_type = _pick(profile, "blood_type", "bloodType", "kan_grubu") or _pick(quiz, "blood_type")
-    allergies = _pick(profile, "allergies", "kritik_alerjiler") or _pick(quiz, "allergies", "allergy")
-    medications = _pick(profile, "medications", "critical_medications") or _pick(
-        quiz, "current_medications", "medications"
-    )
-    diagnoses = _pick(profile, "diagnoses", "active_diagnoses", "chronic_conditions") or _pick(
-        quiz, "chronic_conditions"
-    )
-    emergency_contact = _pick(profile, "emergency_contact", "acil_temas")
-    notes = _pick(profile, "emergency_notes", "special_notes")
+    age = _pick(profile, "age", "yas")
+    sex = _pick(profile, "sex", "gender", "cinsiyet")
+    blood_type = _pick(profile, "blood_type", "bloodType", "kan_grubu")
+    allergies = _pick(profile, "critical_allergies", "allergies", "kritik_alerjiler")
+    medications = _pick(profile, "critical_medications", "medications")
+    diagnoses = _pick(profile, "active_diagnoses", "diagnoses", "chronic_conditions")
+    notes = _pick(profile, "special_notes", "emergency_notes")
 
-    updated_at = datetime.utcnow().strftime("%d.%m.%Y %H:%M")
+    contacts = form.get("emergency_contacts") if isinstance(form.get("emergency_contacts"), list) else []
+    emergency_contact = _pick(profile, "emergency_contact", "acil_temas")
+    if not emergency_contact and contacts:
+        c0 = contacts[0] if isinstance(contacts[0], dict) else {}
+        emergency_contact = " · ".join(
+            str(x) for x in [c0.get("name"), c0.get("relation"), c0.get("phone")] if x
+        )
+
+    allergy_lines = _list_section_rows(
+        form.get("allergies") if isinstance(form.get("allergies"), list) else None,
+        [("allergen", "Alerjen"), ("type", "Tür"), ("reaction", "Reaksiyon"), ("severity", "Şiddet"), ("plan", "Plan")],
+    )
+    medication_lines = _list_section_rows(
+        form.get("medications") if isinstance(form.get("medications"), list) else None,
+        [("name", "İlaç"), ("dose", "Doz"), ("frequency", "Sıklık"), ("reason", "Neden"), ("prescriber", "Hekim")],
+    )
+    diagnosis_lines = _list_section_rows(
+        form.get("diagnoses") if isinstance(form.get("diagnoses"), list) else None,
+        [("name", "Tanı"), ("status", "Durum"), ("treatment", "Tedavi"), ("doctor", "Hekim")],
+    )
+    supplement_lines = _list_section_rows(
+        form.get("supplements") if isinstance(form.get("supplements"), list) else None,
+        [("name", "Ürün"), ("dose", "Doz"), ("frequency", "Sıklık"), ("purpose", "Amaç")],
+    )
+    surgery_lines = _list_section_rows(
+        form.get("surgeries") if isinstance(form.get("surgeries"), list) else None,
+        [("date", "Tarih"), ("procedure", "İşlem"), ("hospital", "Kurum"), ("complications", "Komplikasyon")],
+    )
+    vaccine_lines = _list_section_rows(
+        form.get("vaccinations") if isinstance(form.get("vaccinations"), list) else None,
+        [("name", "Aşı"), ("date", "Tarih"), ("dose", "Doz"), ("next_due", "Sonraki")],
+    )
+    family_lines = _list_section_rows(
+        form.get("family_history") if isinstance(form.get("family_history"), list) else None,
+        [("relation", "Yakınlık"), ("condition", "Hastalık"), ("age_at_diagnosis", "Tanı yaşı")],
+    )
+    doctor_lines = _list_section_rows(
+        form.get("doctors") if isinstance(form.get("doctors"), list) else None,
+        [("name", "Hekim"), ("specialty", "Branş"), ("phone", "İletişim"), ("next_appointment", "Randevu")],
+    )
+    device_lines = _list_section_rows(
+        form.get("devices") if isinstance(form.get("devices"), list) else None,
+        [("device", "Cihaz"), ("location", "Yer"), ("model", "Model"), ("mri_safe", "MR")],
+    )
+    intolerance_lines = _list_section_rows(
+        form.get("drug_intolerances") if isinstance(form.get("drug_intolerances"), list) else None,
+        [("drug", "İlaç"), ("effect", "Yan etki"), ("alternative", "Alternatif")],
+    )
+    past_lines = _list_section_rows(
+        form.get("past_conditions") if isinstance(form.get("past_conditions"), list) else None,
+        [("name", "Hastalık"), ("period", "Dönem"), ("outcome", "Sonuç")],
+    )
+    hospital_lines = _list_section_rows(
+        form.get("hospitalizations") if isinstance(form.get("hospitalizations"), list) else None,
+        [("dates", "Tarih"), ("reason", "Neden"), ("diagnosis", "Tanı"), ("outcome", "Sonuç")],
+    )
 
     return {
         "external_user_id": external_user_id,
-        "updated_at": updated_at,
+        "updated_at": datetime.utcnow().strftime("%d.%m.%Y %H:%M"),
         "profile": profile,
+        "form_data": form,
         "emergency_summary": {
             "full_name": full_name or "Belirtilmemiş",
             "birth_date": birth_date,
             "age": age,
             "sex": sex,
             "blood_type": blood_type or "Bilinmiyor",
-            "allergies": allergies or "Bilinmiyor",
-            "medications": medications or "Bilinmiyor",
-            "diagnoses": diagnoses or "Bilinmiyor",
+            "allergies": allergies or ("; ".join(allergy_lines) if allergy_lines else "Bilinmiyor"),
+            "medications": medications or ("; ".join(medication_lines) if medication_lines else "Bilinmiyor"),
+            "diagnoses": diagnoses or ("; ".join(diagnosis_lines) if diagnosis_lines else "Bilinmiyor"),
             "emergency_contact": emergency_contact,
             "notes": notes,
+            "pregnancy_status": _pick(profile, "pregnancy_status"),
+            "implants_devices": _pick(profile, "implants_devices"),
+            "communication_support": _pick(profile, "communication_support"),
+            "phone": _pick(profile, "phone"),
+            "family_doctor": _pick(profile, "family_doctor"),
+            "preferred_hospital": _pick(profile, "preferred_hospital"),
+            "height_cm": _pick(profile, "height_cm"),
+            "weight_kg": _pick(profile, "weight_kg"),
         },
-        "quiz_rows": _quiz_display_rows(quiz),
-        "has_quiz": bool(quiz),
+        "allergy_lines": allergy_lines,
+        "medication_lines": medication_lines,
+        "diagnosis_lines": diagnosis_lines,
+        "supplement_lines": supplement_lines,
+        "surgery_lines": surgery_lines,
+        "vaccine_lines": vaccine_lines,
+        "family_lines": family_lines,
+        "doctor_lines": doctor_lines,
+        "device_lines": device_lines,
+        "intolerance_lines": intolerance_lines,
+        "past_lines": past_lines,
+        "hospital_lines": hospital_lines,
+        "contact_lines": _list_section_rows(
+            contacts,
+            [("name", "Ad"), ("relation", "Yakınlık"), ("phone", "Tel"), ("notes", "Not")],
+        ),
         "labs": labs,
         "has_labs": bool(labs),
+        "has_form": bool(form),
         "disclaimer": (
             "Bu belge acil durumlarda ve sağlık hizmeti görüşmelerinde kullanılmak üzere "
             "hazırlanmıştır. Tek başına tıbbi rapor veya reçete yerine geçmez. "

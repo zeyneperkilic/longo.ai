@@ -168,10 +168,38 @@ class MedicalId(Base):
     token = Column(String, unique=True, index=True, nullable=False)
     external_user_id = Column(String, index=True, nullable=False)
     is_active = Column(Boolean, default=True, index=True)
-    profile_snapshot = Column(JSON, nullable=True)  # Ideasoft profil alanları (opsiyonel)
+    profile_snapshot = Column(JSON, nullable=True)  # legacy / Ideasoft kısa profil
+    form_data = Column(JSON, nullable=True)  # sağlık künyesi formu (QR değişmez)
+    pin_hash = Column(String, nullable=True)  # şimdilik PIN; sonra TC hash
+    form_updated_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     revoked_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)
+
+
+def ensure_medical_id_schema():
+    """create_all yeni kolon eklemez; mevcut medical_ids tablosuna güvenli ALTER."""
+    from sqlalchemy import inspect, text
+
+    try:
+        insp = inspect(engine)
+        if "medical_ids" not in insp.get_table_names():
+            return
+        cols = {c["name"] for c in insp.get_columns("medical_ids")}
+        statements = []
+        if "form_data" not in cols:
+            statements.append("ALTER TABLE medical_ids ADD COLUMN form_data JSON")
+        if "pin_hash" not in cols:
+            statements.append("ALTER TABLE medical_ids ADD COLUMN pin_hash VARCHAR")
+        if "form_updated_at" not in cols:
+            statements.append("ALTER TABLE medical_ids ADD COLUMN form_updated_at DATETIME")
+        if statements:
+            with engine.begin() as conn:
+                for stmt in statements:
+                    conn.execute(text(stmt))
+            print("medical_ids schema updated:", statements)
+    except Exception as e:
+        print(f"medical_ids schema ensure skipped/failed: {e}")
 
 
 def create_medical_id(
@@ -179,6 +207,8 @@ def create_medical_id(
     external_user_id: str,
     token: str,
     profile_snapshot: dict | None = None,
+    form_data: dict | None = None,
+    pin_hash: str | None = None,
     expires_at: datetime.datetime | None = None,
 ):
     """Yeni medical ID kaydı oluştur (çağıran taraf eski aktifleri revoke etmeli)."""
@@ -187,6 +217,9 @@ def create_medical_id(
         external_user_id=external_user_id,
         is_active=True,
         profile_snapshot=profile_snapshot,
+        form_data=form_data,
+        pin_hash=pin_hash,
+        form_updated_at=datetime.datetime.utcnow() if form_data else None,
         expires_at=expires_at,
     )
     db.add(record)
@@ -226,8 +259,26 @@ def revoke_medical_ids_for_user(db: Session, external_user_id: str) -> int:
 
 
 def update_medical_id_profile(db: Session, record: MedicalId, profile_snapshot: dict | None):
-    """Aktif medical ID üzerindeki profil snapshot'ını güncelle."""
+    """Aktif medical ID üzerindeki profil snapshot'ını güncelle (QR değişmez)."""
     record.profile_snapshot = profile_snapshot
     db.commit()
     db.refresh(record)
+    return record
+
+
+def update_medical_id_form(db: Session, record: MedicalId, form_data: dict | None):
+    """Formu güncelle — token/QR aynı kalır."""
+    record.form_data = form_data
+    record.form_updated_at = datetime.datetime.utcnow()
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+def ensure_medical_id_pin(db: Session, record: MedicalId, pin_hash: str):
+    """PIN yoksa ekle (QR değişmez)."""
+    if not record.pin_hash:
+        record.pin_hash = pin_hash
+        db.commit()
+        db.refresh(record)
     return record

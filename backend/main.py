@@ -24,7 +24,7 @@ from backend.config import (
 )
 from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type
 from backend.auth import get_db
-from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse, MedicalIdCreateRequest, MedicalIdResponse
+from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse, MedicalIdCreateRequest, MedicalIdResponse, MedicalIdFormRequest
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
@@ -444,6 +444,11 @@ if os.getenv("ENVIRONMENT") == "production":
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+try:
+    from backend.db import ensure_medical_id_schema
+    ensure_medical_id_schema()
+except Exception as _schema_err:
+    print(f"medical_id schema ensure error: {_schema_err}")
 
 # CORS middleware
 app.add_middleware(
@@ -3979,11 +3984,13 @@ async def join_video_call(
 
 # ---------------------------------------------------------------------------
 # Medical ID / Kişisel Sağlık Künyesi (QR)
-# Mevcut chat/lab/quiz endpoint'lerine dokunmaz — yalnızca yeni tablo + route.
+# - Form kaydı QR'ı değiştirmez
+# - Şimdilik kilit şifresi: 1234 (sonra TC'ye geçilecek)
+# - Lab mevcut ai_messages'tan okunur (quiz künyeye girmez)
+
 # ---------------------------------------------------------------------------
 
 def _medical_id_public_base(request: Request) -> str:
-    """Public künye URL base — env varsa onu kullan, yoksa request base."""
     env_base = os.getenv("MEDICAL_ID_PUBLIC_BASE") or os.getenv("PUBLIC_API_BASE")
     if env_base:
         return env_base.rstrip("/")
@@ -3992,9 +3999,38 @@ def _medical_id_public_base(request: Request) -> str:
 
 def _medical_id_urls(request: Request, token: str) -> tuple[str, str]:
     base = _medical_id_public_base(request)
-    url = f"{base}/m/{token}"
-    qr_image_url = f"{base}/ai/medical-id/qr/{token}"
-    return url, qr_image_url
+    return f"{base}/m/{token}", f"{base}/ai/medical-id/qr/{token}"
+
+
+def _medical_id_guard(x_user_id: str | None, x_user_level: int | None) -> tuple[str, str]:
+    user_plan = get_user_plan_from_headers(x_user_level)
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Medical ID premium özelliktir")
+    if not x_user_id or not validate_chat_user_id(x_user_id, user_plan):
+        raise HTTPException(status_code=400, detail="Geçerli x-user-id gerekli")
+    return user_plan, x_user_id
+
+
+def _medical_id_response(request: Request, record) -> dict:
+    url, qr_image_url = _medical_id_urls(request, record.token)
+    return {
+        "success": True,
+        "token": record.token,
+        "url": url,
+        "qr_image_url": qr_image_url,
+        "created_at": record.created_at.isoformat() if record.created_at else None,
+        "expires_at": record.expires_at.isoformat() if record.expires_at else None,
+        "form_saved": bool(getattr(record, "form_data", None) or record.profile_snapshot),
+        "pin_hint": "1234",
+        "message": None,
+    }
+
+
+@app.get("/ai/medical-id/form-schema")
+async def medical_id_form_schema(current_user: str = Depends(get_current_user)):
+    """Ideasoft'un formu çizmesi için V1 alan şeması."""
+    from backend.medical_id.form_schema import FORM_SCHEMA_V1
+    return FORM_SCHEMA_V1
 
 
 @app.post("/ai/medical-id/create", response_model=MedicalIdResponse)
@@ -4007,8 +4043,8 @@ async def create_or_get_medical_id(
     x_user_level: int | None = Header(default=None),
 ):
     """
-    Profilde gösterilecek Medical ID / QR üretir veya mevcut aktif kaydı döner.
-    Opsiyonel body.profile ile Ideasoft kayıt bilgileri (ad, doğum tarihi, kan grubu...) eklenir.
+    Yoksa bir kez QR üretir. Varsa AYNI token döner (force_new=false).
+    Form güncellemesi QR'ı değiştirmez.
     """
     import secrets
     from datetime import timedelta
@@ -4016,61 +4052,110 @@ async def create_or_get_medical_id(
         get_active_medical_id,
         create_medical_id,
         revoke_medical_ids_for_user,
+        update_medical_id_form,
         update_medical_id_profile,
+        ensure_medical_id_pin,
     )
+    from backend.medical_id.pin import default_pin_hash, hash_pin
 
-    user_plan = get_user_plan_from_headers(x_user_level)
-    if user_plan == "free":
-        raise HTTPException(status_code=403, detail="Medical ID premium özelliktir")
-
-    if not x_user_id or not validate_chat_user_id(x_user_id, user_plan):
-        raise HTTPException(status_code=400, detail="Geçerli x-user-id gerekli")
-
-    profile = body.profile if body and body.profile else None
+    _medical_id_guard(x_user_id, x_user_level)
     force_new = bool(body.force_new) if body else False
+    form = body.form if body else None
+    profile = body.profile if body else None
+    pin_hash = hash_pin(body.pin) if body and body.pin else default_pin_hash()
 
     active = get_active_medical_id(db, x_user_id)
 
     if active and not force_new:
+        ensure_medical_id_pin(db, active, pin_hash if not active.pin_hash else active.pin_hash)
+        if form is not None:
+            active = update_medical_id_form(db, active, form)
         if profile is not None:
             active = update_medical_id_profile(db, active, profile)
-        url, qr_image_url = _medical_id_urls(request, active.token)
-        return {
-            "success": True,
-            "token": active.token,
-            "url": url,
-            "qr_image_url": qr_image_url,
-            "created_at": active.created_at.isoformat() if active.created_at else None,
-            "expires_at": active.expires_at.isoformat() if active.expires_at else None,
-            "profile_attached": bool(active.profile_snapshot),
-        }
+        return _medical_id_response(request, active)
 
-    # Yeni token — eski aktifleri iptal et
-    revoke_medical_ids_for_user(db, x_user_id)
+    # Yeni QR yalnızca yoksa veya force_new
+    if force_new:
+        old_form = active.form_data if active else None
+        old_profile = active.profile_snapshot if active else None
+        revoke_medical_ids_for_user(db, x_user_id)
+        if form is None:
+            form = old_form
+        if profile is None:
+            profile = old_profile
+
     token = secrets.token_urlsafe(32)
     expires_days = int(os.getenv("MEDICAL_ID_EXPIRES_DAYS", "365"))
     expires_at = datetime.utcnow() + timedelta(days=expires_days) if expires_days > 0 else None
-
-    # force_new + mevcut profil korunmak istenirse eski snapshot'ı taşı
-    if profile is None and active and active.profile_snapshot:
-        profile = active.profile_snapshot
 
     record = create_medical_id(
         db=db,
         external_user_id=x_user_id,
         token=token,
         profile_snapshot=profile,
+        form_data=form,
+        pin_hash=pin_hash,
         expires_at=expires_at,
     )
-    url, qr_image_url = _medical_id_urls(request, record.token)
+    return _medical_id_response(request, record)
+
+
+@app.post("/ai/medical-id/form", response_model=MedicalIdResponse)
+async def save_medical_id_form(
+    request: Request,
+    body: MedicalIdFormRequest,
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None),
+):
+    """Künye formunu kaydet/güncelle — QR ASLA değişmez."""
+    from backend.db import get_active_medical_id, update_medical_id_form, create_medical_id, ensure_medical_id_pin
+    from backend.medical_id.pin import default_pin_hash
+    import secrets
+    from datetime import timedelta
+
+    _medical_id_guard(x_user_id, x_user_level)
+    active = get_active_medical_id(db, x_user_id)
+    if not active:
+        # Form ilk kez geliyorsa sessizce create et (aynı QR bundan sonra sabit)
+        expires_days = int(os.getenv("MEDICAL_ID_EXPIRES_DAYS", "365"))
+        expires_at = datetime.utcnow() + timedelta(days=expires_days) if expires_days > 0 else None
+        active = create_medical_id(
+            db=db,
+            external_user_id=x_user_id,
+            token=secrets.token_urlsafe(32),
+            form_data=body.form,
+            pin_hash=default_pin_hash(),
+            expires_at=expires_at,
+        )
+    else:
+        ensure_medical_id_pin(db, active, default_pin_hash())
+        active = update_medical_id_form(db, active, body.form)
+    return _medical_id_response(request, active)
+
+
+@app.get("/ai/medical-id/form")
+async def get_medical_id_form(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None),
+):
+    """Kayıtlı formu getir (Ideasoft edit için)."""
+    from backend.db import get_active_medical_id
+
+    _medical_id_guard(x_user_id, x_user_level)
+    active = get_active_medical_id(db, x_user_id)
+    if not active:
+        return {"success": True, "exists": False, "form": None, "token": None}
     return {
         "success": True,
-        "token": record.token,
-        "url": url,
-        "qr_image_url": qr_image_url,
-        "created_at": record.created_at.isoformat() if record.created_at else None,
-        "expires_at": record.expires_at.isoformat() if record.expires_at else None,
-        "profile_attached": bool(record.profile_snapshot),
+        "exists": True,
+        "token": active.token,
+        "form": active.form_data,
+        "profile": active.profile_snapshot,
+        "form_updated_at": active.form_updated_at.isoformat() if active.form_updated_at else None,
     }
 
 
@@ -4081,22 +4166,15 @@ async def revoke_medical_id(
     x_user_id: str | None = Header(default=None),
     x_user_level: int | None = Header(default=None),
 ):
-    """Kullanıcının aktif Medical ID / QR'ını iptal eder."""
     from backend.db import revoke_medical_ids_for_user
 
-    user_plan = get_user_plan_from_headers(x_user_level)
-    if user_plan == "free":
-        raise HTTPException(status_code=403, detail="Medical ID premium özelliktir")
-    if not x_user_id:
-        raise HTTPException(status_code=400, detail="x-user-id gerekli")
-
+    _medical_id_guard(x_user_id, x_user_level)
     count = revoke_medical_ids_for_user(db, x_user_id)
     return {"success": True, "revoked": count}
 
 
 @app.get("/ai/medical-id/qr/{token}")
 async def medical_id_qr_image(token: str, request: Request, db: Session = Depends(get_db)):
-    """Public QR PNG — Ideasoft profilde img src olarak kullanabilir."""
     from fastapi.responses import Response
     from backend.db import get_medical_id_by_token
     from backend.medical_id.qr import make_qr_png_bytes
@@ -4116,12 +4194,11 @@ async def medical_id_qr_image(token: str, request: Request, db: Session = Depend
 
 
 @app.get("/m/{token}")
-async def public_medical_id_card(token: str, db: Session = Depends(get_db)):
-    """QR okutulunca açılan public sağlık künyesi (HTML). Auth gerekmez — token yeter."""
+async def public_medical_id_unlock_page(token: str, db: Session = Depends(get_db)):
+    """QR okutulunca önce şifre ekranı."""
     from fastapi.responses import HTMLResponse
     from backend.db import get_medical_id_by_token
-    from backend.medical_id.card_builder import build_health_card_data
-    from backend.medical_id.html_renderer import render_health_card_html
+    from backend.medical_id.unlock_page import render_unlock_page
 
     record = get_medical_id_by_token(db, token)
     if not record or not record.is_active:
@@ -4129,9 +4206,48 @@ async def public_medical_id_card(token: str, db: Session = Depends(get_db)):
     if record.expires_at and record.expires_at < datetime.utcnow():
         raise HTTPException(status_code=410, detail="Künye süresi dolmuş")
 
+    return HTMLResponse(content=render_unlock_page(token))
+
+
+@app.post("/m/{token}/unlock")
+async def public_medical_id_unlock(token: str, request: Request, db: Session = Depends(get_db)):
+    """Şifre doğruysa künyeyi göster. Form + lab birleşik. Quiz yok."""
+    from fastapi.responses import HTMLResponse
+    from backend.db import get_medical_id_by_token
+    from backend.medical_id.pin import verify_pin
+    from backend.medical_id.unlock_page import render_unlock_page
+    from backend.medical_id.card_builder import build_health_card_data
+    from backend.medical_id.html_renderer import render_health_card_html
+
+    submitted_pin = None
+    ctype = (request.headers.get("content-type") or "").lower()
+    try:
+        if "application/json" in ctype:
+            payload = await request.json()
+            if isinstance(payload, dict):
+                submitted_pin = payload.get("pin") or payload.get("password")
+        else:
+            form = await request.form()
+            submitted_pin = form.get("pin") or form.get("password")
+    except Exception:
+        submitted_pin = None
+
+    record = get_medical_id_by_token(db, token)
+    if not record or not record.is_active:
+        raise HTTPException(status_code=404, detail="Künye bulunamadı veya iptal edilmiş")
+    if record.expires_at and record.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=410, detail="Künye süresi dolmuş")
+
+    if not verify_pin(submitted_pin, getattr(record, "pin_hash", None)):
+        return HTMLResponse(
+            content=render_unlock_page(token, error="Şifre hatalı. Lütfen tekrar deneyin."),
+            status_code=401,
+        )
+
     data = build_health_card_data(
         db=db,
         external_user_id=record.external_user_id,
         profile_snapshot=record.profile_snapshot,
+        form_data=getattr(record, "form_data", None),
     )
     return HTMLResponse(content=render_health_card_html(data))

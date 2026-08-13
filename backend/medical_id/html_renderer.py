@@ -1,4 +1,4 @@
-"""Sağlık künyesi HTML render — patron draft'ının V1 özeti (acil + quiz + lab)."""
+"""Sağlık künyesi HTML render — form + lab (quiz yok)."""
 from __future__ import annotations
 
 import html
@@ -21,14 +21,18 @@ def _row(label: str, value) -> str:
 
 def render_health_card_html(data: dict) -> str:
     em = data.get("emergency_summary") or {}
-    quiz_rows = data.get("quiz_rows") or []
     labs = data.get("labs") or []
 
-    quiz_html = ""
-    if quiz_rows:
-        quiz_html = "".join(_row(r["label"], r["value"]) for r in quiz_rows)
-    else:
-        quiz_html = '<p class="empty">Quiz verisi henüz yok.</p>'
+    def _lines_block(title: str, lines: list) -> str:
+        if not lines:
+            return ""
+        body = "".join(f"<div class='lab-item'><div class='lab-value'>{_esc(line)}</div></div>" for line in lines)
+        return f"""
+        <section class="card">
+          <h2><span class="dot"></span> {_esc(title)}</h2>
+          {body}
+        </section>
+        """
 
     lab_rows = ""
     if labs:
@@ -50,6 +54,22 @@ def render_health_card_html(data: dict) -> str:
     age_line = em.get("age") or "—"
     if em.get("birth_date"):
         age_line = f"{em.get('birth_date')} / {em.get('age') or '—'}"
+
+    extra_sections = (
+        _lines_block("Alerjiler", data.get("allergy_lines") or [])
+        + _lines_block("İlaç intoleransları", data.get("intolerance_lines") or [])
+        + _lines_block("İlaçlar", data.get("medication_lines") or [])
+        + _lines_block("Supplementler", data.get("supplement_lines") or [])
+        + _lines_block("Tanılar", data.get("diagnosis_lines") or [])
+        + _lines_block("Geçmiş hastalıklar", data.get("past_lines") or [])
+        + _lines_block("Ameliyatlar", data.get("surgery_lines") or [])
+        + _lines_block("Yatış / acil", data.get("hospital_lines") or [])
+        + _lines_block("Aşılar", data.get("vaccine_lines") or [])
+        + _lines_block("Aile öyküsü", data.get("family_lines") or [])
+        + _lines_block("Cihaz / implant", data.get("device_lines") or [])
+        + _lines_block("Hekimler", data.get("doctor_lines") or [])
+        + _lines_block("Acil iletişim kişileri", data.get("contact_lines") or [])
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="tr">
@@ -143,7 +163,7 @@ def render_health_card_html(data: dict) -> str:
   <div class="wrap">
     <div class="brand">
       <div class="logo">LONGOPASS</div>
-      <div class="badge">Medical ID · V1</div>
+      <div class="badge">Sağlık Künyesi</div>
     </div>
     <h1>Kişisel Sağlık Künyesi</h1>
     <p class="subtitle">Personal Health Record · Acil durum ve sağlık görüşmeleri için özet</p>
@@ -157,15 +177,21 @@ def render_health_card_html(data: dict) -> str:
       {_row("Kritik Alerjiler", em.get("allergies"))}
       {_row("Kritik İlaçlar", em.get("medications"))}
       {_row("Aktif Tanılar", em.get("diagnoses"))}
+      {_row("Gebelik", em.get("pregnancy_status") or "—")}
+      {_row("İmplant / Cihaz", em.get("implants_devices") or "—")}
+      {_row("İletişim desteği", em.get("communication_support") or "—")}
+      {_row("Boy / Kilo", (
+          f"{em.get('height_cm') or '—'} cm / {em.get('weight_kg') or '—'} kg"
+          if em.get("height_cm") or em.get("weight_kg") else "—"
+      ))}
       {_row("Acil Temas", em.get("emergency_contact") or "—")}
+      {_row("Aile Hekimi", em.get("family_doctor") or "—")}
+      {_row("Tercih Kurum", em.get("preferred_hospital") or "—")}
       {_row("Özel Husus", em.get("notes") or "—")}
       <div class="updated">Son güncelleme: {_esc(data.get("updated_at"))}</div>
     </section>
 
-    <section class="card">
-      <h2><span class="dot"></span> Sağlık Profili (Quiz)</h2>
-      {quiz_html}
-    </section>
+    {extra_sections}
 
     <section class="card">
       <h2><span class="dot"></span> Laboratuvar Sonuçları</h2>
