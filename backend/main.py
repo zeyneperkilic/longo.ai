@@ -24,7 +24,7 @@ from backend.config import (
 )
 from backend.db import Base, engine, SessionLocal, create_ai_message, get_user_ai_messages, get_user_ai_messages_by_type
 from backend.auth import get_db
-from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse
+from backend.schemas import ChatStartRequest, ChatStartResponse, ChatMessageRequest, ChatResponse, QuizRequest, QuizResponse, SingleLabRequest, SingleSessionRequest, MultipleLabRequest, LabAnalysisResponse, SingleSessionResponse, GeneralLabSummaryResponse, TestRecommendationRequest, TestRecommendationResponse, MetabolicAgeTestRequest, MetabolicAgeTestResponse, MedicalIdCreateRequest, MedicalIdResponse
 from backend.health_guard import guard_or_message
 from backend.orchestrator import parallel_chat, parallel_quiz_analyze, parallel_single_lab_analyze, parallel_single_session_analyze, parallel_multiple_lab_analyze
 from backend.utils import parse_json_safe, generate_response_id, extract_user_context_hybrid
@@ -3975,3 +3975,163 @@ async def join_video_call(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Video call hatası: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# Medical ID / Kişisel Sağlık Künyesi (QR)
+# Mevcut chat/lab/quiz endpoint'lerine dokunmaz — yalnızca yeni tablo + route.
+# ---------------------------------------------------------------------------
+
+def _medical_id_public_base(request: Request) -> str:
+    """Public künye URL base — env varsa onu kullan, yoksa request base."""
+    env_base = os.getenv("MEDICAL_ID_PUBLIC_BASE") or os.getenv("PUBLIC_API_BASE")
+    if env_base:
+        return env_base.rstrip("/")
+    return str(request.base_url).rstrip("/")
+
+
+def _medical_id_urls(request: Request, token: str) -> tuple[str, str]:
+    base = _medical_id_public_base(request)
+    url = f"{base}/m/{token}"
+    qr_image_url = f"{base}/ai/medical-id/qr/{token}"
+    return url, qr_image_url
+
+
+@app.post("/ai/medical-id/create", response_model=MedicalIdResponse)
+async def create_or_get_medical_id(
+    request: Request,
+    body: MedicalIdCreateRequest = Body(default_factory=MedicalIdCreateRequest),
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None),
+):
+    """
+    Profilde gösterilecek Medical ID / QR üretir veya mevcut aktif kaydı döner.
+    Opsiyonel body.profile ile Ideasoft kayıt bilgileri (ad, doğum tarihi, kan grubu...) eklenir.
+    """
+    import secrets
+    from datetime import timedelta
+    from backend.db import (
+        get_active_medical_id,
+        create_medical_id,
+        revoke_medical_ids_for_user,
+        update_medical_id_profile,
+    )
+
+    user_plan = get_user_plan_from_headers(x_user_level)
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Medical ID premium özelliktir")
+
+    if not x_user_id or not validate_chat_user_id(x_user_id, user_plan):
+        raise HTTPException(status_code=400, detail="Geçerli x-user-id gerekli")
+
+    profile = body.profile if body and body.profile else None
+    force_new = bool(body.force_new) if body else False
+
+    active = get_active_medical_id(db, x_user_id)
+
+    if active and not force_new:
+        if profile is not None:
+            active = update_medical_id_profile(db, active, profile)
+        url, qr_image_url = _medical_id_urls(request, active.token)
+        return {
+            "success": True,
+            "token": active.token,
+            "url": url,
+            "qr_image_url": qr_image_url,
+            "created_at": active.created_at.isoformat() if active.created_at else None,
+            "expires_at": active.expires_at.isoformat() if active.expires_at else None,
+            "profile_attached": bool(active.profile_snapshot),
+        }
+
+    # Yeni token — eski aktifleri iptal et
+    revoke_medical_ids_for_user(db, x_user_id)
+    token = secrets.token_urlsafe(32)
+    expires_days = int(os.getenv("MEDICAL_ID_EXPIRES_DAYS", "365"))
+    expires_at = datetime.utcnow() + timedelta(days=expires_days) if expires_days > 0 else None
+
+    # force_new + mevcut profil korunmak istenirse eski snapshot'ı taşı
+    if profile is None and active and active.profile_snapshot:
+        profile = active.profile_snapshot
+
+    record = create_medical_id(
+        db=db,
+        external_user_id=x_user_id,
+        token=token,
+        profile_snapshot=profile,
+        expires_at=expires_at,
+    )
+    url, qr_image_url = _medical_id_urls(request, record.token)
+    return {
+        "success": True,
+        "token": record.token,
+        "url": url,
+        "qr_image_url": qr_image_url,
+        "created_at": record.created_at.isoformat() if record.created_at else None,
+        "expires_at": record.expires_at.isoformat() if record.expires_at else None,
+        "profile_attached": bool(record.profile_snapshot),
+    }
+
+
+@app.post("/ai/medical-id/revoke")
+async def revoke_medical_id(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_user_id: str | None = Header(default=None),
+    x_user_level: int | None = Header(default=None),
+):
+    """Kullanıcının aktif Medical ID / QR'ını iptal eder."""
+    from backend.db import revoke_medical_ids_for_user
+
+    user_plan = get_user_plan_from_headers(x_user_level)
+    if user_plan == "free":
+        raise HTTPException(status_code=403, detail="Medical ID premium özelliktir")
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="x-user-id gerekli")
+
+    count = revoke_medical_ids_for_user(db, x_user_id)
+    return {"success": True, "revoked": count}
+
+
+@app.get("/ai/medical-id/qr/{token}")
+async def medical_id_qr_image(token: str, request: Request, db: Session = Depends(get_db)):
+    """Public QR PNG — Ideasoft profilde img src olarak kullanabilir."""
+    from fastapi.responses import Response
+    from backend.db import get_medical_id_by_token
+    from backend.medical_id.qr import make_qr_png_bytes
+
+    record = get_medical_id_by_token(db, token)
+    if not record or not record.is_active:
+        raise HTTPException(status_code=404, detail="Medical ID bulunamadı veya iptal edilmiş")
+    if record.expires_at and record.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=410, detail="Medical ID süresi dolmuş")
+
+    url, _ = _medical_id_urls(request, token)
+    try:
+        png = make_qr_png_bytes(url)
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return Response(content=png, media_type="image/png")
+
+
+@app.get("/m/{token}")
+async def public_medical_id_card(token: str, db: Session = Depends(get_db)):
+    """QR okutulunca açılan public sağlık künyesi (HTML). Auth gerekmez — token yeter."""
+    from fastapi.responses import HTMLResponse
+    from backend.db import get_medical_id_by_token
+    from backend.medical_id.card_builder import build_health_card_data
+    from backend.medical_id.html_renderer import render_health_card_html
+
+    record = get_medical_id_by_token(db, token)
+    if not record or not record.is_active:
+        raise HTTPException(status_code=404, detail="Künye bulunamadı veya iptal edilmiş")
+    if record.expires_at and record.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=410, detail="Künye süresi dolmuş")
+
+    data = build_health_card_data(
+        db=db,
+        external_user_id=record.external_user_id,
+        profile_snapshot=record.profile_snapshot,
+    )
+    return HTMLResponse(content=render_health_card_html(data))

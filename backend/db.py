@@ -159,3 +159,75 @@ def get_high_risk_users(
     if notified is not None:
         query = query.filter(HighRiskUser.notified == notified)
     return query.order_by(HighRiskUser.detected_at.desc()).limit(limit).all()
+
+
+# Medical ID / QR sağlık künyesi — mevcut tablolara dokunmaz
+class MedicalId(Base):
+    __tablename__ = "medical_ids"
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    external_user_id = Column(String, index=True, nullable=False)
+    is_active = Column(Boolean, default=True, index=True)
+    profile_snapshot = Column(JSON, nullable=True)  # Ideasoft profil alanları (opsiyonel)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    revoked_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+
+
+def create_medical_id(
+    db: Session,
+    external_user_id: str,
+    token: str,
+    profile_snapshot: dict | None = None,
+    expires_at: datetime.datetime | None = None,
+):
+    """Yeni medical ID kaydı oluştur (çağıran taraf eski aktifleri revoke etmeli)."""
+    record = MedicalId(
+        token=token,
+        external_user_id=external_user_id,
+        is_active=True,
+        profile_snapshot=profile_snapshot,
+        expires_at=expires_at,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+def get_active_medical_id(db: Session, external_user_id: str):
+    """Kullanıcının aktif medical ID kaydını getir."""
+    return (
+        db.query(MedicalId)
+        .filter(MedicalId.external_user_id == external_user_id, MedicalId.is_active == True)
+        .order_by(MedicalId.created_at.desc())
+        .first()
+    )
+
+
+def get_medical_id_by_token(db: Session, token: str):
+    """Token ile medical ID kaydı getir."""
+    return db.query(MedicalId).filter(MedicalId.token == token).first()
+
+
+def revoke_medical_ids_for_user(db: Session, external_user_id: str) -> int:
+    """Kullanıcının tüm aktif medical ID'lerini iptal et."""
+    now = datetime.datetime.utcnow()
+    rows = (
+        db.query(MedicalId)
+        .filter(MedicalId.external_user_id == external_user_id, MedicalId.is_active == True)
+        .all()
+    )
+    for row in rows:
+        row.is_active = False
+        row.revoked_at = now
+    db.commit()
+    return len(rows)
+
+
+def update_medical_id_profile(db: Session, record: MedicalId, profile_snapshot: dict | None):
+    """Aktif medical ID üzerindeki profil snapshot'ını güncelle."""
+    record.profile_snapshot = profile_snapshot
+    db.commit()
+    db.refresh(record)
+    return record

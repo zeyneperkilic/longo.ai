@@ -337,3 +337,38 @@ class MetabolicAgeTestResponse(BaseModel):
     class Config:
         extra = "allow"
 
+
+# Medical ID / Kişisel Sağlık Künyesi
+class MedicalIdCreateRequest(BaseModel):
+    """
+    Opsiyonel profil alanları Ideasoft kayıt/profil bilgisinden gelir.
+    Quiz'deki yaş aralığı yerine net yaş / doğum tarihi burada gönderilebilir.
+    """
+    profile: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Opsiyonel profil: full_name, birth_date, age, sex, blood_type, "
+            "allergies, medications, diagnoses, emergency_contact, emergency_notes, ..."
+        ),
+    )
+    force_new: bool = Field(
+        default=False,
+        description="True ise mevcut aktif QR iptal edilir, yeni token üretilir",
+    )
+
+    class Config:
+        extra = "allow"
+
+
+class MedicalIdResponse(BaseModel):
+    success: bool = True
+    token: str
+    url: str
+    qr_image_url: str
+    created_at: Optional[str] = None
+    expires_at: Optional[str] = None
+    profile_attached: bool = False
+
+    class Config:
+        extra = "allow"
+
