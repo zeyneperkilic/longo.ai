@@ -16,7 +16,7 @@ AUTH_PASSWORD = os.getenv("AUTH_PASSWORD", "change_this_password")
 
 # ASIL ÜCRETLİ MODELLER (Production için - şu an aktif)
 PARALLEL_MODELS = [
-    "openai/gpt-5-chat:online"
+    "openai/gpt-6.1-sol:online"
 ]
 
 
