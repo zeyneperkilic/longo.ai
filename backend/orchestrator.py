@@ -137,9 +137,12 @@ def cascade_chat_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     else:
         system_prompt = SYSTEM_HEALTH
     system_prompt += (
-        "\n\nYANIT DİLİ: Kesin teşhis, tedavi veya ilaç talimatı verme. "
-        "Kan değerini referans aralığıyla açıkla; aralık dışındaysa ölçülü konuş ve hekim değerlendirmesi öner. "
-        "Takviyeyi hastalık tedavisi olarak sunma, bir değeri düzelteceğini garanti etme. Kaynak uydurma."
+        "\n\nYANIT DİLİ: Türkiye sağlık, tıbbi cihaz ve takviye edici gıda mevzuatına uygun konuş. "
+        "Laboratuvar sonucunu bilgilendirici açıkla; kesin teşhis veya tedavi kararı verme. "
+        "Değeri referans aralığıyla karşılaştırabilirsin ama bundan kesin hastalık veya eksiklik tanısı çıkarma. "
+        "Laboratuvar sonucundan takviye kullanımı, dozu veya süresi belirleme. "
+        "Takviyeyi hastalık tedavisi veya önlenmesi olarak sunma; yalnızca ürünün koşullarına uyan izinli sağlık beyanını kullan. "
+        "Klinik açıdan önemli anormal sonuçta ürün satışına yönlendirme, hekim değerlendirmesini öner. Kaynak uydurma."
     )
     
     # Context'i system prompt'a ekle (main.py'den gelen context)
@@ -207,9 +210,12 @@ def gpt4o_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         else:
             system_prompt = SYSTEM_HEALTH
         system_prompt += (
-            "\n\nYANIT DİLİ: Kesin teşhis, tedavi veya ilaç talimatı verme. "
-            "Kan değerini referans aralığıyla açıkla; aralık dışındaysa ölçülü konuş ve hekim değerlendirmesi öner. "
-            "Takviyeyi hastalık tedavisi olarak sunma, bir değeri düzelteceğini garanti etme. Kaynak uydurma."
+            "\n\nYANIT DİLİ: Türkiye sağlık, tıbbi cihaz ve takviye edici gıda mevzuatına uygun konuş. "
+            "Laboratuvar sonucunu bilgilendirici açıkla; kesin teşhis veya tedavi kararı verme. "
+            "Değeri referans aralığıyla karşılaştırabilirsin ama bundan kesin hastalık veya eksiklik tanısı çıkarma. "
+            "Laboratuvar sonucundan takviye kullanımı, dozu veya süresi belirleme. "
+            "Takviyeyi hastalık tedavisi veya önlenmesi olarak sunma; yalnızca ürünün koşullarına uyan izinli sağlık beyanını kullan. "
+            "Klinik açıdan önemli anormal sonuçta ürün satışına yönlendirme, hekim değerlendirmesini öner. Kaynak uydurma."
         )
         
         # Context'i system prompt'a ekle
