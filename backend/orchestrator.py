@@ -136,6 +136,11 @@ def cascade_chat_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         system_prompt = SYSTEM_HEALTH_ENGLISH
     else:
         system_prompt = SYSTEM_HEALTH
+    system_prompt += (
+        "\n\nYANIT DİLİ: Kesin teşhis, tedavi veya ilaç talimatı verme. "
+        "Kan değerini referans aralığıyla açıkla; aralık dışındaysa ölçülü konuş ve hekim değerlendirmesi öner. "
+        "Takviyeyi hastalık tedavisi olarak sunma, bir değeri düzelteceğini garanti etme. Kaynak uydurma."
+    )
     
     # Context'i system prompt'a ekle (main.py'den gelen context)
     # System message'dan context'i al
@@ -158,7 +163,7 @@ def cascade_chat_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                     system_prompt += f"{key.title()}: {', '.join(value)}\n"
                 else:
                     system_prompt += f"{key.title()}: {value}\n"
-        system_prompt += "\n\nKRİTİK TALİMAT: Bu kullanıcı bilgilerini MUTLAKA dikkate al ve her yanıtında kullan. Eğer kullanıcının hastalıkları, alerjileri veya tercihleri varsa, bunları göz ardı etme. Her supplement önerisinde bu bilgileri dikkate al ve güvenli tavsiyeler ver. Context'i kullanmazsan yanıtın eksik olur."
+        system_prompt += "\n\nKRİTİK TALİMAT: Bu kullanıcı bilgilerini bağlam olarak kullan. Kesin teşhis, tedavi veya ilaç talimatı verme. Takviyeyi hastalık tedavisi olarak sunma. Klinik olarak önemli bir sonuçta kişiye özel takviye kullanım önerisi yerine hekim değerlendirmesine yönlendir."
     
     # Update messages with correct language - system prompt'u her zaman ilk sıraya ekle
     updated_messages = [{"role": "system", "content": system_prompt}] + [
@@ -201,6 +206,11 @@ def gpt4o_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
             system_prompt = SYSTEM_HEALTH_ENGLISH
         else:
             system_prompt = SYSTEM_HEALTH
+        system_prompt += (
+            "\n\nYANIT DİLİ: Kesin teşhis, tedavi veya ilaç talimatı verme. "
+            "Kan değerini referans aralığıyla açıkla; aralık dışındaysa ölçülü konuş ve hekim değerlendirmesi öner. "
+            "Takviyeyi hastalık tedavisi olarak sunma, bir değeri düzelteceğini garanti etme. Kaynak uydurma."
+        )
         
         # Context'i system prompt'a ekle
         if "context_data" in messages[0] and messages[0]["context_data"]:
@@ -216,7 +226,7 @@ def gpt4o_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
                 system_prompt += f"Yaş: {context['yas']}\n"
             if "cinsiyet" in context and context["cinsiyet"]:
                 system_prompt += f"Cinsiyet: {context['yas']}\n"
-            system_prompt += "\n\nKRİTİK TALİMAT: Bu kullanıcı bilgilerini MUTLAKA dikkate al ve her yanıtında kullan."
+            system_prompt += "\n\nKRİTİK TALİMAT: Bu kullanıcı bilgilerini bağlam olarak kullan. Kesin teşhis, tedavi veya ilaç talimatı verme. Takviyeyi hastalık tedavisi olarak sunma. Klinik olarak önemli bir sonuçta kişiye özel takviye kullanım önerisi yerine hekim değerlendirmesine yönlendir."
         
         # Update messages with correct language
         updated_messages = [{"role": "system", "content": system_prompt}] + [
