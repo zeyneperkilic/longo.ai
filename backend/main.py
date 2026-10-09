@@ -304,7 +304,7 @@ def build_chat_system_prompt() -> str:
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
-💡 YANIT STİLİ: Kısa, net, açıklayıcı ve kullanıcı dostu ol. Longopass'ın sakin, premium tonunu koru. Her yanıta aynı uyarıyı ekleme.
+💡 YANIT STİLİ: Kısa, net, açıklayıcı ve kullanıcı dostu ol. Longopass'ın sakin, premium tonunu koru. Uzun mevzuat metnini her yanıta tekrarlama. Her yanıtın son cümlesi tam olarak şu olsun: "Bu bilgi bir tanı veya teşhis değildir."
 
 ⚖️ YANIT DİLİ (TÜRKİYE SAĞLIK, TIBBİ CİHAZ VE TAKVİYE EDİCİ GIDA MEVZUATI):
 - Yanıtın tamamı bu mevzuata uygun olsun.
@@ -759,7 +759,7 @@ async def handle_free_user_chat(req: ChatMessageRequest, x_user_id: str):
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
 
-💡 RESPONSE STYLE: Be concise, clear, explanatory and user-friendly. Keep Longopass's calm, premium tone. Do not repeat the same warning in every reply.
+💡 RESPONSE STYLE: Be concise, clear, explanatory and user-friendly. Keep Longopass's calm, premium tone. Do not repeat the long regulatory text in every reply. End every reply with exactly this sentence: "This information is not a diagnosis."
 
 ⚖️ RESPONSE LANGUAGE (TURKISH HEALTH, MEDICAL DEVICE, AND FOOD SUPPLEMENT RULES):
 - The entire reply must comply with these rules.
@@ -853,7 +853,7 @@ Correct: "Your ferritin level is below the reference range. This may suggest tha
 
 ✨ SAĞLIK ODAĞI: Her konuyu sağlık alanına çek. Kullanıcı başka bir şeyden bahsederse, nazikçe sağlık konusuna yönlendir.
 
-💡 YANIT STİLİ: Kısa, net, açıklayıcı ve kullanıcı dostu ol. Longopass'ın sakin, premium tonunu koru. Her yanıta aynı uyarıyı ekleme.
+💡 YANIT STİLİ: Kısa, net, açıklayıcı ve kullanıcı dostu ol. Longopass'ın sakin, premium tonunu koru. Uzun mevzuat metnini her yanıta tekrarlama. Her yanıtın son cümlesi tam olarak şu olsun: "Bu bilgi bir tanı veya teşhis değildir."
 
 ⚖️ YANIT DİLİ (TÜRKİYE SAĞLIK, TIBBİ CİHAZ VE TAKVİYE EDİCİ GIDA MEVZUATI):
 - Yanıtın tamamı bu mevzuata uygun olsun.
@@ -916,7 +916,8 @@ Correct: "Your ferritin level is below the reference range. This may suggest tha
         ai_response = await get_ai_response(
             system_prompt=system_prompt,
             user_message=user_message,
-            model="openai/gpt-6.1-sol:online"  # Tüm kullanıcılar için aynı kalite
+            model="openai/gpt-6.1-sol:online",  # Tüm kullanıcılar için aynı kalite
+            max_tokens=3000,
         )
         
         # AI yanıtını al
@@ -1311,7 +1312,7 @@ async def chat_message(req: ChatMessageRequest,
 
 ✨ HEALTH FOCUS: Pull every topic to health area. If user talks about something else, politely redirect to health topic.
 
-💡 RESPONSE STYLE: Be concise, clear, explanatory and user-friendly. Keep Longopass's calm, premium tone. Do not repeat the same warning in every reply.
+💡 RESPONSE STYLE: Be concise, clear, explanatory and user-friendly. Keep Longopass's calm, premium tone. Do not repeat the long regulatory text in every reply. End every reply with exactly this sentence: "This information is not a diagnosis."
 
 ⚖️ RESPONSE LANGUAGE (TURKISH HEALTH, MEDICAL DEVICE, AND FOOD SUPPLEMENT RULES):
 - The entire reply must comply with these rules.

@@ -60,7 +60,7 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         if len(PARALLEL_MODELS) == 1:
             # Tek model - direkt çağır, ThreadPool gereksiz
             try:
-                result = call_chat_model(PARALLEL_MODELS[0], updated_messages, 0.6, 800)
+                result = call_chat_model(PARALLEL_MODELS[0], updated_messages, 0.6, 3000)
                 if is_valid_chat(result["content"]):
                     responses.append({
                         "model": PARALLEL_MODELS[0],
@@ -72,7 +72,7 @@ def parallel_chat(messages: List[Dict[str, str]]) -> Dict[str, Any]:
             # Çoklu model - paralel çağır
             with ThreadPoolExecutor(max_workers=len(PARALLEL_MODELS)) as executor:
                 future_to_model = {
-                    executor.submit(call_chat_model, model, updated_messages, 0.6, 800): model 
+                    executor.submit(call_chat_model, model, updated_messages, 0.6, 3000): model 
                     for model in PARALLEL_MODELS
                 }
                 
@@ -142,7 +142,8 @@ def cascade_chat_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         "Değeri referans aralığıyla karşılaştırabilirsin ama bundan kesin hastalık veya eksiklik tanısı çıkarma. "
         "Laboratuvar sonucundan takviye kullanımı, dozu veya süresi belirleme. "
         "Takviyeyi hastalık tedavisi veya önlenmesi olarak sunma; yalnızca ürünün koşullarına uyan izinli sağlık beyanını kullan. "
-        "Klinik açıdan önemli anormal sonuçta ürün satışına yönlendirme, hekim değerlendirmesini öner. Kaynak uydurma."
+        "Klinik açıdan önemli anormal sonuçta ürün satışına yönlendirme, hekim değerlendirmesini öner. Kaynak uydurma. "
+        "Her yanıtın son cümlesi şu olsun: Bu bilgi bir tanı veya teşhis değildir."
     )
     
     # Context'i system prompt'a ekle (main.py'den gelen context)
@@ -175,7 +176,7 @@ def cascade_chat_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     
     for model in PARALLEL_MODELS:
         try:
-            res = call_chat_model(model, updated_messages, temperature=0.6, max_tokens=1500)
+            res = call_chat_model(model, updated_messages, temperature=0.6, max_tokens=3000)
             if is_valid_chat(res["content"]):
                 res["content"] = _sanitize_links(res["content"]) 
                 res["model_used"] = model
@@ -215,7 +216,8 @@ def gpt4o_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
             "Değeri referans aralığıyla karşılaştırabilirsin ama bundan kesin hastalık veya eksiklik tanısı çıkarma. "
             "Laboratuvar sonucundan takviye kullanımı, dozu veya süresi belirleme. "
             "Takviyeyi hastalık tedavisi veya önlenmesi olarak sunma; yalnızca ürünün koşullarına uyan izinli sağlık beyanını kullan. "
-            "Klinik açıdan önemli anormal sonuçta ürün satışına yönlendirme, hekim değerlendirmesini öner. Kaynak uydurma."
+            "Klinik açıdan önemli anormal sonuçta ürün satışına yönlendirme, hekim değerlendirmesini öner. Kaynak uydurma. "
+        "Her yanıtın son cümlesi şu olsun: Bu bilgi bir tanı veya teşhis değildir."
         )
         
         # Context'i system prompt'a ekle
@@ -240,7 +242,7 @@ def gpt4o_fallback(messages: List[Dict[str, str]]) -> Dict[str, Any]:
         ]
         
         # Try GPT-4o
-        result = call_chat_model("openai/gpt-4o:online", updated_messages, 0.6, 800)
+        result = call_chat_model("openai/gpt-4o:online", updated_messages, 0.6, 3000)
         if is_valid_chat(result["content"]):
             result["content"] = _sanitize_links(result["content"])
             result["model_used"] = "openai/gpt-4o:online (fallback)"
